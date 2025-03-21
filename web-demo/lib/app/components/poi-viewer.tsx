@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Conveyal <support@conveyal.com>
+//
+// SPDX-License-Identifier: MIT
+
 import { Alert, Button } from 'react-bootstrap'
 import { Calendar } from '@styled-icons/fa-solid'
 

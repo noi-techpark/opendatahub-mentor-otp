@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Conveyal <support@conveyal.com>
+//
+// SPDX-License-Identifier: MIT
+
 import React, { useEffect, useState, useRef } from 'react'
 import { connect } from 'react-redux'
 import { useMap, Popup, Source, Layer } from 'react-map-gl'

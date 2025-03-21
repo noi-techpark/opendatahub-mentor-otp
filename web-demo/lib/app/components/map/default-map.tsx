@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Conveyal <support@conveyal.com>
+//
+// SPDX-License-Identifier: MIT
+
 /* eslint-disable react/prop-types */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck

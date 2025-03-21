@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Conveyal <support@conveyal.com>
+//
+// SPDX-License-Identifier: MIT
+
 // TODO: Remove this eslint exception when implementing TypeScript.
 /* eslint-disable react/prop-types */
 import { Auth0Provider } from '@auth0/auth0-react'

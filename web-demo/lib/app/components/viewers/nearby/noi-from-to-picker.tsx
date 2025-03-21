@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Conveyal <support@conveyal.com>
+//
+// SPDX-License-Identifier: MIT
+
 import { connect } from 'react-redux'
 import { Place } from '@opentripplanner/types'
 import FromToLocationPicker from '@opentripplanner/from-to-location-picker'
