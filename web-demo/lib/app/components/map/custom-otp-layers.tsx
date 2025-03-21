@@ -345,11 +345,11 @@ const LAYER_CONFIG = {
                 <CardHeader>
                   <CardTitle>Parking {name}</CardTitle>
                   <CardSubheader>
-                    <BsLabel bsStyle="primary">
+                    {properties.wheelchairAccessibleCarPlaces && <BsLabel bsStyle="primary">
                       <IconWithText Icon={Wheelchair}>
                         <FormattedMessage id="components.TripViewer.accessible" />
                       </IconWithText>
-                    </BsLabel>
+                    </BsLabel>} 
                   </CardSubheader>
                   <CardAside>
                     {properties.realTimeData && (
