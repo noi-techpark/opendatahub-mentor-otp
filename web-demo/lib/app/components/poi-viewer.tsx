@@ -10,7 +10,7 @@ import { MagnifyingGlass } from '@styled-icons/fa-solid/MagnifyingGlass'
 import { MapRef } from 'react-map-gl'
 import { utcToZonedTime } from 'date-fns-tz'
 import coreUtils from '@opentripplanner/core-utils'
-import React, { Component, FormEvent } from 'react'
+import React, { Component, FormEvent, useEffect } from 'react'
 import styled from 'styled-components'
 
 import * as apiActions from '@otp-react-redux/lib/actions/api'
@@ -135,6 +135,7 @@ const StyledFromToPicker = styled(NoiFromToPicker)`
 `
 
 class PoiViewer extends Component<Props, State> {
+  state = getDefaultState();
 
   constructor(props: Props) {
     super(props)
@@ -166,21 +167,68 @@ class PoiViewer extends Component<Props, State> {
         };
       }
     } else {
-        this.state = getDefaultState(props.homeTimezone)
+        this.state = getDefaultState(props.homeTimezone);
     }
-    console.log(this.state);
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
+
+    if(prevProps.selectedPlace !== this.props.selectedPlace) {
+      let { selectedPlace, transitIndex } = this.props
+
+      console.log("update", selectedPlace);
+      if (selectedPlace && selectedPlace.rawGeocodedFeature) {
+        if (!selectedPlace.rawGeocodedFeature.properties) {
+          let poiData = selectedPlace.rawGeocodedFeature;
+          console.log(poiData);
+          this.setState({
+              date: getCurrentDate(this.props.homeTimezone),
+              poiData,
+              poiId: selectedPlace.rawGeocodedFeature.source_id
+          });
+        } else if (selectedPlace.rawGeocodedFeature.properties.source === 'otp') {
+          let poiData = selectedPlace.rawGeocodedFeature.properties.addendum.stop;
+          console.log(poiData);
+          this.setState({
+            date: getCurrentDate(this.props.homeTimezone),
+            poiData,
+            poiId: selectedPlace.rawGeocodedFeature.properties.source_id
+          });
+        } else {
+          let poiData = selectedPlace.rawGeocodedFeature.properties;
+          console.log(poiData);
+          this.setState({
+              date: getCurrentDate(this.props.homeTimezone),
+              poiData,
+              poiId: selectedPlace.rawGeocodedFeature.properties.source_id
+          });
+        }
+      } else if (selectedPlace && selectedPlace.properties) {
+        let poiData = selectedPlace.properties;
+        console.log("set state", poiData);
+        this.setState({
+            date: getCurrentDate(this.props.homeTimezone),
+            poiData,
+            poiId: selectedPlace.properties.id
+        });
+      } else {
+          this.setState(getDefaultState(this.props.homeTimezone));
+      }
+    }
+
+    if(prevState.poiData !== this.state.poiData) {
+      console.log("New state", this.state);
+      this._zoomToStop()
+    }
+
+    // FIXME: This is to prevent zooming the map back to entire itinerary
+    // when accessing the schedule viewer from the nearby view.
   }
 
   _backClicked = () => navigateBack()
 
   componentDidMount() {
     this._findStopTimesForDate(this.state.date)
-  }
-
-  componentDidUpdate() {
-    // FIXME: This is to prevent zooming the map back to entire itinerary
-    // when accessing the schedule viewer from the nearby view.
-    this._zoomToStop()
   }
 
   _findStopTimesForDate = (date: string) => {
@@ -240,10 +288,11 @@ class PoiViewer extends Component<Props, State> {
   _zoomToStop = () => {
     const { map, zoomToPlace } = this.props
     const { poiData } = this.state
+    console.log("Zooming to ", poiData);
     zoomToPlace(map, poiData)
   }
 
-  _renderHeader = (agencyCount: number) => {
+  _renderHeader = () => {
     const { hideBackButton, selectedPlace } = this.props
     const { poiData, poiId } = this.state;
     let stopData = poiData;
@@ -351,39 +400,18 @@ class PoiViewer extends Component<Props, State> {
     const { homeTimezone, showBlockIds, handlePlanTripClick } = this.props
     const { date, poiData } = this.state
     let stopData = poiData;
-    const agencyCount = new Set(stopData?.routes?.map((r) => r.agency.gtfsId))
-      .size
 
     return (
       <div className="stop-viewer base-color-bg">
+        { }
         <PageTitle title={this.getTitle()} />
         <ServiceTimeRangeRetriever />
         {/* Header Block */}
-        {this._renderHeader(agencyCount)}
+        {this._renderHeader()}
         { /* JSON.stringify(stopData) */ }
         <div className="stop-viewer-body">
             <Button onClick={handlePlanTripClick}> Plan trip </Button>
         </div>
-
-        { /* stopData && (
-          <div className="stop-viewer-body">
-            <Scrollable tabIndex={0}>
-              {stopIsFlex(stopData) && (
-                <div style={{ lineHeight: 'normal' }}>
-                  <FormattedMessage id="components.StopViewer.flexStop" />
-                </div>
-              )}
-              {this._isDateWithinRange(date) && (
-                <StopScheduleTable
-                  date={date}
-                  homeTimezone={homeTimezone}
-                  showBlockIds={showBlockIds}
-                  stopData={stopData}
-                />
-              )}
-            </Scrollable>
-          </div>
-        ) */}
       </div>
     )
   }

@@ -48,6 +48,10 @@ const TaxiOverlay = (props: Props) => {
     const mapInstance = map.getMap()
     const carIcon = new Image()
     carIcon.onload = function () {
+      
+      carIcon.width = 150
+      carIcon.height = 150
+
       if (!mapInstance.hasImage('taxi')) {
         mapInstance.addImage('taxi', carIcon)
       }

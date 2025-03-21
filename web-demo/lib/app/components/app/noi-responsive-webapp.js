@@ -221,7 +221,7 @@ class NoiResponsiveWebapp extends Component {
       <div className="otp">
         <DesktopNav />
         <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
-        {!query.to ?
+        {(!query.from && !query.to) ?
           <Grid>
             <Row className="main-row">
               {MainControls && <MainControls />}

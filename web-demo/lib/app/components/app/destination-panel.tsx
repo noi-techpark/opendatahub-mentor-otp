@@ -56,7 +56,7 @@ class DestinationPanel extends Component<Props> {
     const { activeSearch, intl, mobile, query, showUserSettings } = this.props
     const { planTripClicked } = this.state
 
-    let validLocationsStop = ['RentalVehicle', 'VehicleParking', 'BikeRentalStation'];
+    let validLocationsStop = ['Stop', 'RentalVehicle', 'VehicleParking', 'BikeRentalStation'];
     let validLocationsPoi = ['Stop', 'RentalVehicle', 'VehicleParking', 'BikeRentalStation'];
 
     const mapAction = mobile
@@ -87,7 +87,7 @@ class DestinationPanel extends Component<Props> {
           style={{ padding: '10px' }}
         >
           <span className="batch-routing-panel-location-fields">
-            {planTripClicked && (
+            {(planTripClicked || query.from) && (
               <LocationField
                 inputPlaceholder={intl.formatMessage(
                   { id: 'common.searchForms.enterStartLocation' },
@@ -99,7 +99,7 @@ class DestinationPanel extends Component<Props> {
                 showClearButton={!mobile}
               />
             )}
-            {planTripClicked && (
+            {(planTripClicked || query.from) && (
               <LocationField
                 inputPlaceholder={intl.formatMessage(
                   { id: 'common.searchForms.enterDestination' },
@@ -111,17 +111,17 @@ class DestinationPanel extends Component<Props> {
                 showClearButton={!mobile}
               />
             )}
-            {planTripClicked && (
+            {(planTripClicked || query.from) && (
               <div className="switch-button-container">
                 <SwitchButton />
               </div>
             )}
           </span>
-          {planTripClicked && (
+          {(planTripClicked || query.from) && (
             <BatchSettings onPlanTripClick={this.handlePlanTripClick} />
           )}
         </form>
-        {!planTripClicked && query.to && (<div>
+        {!(planTripClicked || query.from) && query.to && (<div>
           <PoiViewer
             handlePlanTripClick={this.handlePlanTripClick}
             hideBackButton
@@ -142,7 +142,7 @@ class DestinationPanel extends Component<Props> {
             <NarrativeItineraries />
           </div>
         )}
-        {!planTripClicked &&
+        {!(planTripClicked || query.from) &&
           <NoiNearbyView
             handlePlanTripClick={this.handlePlanTripClick}
             validLocations={query.to.rawGeocodedFeature?.properties?.layer === 'stops' ? validLocationsStop : validLocationsPoi }

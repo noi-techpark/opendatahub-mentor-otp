@@ -1,9 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Layer, Popup, useMap } from 'react-map-gl'
+import { Label as BsLabel } from 'react-bootstrap'
 import ReactDOMServer from 'react-dom/server'
+import { FormattedMessage } from 'react-intl'
 import { ClassicModeIcon } from '@opentripplanner/icons'
-import { Parking } from '@styled-icons/fa-solid'
-import { filter } from 'lodash'
+import { Bicycle, Bus, C, Car, Parking, Train } from '@styled-icons/fa-solid'
+import { Rss } from '@styled-icons/fa-solid/Rss'
+import { Wheelchair } from '@styled-icons/fa-solid/Wheelchair'
+import { IconWithText } from '@otp-react-redux/lib/components/util/styledIcon'
+import styled from 'styled-components'
+import { Card, CardBody, CardHeader, CardSubheader, CardTitle, CardAside } from '@otp-react-redux/lib/components/viewers/nearby/styled'
+import FromToPicker from '@otp-react-redux/lib/components/viewers/nearby/from-to-picker'
+import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
+
+
+
+const PulsingRss = styled(Rss)`
+  animation: pulse-opacity 2s ease-in-out infinite;
+  transform: scaleX(-1);
+`
 
 
 // --- Default configuration for layers ---
@@ -39,7 +54,7 @@ const LAYER_CONFIG = {
     },
     minzoom: 17,
     maxzoom: 20,
-    popupRenderer: (properties) => {
+    popupRenderer: (properties, hoverInfo) => {
       let routesCount = 0
       try {
         const parsedRoutes =
@@ -51,33 +66,39 @@ const LAYER_CONFIG = {
         routesCount = 0
       }
       return (
-        <div>
-          <div style={{ fontSize: '1.1em', marginBottom: '0.3em' }}>
-            <strong>{properties.name}</strong>
-          </div>
-          {properties.platform && (
-            <div>
-              <strong>Platform:</strong> {properties.platform}
-            </div>
-          )}
-          {properties.type && (
-            <div>
-              <strong>Type:</strong>{' '}
-              {properties.type === 'BUS'
-                ? 'Bus'
-                : properties.type === 'RAIL'
-                ? 'Train'
-                : properties.type}
-            </div>
-          )}
-          <div>
-            <strong>Routes:</strong> {routesCount} route
-            {routesCount !== 1 ? 's' : ''}
-          </div>
+        <div style={{width: '300px'}}>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+              {properties.type === 'BUS' && <Bus />}
+              {properties.type === 'RAIL' && <Train />}
+              {properties.name}
+              </CardTitle>
+              <CardSubheader>
+                <strong>Platform:</strong> {properties.platform}
+              </CardSubheader>
+              <CardAside>
+                {properties.realTimeData && (
+                  <PulsingRss width="16px" />
+                )}
+              </CardAside>
+            </CardHeader>
+            <CardBody>
+                <div>
+                  <strong>Routes:</strong> {routesCount} route
+                  {routesCount !== 1 ? 's' : ''}
+                </div>
+                <br />
+
+                <NoiFromToPicker place={hoverInfo} />
+
+            </CardBody>
+          </Card>
         </div>
       )
     }
   },
+  // Not integrated yet, for flex-trip, zones
   areaStops: {
     // Flex zones – using a circle to indicate an area
     type: 'circle',
@@ -88,29 +109,6 @@ const LAYER_CONFIG = {
     },
     minzoom: 14,
     maxzoom: 20
-    /*popupRenderer: (properties) => {
-      let routesCount = 0;
-      try {
-        const parsedRoutes =
-          typeof properties.routes === 'string'
-            ? JSON.parse(properties.routes)
-            : properties.routes;
-        if (Array.isArray(parsedRoutes)) routesCount = parsedRoutes.length;
-      } catch (err) {
-        routesCount = 0;
-      }
-      return (
-        <div>
-          <div style={{ fontSize: '1.1em', marginBottom: '0.3em' }}>
-            <strong>{properties.name}</strong>
-          </div>
-          <div>
-            <strong>Routes:</strong> {routesCount} route
-            {routesCount !== 1 ? 's' : ''}
-          </div>
-        </div>
-      );
-    }*/
   },
   stations: {
     type: 'symbol',
@@ -177,7 +175,7 @@ const LAYER_CONFIG = {
     },
     minzoom: 1,
     maxzoom: 17,
-    popupRenderer: (properties) => {
+    popupRenderer: (properties, hoverInfo) => {
       let routesCount = 0
       try {
         const parsedRoutes =
@@ -189,37 +187,40 @@ const LAYER_CONFIG = {
         routesCount = 0
       }
       return (
-        <div>
-          <div style={{ fontSize: '1.1em', marginBottom: '0.3em' }}>
-            <strong>{properties.name}</strong>
-          </div>
-          {properties.platform && (
-            <div>
-              <strong>Platform:</strong> {properties.platform}
-            </div>
-          )}
-          {properties.type && (
-            <div>
-              <strong>Type:</strong>{' '}
-              {properties.type === 'BUS'
-                ? 'Bus'
-                : properties.type === 'RAIL'
-                ? 'Train'
-                : properties.type}
-            </div>
-          )}
-          <div>
-            <strong>Routes:</strong> {routesCount} route
-            {routesCount !== 1 ? 's' : ''}
-          </div>
+        <div style={{width: '300px'}}>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+              {properties.type.includes('BUS') && <Bus />}
+              {properties.type.includes('RAIL') && <Train />}
+              {properties.name}
+              </CardTitle>
+              <CardAside>
+                {properties.realTimeData && (
+                  <PulsingRss width="16px" />
+                )}
+              </CardAside>
+            </CardHeader>
+            <CardBody>
+                <div>
+                  <strong>Routes:</strong> {routesCount} route
+                  {routesCount !== 1 ? 's' : ''}
+                </div>
+                <br />
+
+                <NoiFromToPicker place={hoverInfo} />
+
+            </CardBody>
+          </Card>
         </div>
       )
     }
   },
+  // Free-floating bike, none yet, would be implemented here
   citybikes: {
     type: 'symbol',
     layout: {
-      'icon-image': 'bicycle-icon', // Supply your bike icon.
+      'icon-image': 'bicycle-icon',
       'icon-size': 0.15,
       'icon-allow-overlap': false,
       'text-field': ['get', 'name'],
@@ -229,21 +230,12 @@ const LAYER_CONFIG = {
     },
     minzoom: 14,
     maxzoom: 20
-    /*popupRenderer: (properties) => (
-      <div>
-        <div style={{ fontSize: '1.1em', marginBottom: '0.3em' }}>
-          <strong>{properties.name}</strong>
-        </div>
-        <div>
-          <strong>Type:</strong> Vehicle Rental
-        </div>
-      </div>
-    )*/
   },
+  // Free-floating vehicles, none yet, to be implemented
   rentalVehicles: {
     type: 'symbol',
     layout: {
-      'icon-image': 'scooter-icon', // Supply your micromobility icon.
+      'icon-image': 'scooter-icon', 
       'icon-size': 0.1,
       'icon-allow-overlap': false,
       'text-field': ['get', 'name'],
@@ -253,16 +245,6 @@ const LAYER_CONFIG = {
     },
     minzoom: 1,
     maxzoom: 20
-    /*popupRenderer: (properties) => (
-      <div>
-        <div style={{ fontSize: '1.1em', marginBottom: '0.3em' }}>
-          <strong>{properties.name}</strong>
-        </div>
-        <div>
-          <strong>Vehicle ID:</strong> {properties.vehicleId || 'n/a'}
-        </div>
-      </div>
-    )*/
   },
   rentalStations: {
     type: 'symbol',
@@ -286,18 +268,46 @@ const LAYER_CONFIG = {
     },
     minzoom: 14,
     maxzoom: 20,
-    popupRenderer: (properties) => {
+    popupRenderer: (properties, hoverInfo) => {
+      console.log(hoverInfo);
+      console.log(properties);
+      let formFactors = properties.formFactors.split(",");
       return (
-        <div>
-          <div style={{ fontSize: '1.1em', marginBottom: '0.3em' }}>
-            <strong>{properties.name}</strong>
-          </div>
-          <div>
-            <strong>Network:</strong> {properties.network || 'n/a'}
-          </div>
-          <div>
-            <strong>Form Factors:</strong> {properties.formFactors || 'n/a'}
-          </div>
+        <div style={{width: '300px'}}>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                
+              {formFactors.includes('BICYCLE') &&
+                  <IconWithText Icon={Bicycle}>
+                  </IconWithText>
+                }
+                {formFactors.includes('CAR') &&
+                  <IconWithText Icon={Car}>
+                  </IconWithText>
+                }
+                {properties.name}</CardTitle>
+              <CardSubheader>
+                {/* properties.network // No nice name in map tiles */}
+              </CardSubheader>
+              <CardAside>
+                {properties.operative && (
+                  <PulsingRss width="16px" />
+                )}
+              </CardAside>
+            </CardHeader>
+            <CardBody>
+              <div>
+                <FormattedMessage
+                  id="components.NearbyView.bikesAvailable"
+                  values={{bikesAvailable:properties.vehiclesAvailable}}
+                />
+              </div>
+                <br />
+                <NoiFromToPicker place={hoverInfo} />
+
+            </CardBody>
+          </Card>
         </div>
       );
     }
@@ -323,32 +333,50 @@ const LAYER_CONFIG = {
     },
     minzoom: 14,
     maxzoom: 20,
-    popupRenderer: (properties) => {
+    popupRenderer: (properties, hoverInfo) => {
         const name = properties.name && properties.name.trim() ? ` (${properties.name.trim()})` : '';
         return (
-            <div>
-            <div style={{ fontSize: '1.1em', marginBottom: '0.3em' }}>
-                <strong>Parking{name}</strong>
-            </div>
-            <div>
-                {(properties.anyCarPlaces || properties.carPlaces) && (
-                <span style={{ marginRight: '8px' }}>
-                    <ClassicModeIcon mode="car" style={{ width: '16px', height: '16px' }} />
-                </span>
-                )}
-                {properties.bicyclePlaces && (
-                <span>
-                    <ClassicModeIcon mode="bicycle" style={{ width: '16px', height: '16px' }} />
-                </span>
-                )}
-            </div>
+            <div style={{minWidth: '200px'}}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Parking {name}</CardTitle>
+                  <CardSubheader>
+                    <BsLabel bsStyle="primary">
+                      <IconWithText Icon={Wheelchair}>
+                        <FormattedMessage id="components.TripViewer.accessible" />
+                      </IconWithText>
+                    </BsLabel>
+                  </CardSubheader>
+                  <CardAside>
+                    {properties.realTimeData && (
+                      <PulsingRss width="16px" />
+                    )}
+                  </CardAside>
+                </CardHeader>
+                <CardBody>
+                  <div> { properties.carPlaces &&
+                      <IconWithText Icon={Car}>
+                        {properties['availability.carPlaces']} / {properties['capacity.carPlaces']}
+                      </IconWithText>
+                    }
+                  </div>
+                  <div>
+                    { properties.bicyclePlaces &&
+                    <IconWithText Icon={Bicycle}>
+                      {properties['availability.bicyclePlaces']} / {properties['capacity.bicyclePlaces']}
+                    </IconWithText>
+                    }
+                  </div>
+                  <NoiFromToPicker place={hoverInfo} />
+                </CardBody>
+              </Card>
             </div>
         );
       }
   }
 }
 
-const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
+const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name }) => {
   const map = useMap().default
   const [hoverInfo, setHoverInfo] = useState(null)
   const [stickyInfo, setStickyInfo] = useState(null)
@@ -363,6 +391,9 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
   const defaultConfig = LAYER_CONFIG[sourceLayerName] || {}
   const mergedConfig = {
     source: 'otp-source',
+    name: name || `otp-${sourceLayerName}`,
+    visible: true,
+    key: sourceLayerName,
     'source-layer': sourceLayerName,
     ...defaultConfig,
     ...layerStyle
@@ -382,6 +413,10 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
           busSvgString
         )}`
         const busIcon = new Image()
+        
+        busIcon.width = 131  // Set appropriate size
+        busIcon.height = 150 // Set appropriate size
+        
         busIcon.onload = () => {
           if (!mapInstance.hasImage('parking-icon')) {
             mapInstance.addImage('parking-icon', busIcon, {sdf: true})
@@ -397,7 +432,12 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
       const busDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
         busSvgString
       )}`
+
       const busIcon = new Image()
+          
+      busIcon.width = 131  // Set appropriate size
+      busIcon.height = 150 // Set appropriate size
+
       busIcon.onload = () => {
         if (!mapInstance.hasImage('bus-icon')) {
           mapInstance.addImage('bus-icon', busIcon)
@@ -414,6 +454,9 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
         carSvgString
       )}`
       const carIcon = new Image()
+      carIcon.width = 150  // Set appropriate size
+      carIcon.height = 150 // Set appropriate size
+      
       carIcon.onload = () => {
         if (!mapInstance.hasImage('car-icon')) {
           mapInstance.addImage('car-icon', carIcon)
@@ -430,6 +473,10 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
         tramSvgString
       )}`
       const railIcon = new Image()
+      
+      railIcon.width = 100  // Set appropriate size
+      railIcon.height = 150 // Set appropriate size
+
       railIcon.onload = () => {
         if (!mapInstance.hasImage('rail-icon')) {
           mapInstance.addImage('rail-icon', railIcon)
@@ -446,6 +493,9 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
         scooterSvgString
       )}`
       const scooterIcon = new Image()
+      
+      scooterIcon.width = 150  // Set appropriate size
+      scooterIcon.height = 150 // Set appropriate size
       scooterIcon.onload = () => {
         if (!mapInstance.hasImage('scooter-icon')) {
           mapInstance.addImage('scooter-icon', scooterIcon)
@@ -462,6 +512,10 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
         bicycleSvgString
       )}`
       const bicycleIcon = new Image()
+
+      bicycleIcon.width = 245  // Set appropriate size
+      bicycleIcon.height = 150 // Set appropriate size
+
       bicycleIcon.onload = () => {
         if (!mapInstance.hasImage('bicycle-icon')) {
           mapInstance.addImage('bicycle-icon', bicycleIcon)
@@ -485,11 +539,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
       mapInstance.getCanvas().style.cursor = 'pointer'
       if (!stickyInfoRef.current && e.features && e.features.length) {
         const feature = e.features[0]
-        setHoverInfo({
-          longitude: feature.geometry.coordinates[0],
-          latitude: feature.geometry.coordinates[1],
-          properties: feature.properties
-        })
+        setHoverInfo(feature)
         if (feature.properties.parentStation) {
           setHighlightParentStation(feature.properties.parentStation)
         }
@@ -510,11 +560,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
       if (e.features && e.features.length) {
         const feature = e.features[0]
         if(!feature.properties.stops) {
-            setStickyInfo({
-            longitude: feature.geometry.coordinates[0],
-            latitude: feature.geometry.coordinates[1],
-            properties: feature.properties
-            })
+            setStickyInfo(feature)
         }
         if (feature.properties.parentStation) {
           setHighlightParentStation(feature.properties.parentStation)
@@ -561,9 +607,9 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
   }
 
   // --- New default popup renderer: Print all properties ---
-  const renderPopupContent = (properties) => {
+  const renderPopupContent = (hoverInfo) => {
     if (mergedConfig.popupRenderer) {
-      return mergedConfig.popupRenderer(properties)
+      return mergedConfig.popupRenderer(hoverInfo.properties, hoverInfo)
     }
     return (
       <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
@@ -638,25 +684,27 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {} }) => {
       )}
       {hoverInfo && (
         <Popup
-          longitude={hoverInfo.longitude}
-          latitude={hoverInfo.latitude}
+          maxWidth="none"
+          longitude={hoverInfo.geometry.coordinates[0]}
+          latitude={hoverInfo.geometry.coordinates[1]}
           closeButton={false}
           offsetTop={-10}
           anchor="top"
         >
-          {renderPopupContent(hoverInfo.properties)}
+          {renderPopupContent(hoverInfo)}
         </Popup>
       )}
       {stickyInfo && (
         <Popup
-          longitude={stickyInfo.longitude}
-          latitude={stickyInfo.latitude}
+          maxWidth="none"
+          longitude={stickyInfo.geometry.coordinates[0]}
+          latitude={stickyInfo.geometry.coordinates[1]}
           closeButton={true}
           onClose={onStickyClose}
           offsetTop={-10}
           anchor="top"
         >
-          {renderPopupContent(stickyInfo.properties)}
+          {renderPopupContent(stickyInfo)}
           <br />
           <em>Click outside to dismiss.</em>
         </Popup>

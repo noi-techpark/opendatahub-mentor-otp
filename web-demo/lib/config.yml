@@ -147,7 +147,7 @@ map:
     - type: otp2
       layers:
         #- type: citybikes # overlaps with rental stations
-        - type: rentalVehicles # no free floating at the moment
+        #- type: rentalVehicles # no free floating at the moment
         - type: rentalStations
         - type: vehicleParking
         - type: stops

@@ -7,6 +7,8 @@ import { injectIntl } from 'react-intl'
 import BaseMap from '@opentripplanner/base-map'
 import generateOTP2TileLayers from '@opentripplanner/otp2-tile-overlay'
 import React, { Component } from 'react'
+import { Source } from 'react-map-gl';
+
 import styled from 'styled-components'
 
 import {
@@ -29,7 +31,8 @@ import {
 import { setViewedStop } from '@otp-react-redux/lib/actions/ui'
 import { updateOverlayVisibility } from '@otp-react-redux/lib/actions/config'
 
-import OTPVectorLayers from './custom-otp-layers-collection'
+import OTPVectorLayer from './custom-otp-layers';
+
 import ElevationPointMarker from '@otp-react-redux/lib/components/map/elevation-point-marker'
 import EndpointsOverlay from '@otp-react-redux/lib/components/map/connected-endpoints-overlay'
 import TaxiLayer from './taxi-layer'
@@ -46,6 +49,8 @@ import TransitVehicleOverlay from '@otp-react-redux/lib/components/map/connected
 import TripViewerOverlay from '@otp-react-redux/lib/components/map/connected-trip-viewer-overlay'
 import VehicleRentalOverlay from '@otp-react-redux/lib/components/map/connected-vehicle-rental-overlay'
 import withMap from '@otp-react-redux/lib/components/map/with-map'
+import { Parking, Taxi } from '@styled-icons/fa-solid'
+import { IconWithText } from '../../../vendor/otp-react-redux/lib/components/util/styledIcon'
 
 
 const MapContainer = styled.div`
@@ -106,10 +111,7 @@ function getLayerName(overlay, config, intl) {
     case 'otp2-bike-rental':
     case 'rentalStations':
       return intl.formatMessage(
-        { id: 'components.MapLayers.bike-rental' },
-        {
-          companies: getCompanyNames(companies, config, intl)
-        }
+        { id: 'components.MapLayers.shared-vehicles' },
       )
     case 'car-rental':
       return intl.formatMessage({ id: 'components.MapLayers.car-rental' })
@@ -130,10 +132,14 @@ function getLayerName(overlay, config, intl) {
     case 'stations':
       return intl.formatMessage({ id: 'components.MapLayers.stations' })
     case 'rentalVehicles':
-      if (overlay.network)
-        return getCompanyNames([overlay.network], config, intl)
+      //if (overlay.network)
+      //  return getCompanyNames([overlay.network], config, intl)
 
       return intl.formatMessage({ id: 'components.MapLayers.shared-vehicles' })
+    case 'taxi_noi':
+      return <IconWithText Icon={Taxi}>Taxi</IconWithText>
+    case 'vehicleParking':
+      return <IconWithText Icon={Parking}>Parking</IconWithText>
     case 'otp2':
       // The otp2 type will result in multiple layers, so don't show a warning.
       return type
@@ -331,18 +337,23 @@ class DefaultMap extends Component {
           <EndpointsOverlay />
           <RouteViewerOverlay />
           <TransitVehicleOverlay ModeIcon={ModeIcon} />
-          <GeolocateControl
-            onGeolocate={() => {
-              getCurrentPosition(intl)
-            }}
-            position="top-left"
-          />
           <TransitiveOverlay
             getTransitiveRouteLabel={getTransitiveRouteLabel}
           />
           <TripViewerOverlay />
           <ElevationPointMarker />
 
+          {/* Specific overlay sources */}
+          {overlays?.map((overlayConfig, k) => {
+            switch (overlayConfig.type) {
+              case 'otp2':
+                return <><Source id="otp-source" type="vector" url={vectorTilesEndpoint +
+                        '/' +
+                        overlayConfig.layers.map((l) => l.type).join(',') +
+                        '/tilejson.json'
+                  }></Source></>
+            }
+          })}
           {/* The configurable overlays */}
           {overlays?.map((overlayConfig, k) => {
             const namedLayerProps = {
@@ -407,27 +418,23 @@ class DefaultMap extends Component {
                   />
                 )
               case 'otp2':
-                console.log('overlayConfig', overlayConfig)
                 // This must be a method that returns an array of JSX
                 // as the base-map requires that every toggleable layer
                 // is its own component, and not a subcomponent of another component
-                return (
-                  <OTPVectorLayers
-                    {...namedLayerProps}
-                    visible={true}
-                    tilejsonUrl={
-                      vectorTilesEndpoint +
-                      '/' +
-                      overlayConfig.layers.map((l) => l.type).join(',') +
-                      '/tilejson.json'
-                    }
-                    layerNames={overlayConfig.layers.map((l) => l.type)}
-                  />
-                )
+                return overlayConfig.layers.map((layer) => (
+                    <OTPVectorLayer
+                      id={layer.type}
+                      visible={true}
+                      key={layer.type}
+                      sourceLayerName={layer.type}
+                      name={getLayerName(layer, config, intl)}
+                    />
+                  ))
               default:
                 return null
             }
           })}
+          
           {/* If set, custom overlays are shown if no active itinerary is shown or pending. */}
           {typeof getCustomMapOverlays === 'function' &&
             getCustomMapOverlays(!itinerary && !pending)}

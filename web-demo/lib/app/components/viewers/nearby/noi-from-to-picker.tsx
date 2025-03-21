@@ -5,10 +5,12 @@ import React, { useCallback, useMemo } from 'react'
 
 import * as mapActions from '@otp-react-redux/lib/actions/map'
 import { SetLocationHandler } from '@otp-react-redux/lib/components/util/types'
+import { MapboxGeoJSONFeature } from 'react-map-gl'
+import { setQueryParam } from '../../../../vendor/otp-react-redux/lib/actions/form'
 
 interface Props {
   className?: string
-  place: Place
+  place: Place | MapboxGeoJSONFeature 
   setLocation: SetLocationHandler
   handlePlanTripClick: () => void
 }
@@ -16,9 +18,10 @@ interface Props {
 const NoiFromToPicker = ({ className, place, setLocation, handlePlanTripClick }: Props) => {
   const location = useMemo(
     () => ({
-      lat: place.lat ?? 0,
-      lon: place.lon ?? 0,
-      name: place.name
+      lat: place.lat ?? place.geometry.coordinates[1],
+      lon: place.lon ?? place.geometry.coordinates[0],
+      name: place.name ?? place.properties.name,
+      properties: place.properties
     }),
     [place]
   )
@@ -27,11 +30,13 @@ const NoiFromToPicker = ({ className, place, setLocation, handlePlanTripClick }:
       <FromToLocationPicker
         label
         onFromClick={useCallback(() => {
-          handlePlanTripClick()
+          handlePlanTripClick && handlePlanTripClick()
           setLocation({ location, locationType: 'from', reverseGeocode: false })
         }, [location, setLocation])}
         onToClick={useCallback(() => {
           setLocation({ location, locationType: 'to', reverseGeocode: false })
+          console.log(place);
+          setQueryParam({ entityId: place.properties?.id })
         }, [location, setLocation])}
       />
     </span>
