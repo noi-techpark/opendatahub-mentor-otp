@@ -29,7 +29,7 @@ api:
   basePath: /otp
   v2: true
 
-# Determines if the header brand should be clickable or not. If set to true, 
+# Determines if the header brand should be clickable or not. If set to true,
 # clicking the header brand will go back to the main trip planner page and wipe out any
 # results.
 # brandClickable: true/false
@@ -60,8 +60,8 @@ api:
 #   mobile: BOTH_LOCATIONS_CHANGED
 #   default: ONE_LOCATION_CHANGED
 
-### If Terms of Service is hosted at an outside link, provide it here. If translations 
-### are provided, host each translation by including the language code (eg. en-US, fr, es) 
+### If Terms of Service is hosted at an outside link, provide it here. If translations
+### are provided, host each translation by including the language code (eg. en-US, fr, es)
 ### in the URL and use {locale} to represent the language in the link below
 # termsOfServiceLink:
 
@@ -142,12 +142,18 @@ map:
       url: //tiles.stadiamaps.com/styles/stamen_toner_lite.json
       attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
   overlays:
+    - type: taxi_noi
+      url: https://mobility.api.opendatahub.com/v2/flat,node/ON_DEMAND_VEHICLE/*/latest?where=sorigin.eq.%22smart-taxi-merano%22
     - type: otp2
       layers:
-        - type: stops
-        - type: rentalVehicles
+        #- type: citybikes # overlaps with rental stations
+        #- type: rentalVehicles # no free floating at the moment
         - type: rentalStations
-        - type: vehicleParking  
+        - type: vehicleParking
+        - type: stops
+        #- type: areaStops # couldn't find any
+        - type: stations # couldn't find any
+        
   ### Optional transitive.js (route rendering) properties:
   ### - labeledModes: an array of OTP modes for which the route label should be
   ###                 rendered on the map. Example of OTP modes: BUS, RAIL, ...
@@ -176,7 +182,7 @@ map:
   #       font-family: Hind, sans-serif
   #       font-size: 18px
   #   disableFlexArc: true
-  
+
 
 # it is possible to leave out a geocoder config entirely. In that case only
 # GPS coordinates will be used when finding the origin/destination.
@@ -200,10 +206,10 @@ geocoder:
   #     x-custom-header: abc123
   # required geocoder type.
   type: PELIAS
-  layers: address,venue,street
+  layers: 
   # This base URL is required as the libraries will default to using now-defunct
   # mapzen urls
-  baseUrl: https://geocoder.otp.opendatahub.testingmachine.eu/v1
+  baseUrl: https://pelias-noi.routerank.com/v1
   # This allows the location field dropdown headers to be colored based on Pelias layer
   #resultsColors:
   #  stops: "#007fae"
@@ -389,8 +395,8 @@ itinerary:
   # mutedErrors:
   #   - NO_TRANSIT_CONNECTION_IN_SEARCH_WINDOW
 
-  # List of OTP2 errors that should only be displayed alone, alongside no  
-  # other errors. 
+  # List of OTP2 errors that should only be displayed alone, alongside no
+  # other errors.
   # exclusiveErrors:
   #   - NO_TRANSIT_CONNECTION
 
@@ -438,7 +444,7 @@ itinerary:
   # The sort options to display in the sort options list
   # If unset, will display all.
   # Available sort options: 'BEST', 'DURATION', 'ARRIVALTIME', 'WALKTIME', 'COST', 'DEPARTURETIME'
-  # sortModes: 
+  # sortModes:
   #   - 'BEST'
   #   - 'DURATION'
   #   - 'ARRIVALTIME'
@@ -562,9 +568,9 @@ itinerary:
 # popups:
 #   targets:
 #     testTarget: # To set a name for this target, create the i18n string "config.popups.testTarget"
-#       url: http://example.com/ 
+#       url: http://example.com/
 #       modal: false # Setting this to false always launches the popup as a browser popup
-#     secondTarget: 
+#     secondTarget:
 #       url: http://test.com/
 #       appendLocale: false # Defaults to true, if set to false otp-rr will not append the current i18n language to the popup URL.
 #   launchers:

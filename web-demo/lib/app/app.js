@@ -21,14 +21,18 @@ import Bugsnag from '@bugsnag/js'
 import BugsnagPluginReact from '@bugsnag/plugin-react'
 import React from 'react'
 
+
 // import OTP-RR components
 import {
   BatchResultsScreen,
+  DestinationPanel,
+  RoutingPanel,
   BatchRoutingPanel,
   BatchSearchScreen,
   DefaultItinerary,
-  ResponsiveWebapp,
-  Map
+  NoiResponsiveWebapp,
+  Map,
+  DefaultMap
 } from './index'
 
 // Loads a yaml config file which is set in the webpack section of the craco.config.js file.
@@ -180,7 +184,8 @@ const components = {
 
   ItineraryPreviewSupplement,
 
-  MainPanel: BatchRoutingPanel,
+  MainPanel: DestinationPanel,
+  // MainPanel: BatchRoutingPanel,
 
   MapWindows: isCallTakerModuleEnabled ? jsConfig.MapWindows : null,
 
@@ -197,12 +202,16 @@ const components = {
   TermsOfService,
 
   TermsOfStorage,
-  Map: Map
+
+  Map: Map,
+
+  DefaultMap: DefaultMap
 }
+console.log(DefaultMap);
 
 const Webapp = () => (
   <ErrorBoundary>
-    <ResponsiveWebapp components={{ ...components, ...jsConfig }} />
+    <NoiResponsiveWebapp components={{ ...components, ...jsConfig }} />
   </ErrorBoundary>
 )
 

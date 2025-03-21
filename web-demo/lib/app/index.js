@@ -10,8 +10,8 @@ import ErrorMessage from '@otp-react-redux/lib/components/form/error-message'
 import LocationField from '@otp-react-redux/lib/components/form/connected-location-field'
 import PlanTripButton from '@otp-react-redux/lib/components/form/plan-trip-button'
 import SwitchButton from '@otp-react-redux/lib/components/form/switch-button'
-import DefaultMap from '@otp-react-redux/lib/components/map/default-map'
-import Map from '@otp-react-redux/lib/components/map/map'
+import DefaultMap from './components/map/default-map'
+import Map from './components/map/map'
 import DefaultItinerary from '@otp-react-redux/lib/components/narrative/default/default-itinerary'
 import MetroItinerary from '@otp-react-redux/lib/components/narrative/metro/metro-itinerary'
 import NarrativeItineraries from '@otp-react-redux/lib/components/narrative/narrative-itineraries'
@@ -27,10 +27,9 @@ import NavLoginButtonAuth0 from '@otp-react-redux/lib/components/user/nav-login-
 import StopScheduleViewer from '@otp-react-redux/lib/components/viewers/stop-schedule-viewer'
 import ViewStopButton from '@otp-react-redux/lib/components/viewers/view-stop-button'
 import ViewerContainer from '@otp-react-redux/lib/components/viewers/viewer-container'
-import ResponsiveWebapp from '@otp-react-redux/lib/components/app/responsive-webapp'
+// import ResponsiveWebapp from '@otp-react-redux/lib/components/app/responsive-webapp'
 import AppMenu from '@otp-react-redux/lib/components/app/app-menu'
 import DesktopNav from '@otp-react-redux/lib/components/app/desktop-nav'
-import BatchRoutingPanel from '@otp-react-redux/lib/components/app/batch-routing-panel'
 import BatchResultsScreen from '@otp-react-redux/lib/components/mobile/batch-results-screen'
 import BatchSearchScreen from '@otp-react-redux/lib/components/mobile/batch-search-screen'
 import FormattedMode from '@otp-react-redux/lib/components/util/formatted-mode'
@@ -43,6 +42,11 @@ import createCallTakerReducer from '@otp-react-redux/lib/reducers/call-taker'
 import createOtpReducer from '@otp-react-redux/lib/reducers/create-otp-reducer'
 import createUserReducer from '@otp-react-redux/lib/reducers/create-user-reducer'
 import otpUtils from '@otp-react-redux/lib/util'
+
+import BatchRoutingPanel from '@otp-react-redux/lib/components/app/batch-routing-panel'
+import NoiResponsiveWebapp from './components/app/noi-responsive-webapp'
+import RoutingPanel from './components/app/routing-panel'
+import DestinationPanel from './components/app/destination-panel'
 
 // Example NOI specific component
 import ExampleComponent from './components/example'
@@ -90,14 +94,17 @@ export {
   NavLoginButtonAuth0,
 
   // app components,
-  ResponsiveWebapp,
+  // ResponsiveWebapp,
   AppMenu,
   DesktopNav,
+  NoiResponsiveWebapp,
 
   // batch routing components
   BatchResultsScreen,
   BatchRoutingPanel,
   BatchSearchScreen,
+  RoutingPanel,
+  DestinationPanel,
 
   // Util components
   FormattedMode,
