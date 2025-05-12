@@ -70,7 +70,8 @@ services:
       - ${DOCKER_TRAFFIC_PORT}:8094
 
   amarillo:
-    image: ${DOCKER_IMAGE_AMARILLO}:${DOCKER_TAG}
+    # image: ${DOCKER_IMAGE_AMARILLO}:${DOCKER_TAG}
+    image: ${DOCKER_IMAGE_AMARILLO}:b533c53c9e7542a6108934e7417460221287432c-test
     restart: unless-stopped
     env_file:
       - .env
