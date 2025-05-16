@@ -1,0 +1,602 @@
+/*
+ * SPDX-FileCopyrightText: 2024 Conveyal <support@conveyal.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+ /*
+ * SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+// Vendors vars override
+$fa-font-path: "../fonts/font-awesome" !default;
+
+// Bootstrap vars override (to make THEME customizable)
+$bootstrap-sass-asset-helper: false !default;
+
+$gray-base:              #000 !default;
+$gray-darker:            lighten($gray-base, 13.5%) !default; // #222
+$gray-dark:              lighten($gray-base, 20%) !default;   // #333
+$gray:                   lighten($gray-base, 33.5%) !default; // #555
+$gray-light:             lighten($gray-base, 66.7%) !default; // #777
+$gray-lighter:           lighten($gray-base, 93.5%) !default; // #eee
+
+$brand-primary:         #A4D1B5;
+$brand-primary-dark:    #75ac8a;
+$brand-primary-light:   lighten($brand-primary, 20%) !default;
+$brand-primary-transp:   rgba(255,255,255,.25) !default;
+
+$brand-success:         #5cb85c !default;
+$brand-info:            #5bc0de !default;
+$brand-warning:         #f0ad4e !default;
+$brand-danger:          #d9534f !default;
+
+$body-bg:               #fff !default;
+$text-color:            $gray-dark !default;
+$link-color:            $brand-primary-dark !default;
+$link-hover-color:      darken($link-color, 15%) !default;
+$link-hover-decoration: underline !default;
+
+$font-family-sans-serif:  "Helvetica Neue", Helvetica, Arial, sans-serif !default;
+$font-family-serif:       Georgia, "Times New Roman", Times, serif !default;
+$font-family-monospace:   Menlo, Monaco, Consolas, "Courier New", monospace !default;
+$font-family-base:        $font-family-sans-serif !default;
+
+$font-size-base:          16px !default;
+$font-size-large:         ceil(($font-size-base * 1.25)) !default; // ~18px
+$font-size-small:         ceil(($font-size-base * .85)) !default; // ~12px
+$font-size-xsmall:        ceil(($font-size-base * .7)) !default; // ~12px
+$font-size-xxsmall:       ceil(($font-size-base * .6)) !default; // ~9px
+
+$font-size-h1:            floor(($font-size-base * 2.6)) !default; // ~36px
+$font-size-h2:            floor(($font-size-base * 2.15)) !default; // ~30px
+$font-size-h3:            ceil(($font-size-base * 1.7)) !default; // ~24px
+$font-size-h4:            ceil(($font-size-base * 1.25)) !default; // ~18px
+$font-size-h5:            $font-size-base !default;
+$font-size-h6:            ceil(($font-size-base * .85)) !default; // ~12px
+
+$line-height-base:        1.428571429 !default; // 20/14
+$line-height-computed:    floor(($font-size-base * $line-height-base)) !default; // ~20px
+
+$headings-font-family:    inherit !default;
+$headings-font-weight:    500 !default;
+$headings-line-height:    1.1 !default;
+$headings-color:          inherit !default;
+
+
+$padding-base-vertical:     6px !default;
+$padding-base-horizontal:   12px !default;
+
+$padding-large-vertical:    10px !default;
+$padding-large-horizontal:  16px !default;
+
+$padding-small-vertical:    5px !default;
+$padding-small-horizontal:  10px !default;
+
+$padding-xs-vertical:       1px !default;
+$padding-xs-horizontal:     5px !default;
+
+$line-height-large:         1.3333333 !default;
+$line-height-small:         1.5 !default;
+
+// $border-radius-base:        16px !default;
+// $border-radius-large:       20px !default;
+// $border-radius-small:       12px !default;
+
+$border-radius-base:        8px !default;
+$border-radius-large:       12px !default;
+$border-radius-small:       6px !default;
+
+$component-active-color:    $text-color !default;
+$component-active-bg:       $brand-primary !default;
+$caret-width-base:          4px !default;
+$caret-width-large:         5px !default;
+
+$table-cell-padding:            8px !default;
+$table-condensed-cell-padding:  5px !default;
+$table-bg:                      transparent !default;
+$table-bg-accent:               #f9f9f9 !default;
+$table-bg-hover:                #f5f5f5 !default;
+$table-bg-active:               $table-bg-hover !default;
+$table-border-color:            #ddd !default;
+
+
+$btn-font-weight:                500 !default;
+$btn-default-color:              #333 !default;
+$btn-default-bg:                 #fff !default;
+$btn-default-border:             #ccc !default;
+
+$btn-primary-color:              $text-color !default;
+$btn-primary-bg:                 $brand-primary !default;
+$btn-primary-border:             darken($btn-primary-bg, 5%) !default;
+
+$btn-success-color:              #fff !default;
+$btn-success-bg:                 $brand-success !default;
+$btn-success-border:             darken($btn-success-bg, 5%) !default;
+
+$btn-info-color:                 #fff !default;
+$btn-info-bg:                    $brand-info !default;
+$btn-info-border:                darken($btn-info-bg, 5%) !default;
+
+$btn-warning-color:              #fff !default;
+$btn-warning-bg:                 $brand-warning !default;
+$btn-warning-border:             darken($btn-warning-bg, 5%) !default;
+
+$btn-danger-color:               #fff !default;
+$btn-danger-bg:                  $brand-danger !default;
+$btn-danger-border:              darken($btn-danger-bg, 5%) !default;
+
+$btn-link-disabled-color:        $gray-light !default;
+
+$btn-border-radius-base:         $border-radius-base !default;
+$btn-border-radius-large:        $border-radius-large !default;
+$btn-border-radius-small:        $border-radius-small !default;
+
+$input-bg:                       lighten($brand-primary, 20%) !default;
+$input-bg-disabled:              $gray-lighter !default;
+$input-color:                    $gray !default;
+$input-border:                   $input-bg !default;
+
+$input-border-radius:            $border-radius-base !default;
+$input-border-radius-large:      $border-radius-large !default;
+$input-border-radius-small:      $border-radius-small !default;
+
+$input-border-focus:             lighten($brand-primary, 15%) !default;
+$input-color-placeholder:        $gray-light !default;
+
+$input-height-base:              ($line-height-computed + ($padding-base-vertical * 3) + 2) !default;
+$input-height-large:             (ceil($font-size-large * $line-height-large) + ($padding-large-vertical * 3) + 2) !default;
+$input-height-small:             (floor($font-size-small * $line-height-small) + ($padding-small-vertical * 3) + 2) !default;
+
+$form-group-margin-bottom:       15px !default;
+
+$input-group-addon-bg:           $input-bg !default;
+$input-group-addon-border-color: $input-border !default;
+$cursor-disabled:                not-allowed !default;
+
+
+$dropdown-bg:                    #fff !default;
+$dropdown-border:                rgba(0, 0, 0, .15) !default;
+$dropdown-fallback-border:       #ccc !default;
+$dropdown-divider-bg:            #e5e5e5 !default;
+$dropdown-link-color:            $gray-dark !default;
+$dropdown-link-hover-color:      darken($gray-dark, 5%) !default;
+$dropdown-link-hover-bg:         #f5f5f5 !default;
+$dropdown-link-active-color:     $component-active-color !default;
+$dropdown-link-active-bg:        $component-active-bg !default;
+$dropdown-link-disabled-color:   $gray-light !default;
+
+$dropdown-header-color:          $gray-light !default;
+$dropdown-caret-color:           #000 !default;
+
+$zindex-navbar:            1000 !default;
+$zindex-dropdown:          1000 !default;
+$zindex-popover:           1060 !default;
+$zindex-tooltip:           1070 !default;
+$zindex-navbar-fixed:      1030 !default;
+$zindex-modal-background:  1040 !default;
+$zindex-modal:             1050 !default;
+$zindex-controls:		   2000 !default;
+
+
+$screen-xs:                  480px !default;
+$screen-xs-min:              $screen-xs !default;
+$screen-phone:               $screen-xs-min !default;
+
+$screen-sm:                  768px !default;
+$screen-sm-min:              $screen-sm !default;
+$screen-tablet:              $screen-sm-min !default;
+
+$screen-md:                  992px !default;
+$screen-md-min:              $screen-md !default;
+$screen-desktop:             $screen-md-min !default;
+
+$screen-lg:                  1200px !default;
+$screen-lg-min:              $screen-lg !default;
+$screen-lg-desktop:          $screen-lg-min !default;
+
+$screen-xs-max:              ($screen-sm-min - 1) !default;
+$screen-sm-max:              ($screen-md-min - 1) !default;
+$screen-md-max:              ($screen-lg-min - 1) !default;
+
+
+$grid-columns:              12 !default;
+$grid-gutter-width:         30px !default;
+$grid-float-breakpoint:     $screen-sm-min !default;
+$grid-float-breakpoint-max: ($grid-float-breakpoint - 1) !default;
+
+
+$container-tablet:             (720px + $grid-gutter-width) !default;
+$container-sm:                 $container-tablet !default;
+
+$container-desktop:            (940px + $grid-gutter-width) !default;
+$container-md:                 $container-desktop !default;
+
+$container-large-desktop:      (1140px + $grid-gutter-width) !default;
+$container-lg:                 $container-large-desktop !default;
+
+
+$navbar-height:                    50px !default;
+$navbar-margin-bottom:             0 !default;
+$navbar-border-radius:             0;
+$navbar-padding-horizontal:        floor(($grid-gutter-width / 2)) !default;
+$navbar-padding-vertical:          (($navbar-height - $line-height-computed) / 2) !default;
+$navbar-collapse-max-height:       340px !default;
+
+$navbar-default-color:             $text-color !default;
+$navbar-default-bg:                $brand-primary !default;
+$navbar-default-border:            darken($navbar-default-bg, 6.5%) !default;
+
+$navbar-default-link-color:                $text-color !default;
+$navbar-default-link-hover-color:          lighten($navbar-default-bg, 40%) !default;
+$navbar-default-link-hover-bg:             transparent !default;
+$navbar-default-link-active-color:         lighten($navbar-default-bg, 40%) !default;
+$navbar-default-link-active-bg:            darken($navbar-default-bg, 6.5%) !default;
+$navbar-default-link-disabled-color:       #ccc !default;
+$navbar-default-link-disabled-bg:          transparent !default;
+
+$navbar-default-brand-color:               $navbar-default-link-color !default;
+$navbar-default-brand-hover-color:         darken($navbar-default-brand-color, 10%) !default;
+$navbar-default-brand-hover-bg:            transparent !default;
+
+$navbar-default-toggle-hover-bg:           transparent !default;
+$navbar-default-toggle-icon-bar-bg:        $text-color !default;
+$navbar-default-toggle-border-color:       transparent !default;
+
+$nav-link-padding:                          10px 15px !default;
+$nav-link-hover-bg:                         $gray-lighter !default;
+
+$nav-disabled-link-color:                   $gray-light !default;
+$nav-disabled-link-hover-color:             $gray-light !default;
+
+$label-default-bg:            $gray-light !default;
+$label-primary-bg:            $brand-primary !default;
+$label-success-bg:            $brand-success !default;
+$label-info-bg:               $brand-info !default;
+$label-warning-bg:            $brand-warning !default;
+$label-danger-bg:             $brand-danger !default;
+$label-color:                 #fff !default;
+$label-link-hover-color:      #fff !default;
+
+$modal-title-padding:         15px !default;
+$modal-title-line-height:     $line-height-base !default;
+
+$modal-content-bg:                             #fff !default;
+$modal-content-border-color:                   rgba(0, 0, 0, .2) !default;
+$modal-content-fallback-border-color:          #999 !default;
+
+$modal-backdrop-bg:           #000 !default;
+$modal-backdrop-opacity:      .5 !default;
+$modal-header-border-color:   #e5e5e5 !default;
+$modal-footer-border-color:   $modal-header-border-color !default;
+
+$list-group-bg:                 #fff !default;
+$list-group-border:             #ddd !default;
+$list-group-border-radius:      $border-radius-base !default;
+
+$list-group-hover-bg:           #f5f5f5 !default;
+$list-group-active-color:       $component-active-color !default;
+$list-group-active-bg:          $component-active-bg !default;
+$list-group-active-border:      $list-group-active-bg !default;
+$list-group-active-text-color:  lighten($list-group-active-bg, 40%) !default;
+
+$list-group-disabled-color:      $gray-light !default;
+$list-group-disabled-bg:         $gray-lighter !default;
+$list-group-disabled-text-color: $list-group-disabled-color !default;
+
+$list-group-link-color:         #555 !default;
+$list-group-link-hover-color:   $list-group-link-color !default;
+$list-group-link-heading-color: #333 !default;
+
+$panel-bg:                    #fff !default;
+$panel-body-padding:          15px !default;
+$panel-heading-padding:       10px 15px !default;
+$panel-footer-padding:        $panel-heading-padding !default;
+$panel-border-radius:         $border-radius-base !default;
+
+$panel-inner-border:          #ddd !default;
+$panel-footer-bg:             #f5f5f5 !default;
+
+$panel-default-text:          $gray-dark !default;
+$panel-default-border:        #ddd !default;
+$panel-default-heading-bg:    lighten($brand-primary, 20%) !default;
+
+$panel-primary-text:          #fff !default;
+$panel-primary-border:        $brand-primary !default;
+$panel-primary-heading-bg:    $brand-primary !default;
+
+
+// Project vars
+$base-color: $brand-primary;
+$sidebar-width: 512px;
+$option-panel-width: 400px;
+$settings-selector-panel-color: $text-color;
+$settings-selector-panel-bg: $brand-primary;
+
+$mobile-welcome-location-top: $navbar-height;
+$mobile-welcome-location-height: 57px;
+$mobile-welcome-map-top: $mobile-welcome-location-top + $mobile-welcome-location-height;
+
+$mobile-location-search-top: $navbar-height;
+
+$mobile-search-settings-top: $navbar-height;
+$mobile-search-settings-map-top: 248px;
+
+$location-filter-top: 80px;
+$location-filter-width: 280px;
+
+// MAIN LAYOUT AND COMPONENTS WITH BOOTSTRAP
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/variables";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/mixins";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/normalize";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/scaffolding";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/type";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/code";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/grid";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/tables";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/forms";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/buttons";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/component-animations";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/dropdowns";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/button-groups";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/input-groups";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/navs";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/navbar";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/breadcrumbs";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/pagination";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/pager";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/labels";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/badges";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/thumbnails";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/alerts";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/list-group";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/panels";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/responsive-embed";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/wells";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/close";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/modals";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/tooltip";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/popovers";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/utilities";
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/bootstrap/responsive-utilities";
+ 
+@import url(maplibre-gl/dist/maplibre-gl.css);
+
+@import url(@otp-react-redux/lib/components/admin/call-taker.css);
+@import url(@otp-react-redux/lib/components/app/app.css);
+@import url(@otp-react-redux/lib/components/app/app.css);
+@import "lib/vendor/otp-react-redux/lib/components/map/map";
+@import url(@otp-react-redux/lib/components/form/form.css);
+@import url(@otp-react-redux/lib/components/narrative/narrative.css);
+@import url(@otp-react-redux/lib/components/narrative/default/itinerary.css);
+@import url(@otp-react-redux/lib/components/mobile/mobile.css);
+@import url(@otp-react-redux/lib/components/user/nav-login-button.css);
+@import url(@otp-react-redux/lib/components/viewers/viewers.css);
+
+@import url(@otp-react-redux/lib/bike-rental.css);
+
+@import url(react-sliding-pane/dist/react-sliding-pane.css);
+
+/* Hide IE/Edge clear button in text input fields. */
+input[type="text"]::-ms-clear {
+  display: none;
+}
+
+/* New app menu */
+.app-menu-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 15px;
+  justify-content: space-between;
+  padding: 0;
+  position: absolute;
+  top: 16px;
+  transition: all 1s ease;
+  width: 21px;
+  z-index: 10;
+}
+
+@media only screen and (max-width: 768px) {
+  #locale-selector-wrapper {
+    display: none;
+  }
+  .app-menu-icon {
+    left: 15px;
+  }
+}
+
+.app-menu-icon .menu-line {
+  border-bottom: 3px solid #ffffff;
+  display: block;
+  position: relative;
+  transition: all 0.5s ease;
+  width: 100%;
+}
+
+.app-menu-icon[aria-expanded="true"] .menu-line.top {
+  transform: rotate(45deg);
+  top: 7px;
+}
+.app-menu-icon[aria-expanded="true"] .menu-line.bottom {
+  transform: rotate(-45deg);
+  bottom: 5px;
+}
+.app-menu-icon[aria-expanded="true"] .menu-line.middle {
+  display: none;
+}
+
+.slide-pane {
+  transition: all 0.2s ease-in-out;
+}
+
+.slide-pane_from_left {
+  margin: 52px auto 0 0;
+  /* Keep pane from overflowing on smaller screens */
+  height: calc(100% - 52px);
+}
+
+.slide-pane__content {
+  padding: 6px 0;
+}
+
+.slide-pane__overlay {
+  z-index: 1000;
+}
+
+.app-menu {
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.app-menu img,
+.app-menu svg {
+  max-height: 1em;
+  margin: 0 2rem;
+  vertical-align: middle;
+  width: 1em;
+}
+
+.app-menu a,
+.app-menu button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font-size: 20px;
+  padding: 0.5rem 0;
+  text-decoration: none;
+  width: 100%;
+}
+
+/* Prevents hover styles from getting triggered on mobile */
+@media (hover: hover) {
+  .app-menu a:hover,
+  .app-menu button:hover {
+    color: #4c97f5;
+  }
+}
+
+.app-menu a:focus,
+.app-menu button:focus {
+  background-color: #ddd;
+  outline: 2px solid #4c97f5;
+  outline-offset: -2px;
+}
+
+.app-menu button[aria-selected="true"],
+.sort-option button[aria-selected="true"],
+#locale-selector button[aria-selected="true"] {
+  font-weight: bold;
+}
+
+.skip-nav-button {
+  color: initial;
+  position: fixed;
+  top: -30px;
+}
+.skip-nav-button:focus {
+  padding: 7px 24px;
+  top: 7px;
+  z-index: 100;
+}
+
+.view-switcher {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .view-switcher {
+    display: flex;
+  }
+}
+
+.expand-menu-chevron {
+  flex-grow: 1;
+  text-align: end;
+}
+
+.dropdown-header {
+  font-size: inherit;
+  line-height: normal;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.sub-menu-container {
+  border-top: 1px solid #cccccc;
+  margin-top: 0.5rem;
+  padding-left: 2rem;
+}
+
+.app-menu .app-menu-divider {
+  border-bottom: 1px solid #ccc;
+  padding: 1rem 0;
+}
+
+/* Header image or title */
+/* If an icon is used, visually-hide the title (but keep it visible to screen readers). */
+.with-icon div.navbar-title {
+  height: 0;
+  overflow: hidden;
+  width: 0;
+}
+
+/* Buttons */
+
+button.header,
+button.step,
+.clear-button-formatting {
+  background: transparent;
+  color: inherit;
+  border: 0;
+  text-align: inherit;
+  text-decoration: none;
+  padding: 0;
+  margin: 0;
+}
+
+.clear-button-formatting:active {
+  background: none;
+  box-shadow: none;
+}
+
+.clear-button-formatting:focus {
+  background: none;
+}
+
+.clear-button-formatting:hover {
+  background: none;
+}
+
+button.header,
+button.step {
+  width: 100%;
+}
+
+.overflow-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-container .leaflet-top {
+  /* we need to override this z-index so that the +/- map controls appear below
+  the geocoder search results */
+  z-index: 999;
+}
+
+/* Bootstrap adds a bottom margin to all labels,
+   but we don't want that in the map layer selector when it is collapsed. */
+.maplibregl-map .layers-list label {
+  margin-bottom: 0;
+}
+.maplibregl-map .layers-list.fake-mobile-hover label,
+.maplibregl-map .layers-list:hover label {
+  margin-bottom: 5px;
+}

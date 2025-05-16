@@ -45,7 +45,6 @@ import otpUtils from '@otp-react-redux/lib/util'
 
 import BatchRoutingPanel from '@otp-react-redux/lib/components/app/batch-routing-panel'
 import NoiResponsiveWebapp from './components/app/noi-responsive-webapp'
-import RoutingPanel from './components/app/routing-panel'
 import DestinationPanel from './components/app/destination-panel'
 
 // Example NOI specific component
@@ -103,7 +102,6 @@ export {
   BatchResultsScreen,
   BatchRoutingPanel,
   BatchSearchScreen,
-  RoutingPanel,
   DestinationPanel,
 
   // Util components

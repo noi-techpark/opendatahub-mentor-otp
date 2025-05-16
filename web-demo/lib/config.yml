@@ -246,24 +246,45 @@ modes:
       # List of modes to add to the query when this button is enabled
       modes:
         - mode: TRANSIT
+
+    - iconName: bicycle_rent
+      key: bikesharing
+      modes:
+        # Modes can contain a qualifier
+        # See OTP documentation for details
+        - mode: BICYCLE
+          qualifier: RENT
+
+    - iconName: walk
+      key: walk
+      modes:
+        # Modes can contain a qualifier
+        # See OTP documentation for details
+        - mode: WALK
+
     - iconName: bicycle
       key: bicycle
       modes:
         # Modes can contain a qualifier
         # See OTP documentation for details
         - mode: BICYCLE
-        - mode: BICYCLE
+
+    - iconName: micromobility
+      key: scooter
+      modes:
+        # Modes can contain a qualifier
+        # See OTP documentation for details
+        - mode: SCOOTER
           qualifier: RENT
-        - mode: BICYCLE
-          qualifier: PARK
+
     - iconName: car
       key: car
       modes:
-        - mode: CAR
+        # Modes can contain a qualifier
+        # See OTP documentation for details
         - mode: CAR
           qualifier: RENT
-        - mode: CAR
-          qualifier: PARK
+
   # Allows initial state to be configured.
   # Which buttons enabled on load + overriding setting defaults
   initialState:
@@ -301,19 +322,6 @@ modes:
       label: Subway
     - mode: FERRY
       label: Ferry
-
-  # Potentially deprecated
-  accessModes:
-    - mode: BICYCLE
-      label: Bike
-    - mode: BICYCLE_PARK
-      label: Bike parking
-    - mode: BICYCLE_RENT
-      label: Bikesharing
-    - mode: CAR_PARK
-      label: Car parking
-    - mode: CAR_RENT
-      label: Carsharing
 
 # # The following modules require the datastoreUrl and trinetReDirect properties
 # # to be set. Note: Most of these components are currently only configured for

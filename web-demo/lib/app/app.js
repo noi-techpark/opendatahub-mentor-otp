@@ -26,8 +26,6 @@ import React from 'react'
 import {
   BatchResultsScreen,
   DestinationPanel,
-  RoutingPanel,
-  BatchRoutingPanel,
   BatchSearchScreen,
   DefaultItinerary,
   NoiResponsiveWebapp,
@@ -185,7 +183,6 @@ const components = {
   ItineraryPreviewSupplement,
 
   MainPanel: DestinationPanel,
-  // MainPanel: BatchRoutingPanel,
 
   MapWindows: isCallTakerModuleEnabled ? jsConfig.MapWindows : null,
 
@@ -207,7 +204,6 @@ const components = {
 
   DefaultMap: DefaultMap
 }
-console.log(DefaultMap);
 
 const Webapp = () => (
   <ErrorBoundary>

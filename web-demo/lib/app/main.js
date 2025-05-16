@@ -18,7 +18,7 @@ import { connectRouter, routerMiddleware } from 'connected-react-router'
 import { createHashHistory } from 'history'
 
 // CSS imports
-import './index.css'
+import './index.scss'
 
 // Example NOI specific component
 import ExampleComponent from './components/example'
