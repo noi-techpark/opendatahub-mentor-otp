@@ -52,13 +52,14 @@ class DestinationPanel extends Component<Props> {
   handleSubmit = (e: FormEvent) => e.preventDefault()
   
   handlePlanTripClick = () => {
-    this.props.routeTo(
-      "/nearby/" + this.props.query.to.lat + "," + this.props.query.to.lon,
-      "",
-      replace
-    )
+    if(this.props.query.to) {
+      this.props.routeTo(
+        "/nearby/" + this.props.query.to.lat + "," + this.props.query.to.lon,
+        "",
+        replace
+      )
+    }
     setTimeout(()=> this.setState({ planTripClicked: true }), 100)
-
   }
 
   componentDidUpdate() {

@@ -112,10 +112,10 @@ const LAYER_CONFIG = {
             <StyledCardHeader>
               <StyledCardTitle>
               {properties.type.includes('BUS') && 
-                  <IconWithText Icon={Bus}>
+                  <IconWithText icon={<ClassicModeIcon mode="bus" />}>
                   </IconWithText>}
               {properties.type.includes('RAIL') && 
-                  <IconWithText Icon={Train}>
+                  <IconWithText icon={<ClassicModeIcon mode="rail" />}>
                   </IconWithText>}
                   <Button onClick={() => { setViewedStop({...properties, stopId: properties.gtfsId}, "nearby");}}>{properties.name}</Button>
               </StyledCardTitle>
@@ -230,10 +230,10 @@ const LAYER_CONFIG = {
             <StyledCardHeader>
               <StyledCardTitle>
               {properties.type.includes('BUS') && 
-                  <IconWithText Icon={Bus}>
+                  <IconWithText icon={<ClassicModeIcon mode="bus" />}>
                   </IconWithText>}
               {properties.type.includes('RAIL') && 
-                  <IconWithText Icon={Train}>
+                  <IconWithText icon={<ClassicModeIcon mode="rail" />}>
                   </IconWithText>}
               {properties.name}
               </StyledCardTitle>
@@ -315,11 +315,11 @@ const LAYER_CONFIG = {
               <StyledCardTitle>
                 
               {formFactors.includes('BICYCLE') &&
-                  <IconWithText Icon={Bicycle}>
+                  <IconWithText icon={<ClassicModeIcon mode="bicycle" />}>
                   </IconWithText>
                 }
                 {formFactors.includes('CAR') &&
-                  <IconWithText Icon={Car}>
+                  <IconWithText icon={<ClassicModeIcon mode="car" />}>
                   </IconWithText>
                 }
                 {properties.name}
@@ -389,14 +389,14 @@ const LAYER_CONFIG = {
                 </StyledCardHeader>
                 <StyledCardBody>
                   <div> { properties.carPlaces &&
-                      <IconWithText Icon={Car}>
+                      <IconWithText icon={<ClassicModeIcon mode="car" />}>
                         {properties['availability.carPlaces']} / {properties['capacity.carPlaces']}
                       </IconWithText>
                     }
                   </div>
                   <div>
                     { properties.bicyclePlaces &&
-                    <IconWithText Icon={Bicycle}>
+                    <IconWithText icon={<ClassicModeIcon mode="bicycle" />}>
                       {properties['availability.bicyclePlaces']} / {properties['capacity.bicyclePlaces']}
                     </IconWithText>
                     }
