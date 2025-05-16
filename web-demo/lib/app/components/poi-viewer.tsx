@@ -147,7 +147,6 @@ class PoiViewer extends Component<Props, State> {
     if (selectedPlace && selectedPlace.rawGeocodedFeature) {
       if (!selectedPlace.rawGeocodedFeature.properties) {
         let poiData = selectedPlace.rawGeocodedFeature;
-        console.log(poiData);
         this.state = {
             date: getCurrentDate(props.homeTimezone),
             poiData,
@@ -155,7 +154,6 @@ class PoiViewer extends Component<Props, State> {
         };
       } else if (selectedPlace.rawGeocodedFeature.properties.source === 'otp') {
         let poiData = selectedPlace.rawGeocodedFeature.properties.addendum.stop;
-        console.log(poiData);
         this.state = {
           date: getCurrentDate(props.homeTimezone),
           poiData,
@@ -163,7 +161,6 @@ class PoiViewer extends Component<Props, State> {
         };
       } else {
         let poiData = selectedPlace.rawGeocodedFeature.properties;
-        console.log(poiData);
         this.state = {
             date: getCurrentDate(props.homeTimezone),
             poiData,
@@ -180,11 +177,9 @@ class PoiViewer extends Component<Props, State> {
     if(prevProps.selectedPlace !== this.props.selectedPlace) {
       let { selectedPlace, transitIndex } = this.props
 
-      console.log("update", selectedPlace);
       if (selectedPlace && selectedPlace.rawGeocodedFeature) {
         if (!selectedPlace.rawGeocodedFeature.properties) {
           let poiData = selectedPlace.rawGeocodedFeature;
-          console.log(poiData);
           this.setState({
               date: getCurrentDate(this.props.homeTimezone),
               poiData,
@@ -192,7 +187,6 @@ class PoiViewer extends Component<Props, State> {
           });
         } else if (selectedPlace.rawGeocodedFeature.properties.source === 'otp') {
           let poiData = selectedPlace.rawGeocodedFeature.properties.addendum.stop;
-          console.log(poiData);
           this.setState({
             date: getCurrentDate(this.props.homeTimezone),
             poiData,
@@ -200,7 +194,6 @@ class PoiViewer extends Component<Props, State> {
           });
         } else {
           let poiData = selectedPlace.rawGeocodedFeature.properties;
-          console.log(poiData);
           this.setState({
               date: getCurrentDate(this.props.homeTimezone),
               poiData,
@@ -209,7 +202,6 @@ class PoiViewer extends Component<Props, State> {
         }
       } else if (selectedPlace && selectedPlace.properties) {
         let poiData = selectedPlace.properties;
-        console.log("set state", poiData);
         this.setState({
             date: getCurrentDate(this.props.homeTimezone),
             poiData,
@@ -221,7 +213,6 @@ class PoiViewer extends Component<Props, State> {
     }
 
     if(prevState.poiData !== this.state.poiData) {
-      console.log("New state", this.state);
       this._zoomToStop()
     }
 
@@ -292,8 +283,32 @@ class PoiViewer extends Component<Props, State> {
   _zoomToStop = () => {
     const { map, zoomToPlace } = this.props
     const { poiData } = this.state
-    console.log("Zooming to ", poiData);
     zoomToPlace(map, poiData)
+  }
+
+  _renderStop = (childs: StopData) => {
+    const { map, zoomToPlace } = this.props
+
+    var stops = [];
+    childs.forEach((childStop) => {
+      stops.push((
+        <StopCardHeader
+        actionIcon={Calendar}
+        // Remove entityId URL parameter when leaving nearby view.
+        actionParams={{ entityId: undefined }}
+        actionPath={`/schedule/${childStop.gtfsId}`}
+        actionText={
+            <FormattedMessage id="components.StopViewer.viewSchedule" />
+        }
+
+          // FIXME: What icon should we use?
+          onZoomClick={() => {zoomToPlace(map, childStop)}}
+          stopData={childStop}
+          titleAs="h1"
+        />
+      ));
+    });
+    return stops;
   }
 
   _renderHeader = () => {
@@ -303,7 +318,7 @@ class PoiViewer extends Component<Props, State> {
     let stopId = poiId;
     return (
       // CSS class stop-viewer-header is needed for customizing how logos are displayed.
-      <div className="poi-viewer-header">
+      stopData?.childs ? <></> : <div className="poi-viewer-header">
         {}
         {/* Back button */}
         {!hideBackButton && (
@@ -317,22 +332,7 @@ class PoiViewer extends Component<Props, State> {
         )}
 
         <HeaderCard>
-          {stopData?.gtfsId ? (
-            <StopCardHeader
-            actionIcon={Calendar}
-            // Remove entityId URL parameter when leaving nearby view.
-            actionParams={{ entityId: undefined }}
-            actionPath={`/schedule/${stopData.gtfsId}`}
-            actionText={
-                <FormattedMessage id="components.StopViewer.viewSchedule" />
-            }
-
-              // FIXME: What icon should we use?
-              onZoomClick={this._zoomToStop}
-              stopData={stopData}
-              titleAs="h1"
-            />
-          ) : (
+          {stopData?.childs ? this._renderStop([stopData.childs[0]]) : (
             <CardHeader>
                 <CardTitle as="h1">{stopData?.name}</CardTitle>
             </CardHeader>

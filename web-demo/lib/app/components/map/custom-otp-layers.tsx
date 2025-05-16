@@ -6,18 +6,55 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Layer, Popup, useMap } from 'react-map-gl'
 import { Label as BsLabel } from 'react-bootstrap'
 import ReactDOMServer from 'react-dom/server'
-import { FormattedMessage } from 'react-intl'
+import { FormattedMessage, injectIntl } from 'react-intl'
 import { ClassicModeIcon } from '@opentripplanner/icons'
 import { Bicycle, Bus, C, Car, Parking, Train } from '@styled-icons/fa-solid'
 import { Rss } from '@styled-icons/fa-solid/Rss'
 import { Wheelchair } from '@styled-icons/fa-solid/Wheelchair'
+import { setViewedStop } from '@otp-react-redux/lib/actions/ui'
+import { setLocation } from '@otp-react-redux/lib/actions/map'
 import { IconWithText } from '@otp-react-redux/lib/components/util/styledIcon'
 import styled from 'styled-components'
 import { Card, CardBody, CardHeader, CardSubheader, CardTitle, CardAside } from '@otp-react-redux/lib/components/viewers/nearby/styled'
-import FromToPicker from '@otp-react-redux/lib/components/viewers/nearby/from-to-picker'
 import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
+import { grey } from '@otp-react-redux/lib/components/util/colors'
+import { connect } from 'react-redux'
+import { Button } from '@opentripplanner/endpoints-overlay/lib/styled'
 
+//  
+const StyledCard = styled(Card)`
+  text-align: center;
+`
 
+const StyledCardHeader = styled(CardHeader)`
+  align-items: center;
+  display: grid;
+`
+
+const StyledCardTitle = styled(CardTitle)`
+  align-items: center;
+  display: block;
+`
+
+const StyledCardSubheader = styled(CardSubheader)`
+  color: ${grey[900]};
+  font-size: 16px;
+  font-weight: 400;
+  grid-column: 1;
+  margin: 0;
+`
+const StyledCardAside = styled(CardAside)`
+  color: ${grey[900]}
+  grid-column: -1;
+  grid-row: 1;
+  text-align: right;
+`
+
+const StyledCardBody = styled(CardBody)`
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+  padding: 0rem 1.2rem;
+`
 
 const PulsingRss = styled(Rss)`
   animation: pulse-opacity 2s ease-in-out infinite;
@@ -58,7 +95,7 @@ const LAYER_CONFIG = {
     },
     minzoom: 17,
     maxzoom: 20,
-    popupRenderer: (properties, hoverInfo) => {
+    popupRenderer: (properties, hoverInfo, setViewedStop, setLocation) => {
       let routesCount = 0
       try {
         const parsedRoutes =
@@ -71,33 +108,30 @@ const LAYER_CONFIG = {
       }
       return (
         <div style={{width: '300px'}}>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-              {properties.type === 'BUS' && <Bus />}
-              {properties.type === 'RAIL' && <Train />}
-              {properties.name}
-              </CardTitle>
-              <CardSubheader>
+          <StyledCard>
+            <StyledCardHeader>
+              <StyledCardTitle>
+              {properties.type.includes('BUS') && 
+                  <IconWithText icon={<ClassicModeIcon mode="bus" />}>
+                  </IconWithText>}
+              {properties.type.includes('RAIL') && 
+                  <IconWithText icon={<ClassicModeIcon mode="rail" />}>
+                  </IconWithText>}
+                  <Button onClick={() => { setViewedStop({...properties, stopId: properties.gtfsId}, "nearby");}}>{properties.name}</Button>
+              </StyledCardTitle>
+              <StyledCardSubheader>
                 <strong>Platform:</strong> {properties.platform}
-              </CardSubheader>
-              <CardAside>
+              </StyledCardSubheader>
+              <StyledCardAside>
                 {properties.realTimeData && (
                   <PulsingRss width="16px" />
                 )}
-              </CardAside>
-            </CardHeader>
-            <CardBody>
-                <div>
-                  <strong>Routes:</strong> {routesCount} route
-                  {routesCount !== 1 ? 's' : ''}
-                </div>
-                <br />
-
+              </StyledCardAside>
+            </StyledCardHeader>
+            <StyledCardBody>
                 <NoiFromToPicker place={hoverInfo} />
-
-            </CardBody>
-          </Card>
+            </StyledCardBody>
+          </StyledCard>
         </div>
       )
     }
@@ -192,30 +226,30 @@ const LAYER_CONFIG = {
       }
       return (
         <div style={{width: '300px'}}>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-              {properties.type.includes('BUS') && <Bus />}
-              {properties.type.includes('RAIL') && <Train />}
+          <StyledCard>
+            <StyledCardHeader>
+              <StyledCardTitle>
+              {properties.type.includes('BUS') && 
+                  <IconWithText icon={<ClassicModeIcon mode="bus" />}>
+                  </IconWithText>}
+              {properties.type.includes('RAIL') && 
+                  <IconWithText icon={<ClassicModeIcon mode="rail" />}>
+                  </IconWithText>}
               {properties.name}
-              </CardTitle>
-              <CardAside>
+              </StyledCardTitle>
+              <StyledCardAside>
                 {properties.realTimeData && (
                   <PulsingRss width="16px" />
                 )}
-              </CardAside>
-            </CardHeader>
-            <CardBody>
-                <div>
-                  <strong>Routes:</strong> {routesCount} route
-                  {routesCount !== 1 ? 's' : ''}
-                </div>
+              </StyledCardAside>
+            </StyledCardHeader>
+            <StyledCardBody>
                 <br />
 
                 <NoiFromToPicker place={hoverInfo} />
 
-            </CardBody>
-          </Card>
+            </StyledCardBody>
+          </StyledCard>
         </div>
       )
     }
@@ -273,34 +307,30 @@ const LAYER_CONFIG = {
     minzoom: 14,
     maxzoom: 20,
     popupRenderer: (properties, hoverInfo) => {
-      console.log(hoverInfo);
-      console.log(properties);
       let formFactors = properties.formFactors.split(",");
       return (
         <div style={{width: '300px'}}>
-          <Card>
-            <CardHeader>
-              <CardTitle>
+          <StyledCard>
+            <StyledCardHeader>
+              <StyledCardTitle>
                 
               {formFactors.includes('BICYCLE') &&
-                  <IconWithText Icon={Bicycle}>
+                  <IconWithText icon={<ClassicModeIcon mode="bicycle" />}>
                   </IconWithText>
                 }
                 {formFactors.includes('CAR') &&
-                  <IconWithText Icon={Car}>
+                  <IconWithText icon={<ClassicModeIcon mode="car" />}>
                   </IconWithText>
                 }
-                {properties.name}</CardTitle>
-              <CardSubheader>
-                {/* properties.network // No nice name in map tiles */}
-              </CardSubheader>
-              <CardAside>
+                {properties.name}
+              </StyledCardTitle>
+              <StyledCardAside>
                 {properties.operative && (
                   <PulsingRss width="16px" />
                 )}
-              </CardAside>
-            </CardHeader>
-            <CardBody>
+              </StyledCardAside>
+            </StyledCardHeader>
+            <StyledCardBody>
               <div>
                 <FormattedMessage
                   id="components.NearbyView.bikesAvailable"
@@ -310,8 +340,8 @@ const LAYER_CONFIG = {
                 <br />
                 <NoiFromToPicker place={hoverInfo} />
 
-            </CardBody>
-          </Card>
+            </StyledCardBody>
+          </StyledCard>
         </div>
       );
     }
@@ -341,46 +371,46 @@ const LAYER_CONFIG = {
         const name = properties.name && properties.name.trim() ? ` (${properties.name.trim()})` : '';
         return (
             <div style={{minWidth: '200px'}}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Parking {name}</CardTitle>
-                  <CardSubheader>
+              <StyledCard>
+                <StyledCardHeader>
+                  <StyledCardTitle>Parking {name}</StyledCardTitle>
+                  <StyledCardSubheader>
                     {properties.wheelchairAccessibleCarPlaces && <BsLabel bsStyle="primary">
                       <IconWithText Icon={Wheelchair}>
                         <FormattedMessage id="components.TripViewer.accessible" />
                       </IconWithText>
                     </BsLabel>} 
-                  </CardSubheader>
-                  <CardAside>
+                  </StyledCardSubheader>
+                  <StyledCardAside>
                     {properties.realTimeData && (
                       <PulsingRss width="16px" />
                     )}
-                  </CardAside>
-                </CardHeader>
-                <CardBody>
+                  </StyledCardAside>
+                </StyledCardHeader>
+                <StyledCardBody>
                   <div> { properties.carPlaces &&
-                      <IconWithText Icon={Car}>
+                      <IconWithText icon={<ClassicModeIcon mode="car" />}>
                         {properties['availability.carPlaces']} / {properties['capacity.carPlaces']}
                       </IconWithText>
                     }
                   </div>
                   <div>
                     { properties.bicyclePlaces &&
-                    <IconWithText Icon={Bicycle}>
+                    <IconWithText icon={<ClassicModeIcon mode="bicycle" />}>
                       {properties['availability.bicyclePlaces']} / {properties['capacity.bicyclePlaces']}
                     </IconWithText>
                     }
                   </div>
                   <NoiFromToPicker place={hoverInfo} />
-                </CardBody>
-              </Card>
+                </StyledCardBody>
+              </StyledCard>
             </div>
         );
       }
   }
 }
 
-const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name }) => {
+const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop, setLocation }) => {
   const map = useMap().default
   const [hoverInfo, setHoverInfo] = useState(null)
   const [stickyInfo, setStickyInfo] = useState(null)
@@ -529,10 +559,6 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name }) => {
     }
   }, [map, sourceLayerName])
 
-
-  useEffect(() => {
-    console.log(highlightParentStation);
-  }, [highlightParentStation]);
   // --- Attach event listeners (hover, click) ---
   useEffect(() => {
     if (!map) return
@@ -579,29 +605,44 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name }) => {
         });
       }
     }
-    if (mapInstance.getLayer(layerId)) {
-      mapInstance.on('mouseenter', layerId, onMouseEnter)
-      mapInstance.on('mouseleave', layerId, onMouseLeave)
-      mapInstance.on('click', layerId, onClick)
-    }
-    const styleDataHandler = () => {
+    function setEvent(layerId) {
       if (mapInstance.getLayer(layerId)) {
-        mapInstance.off('mouseenter', layerId, onMouseEnter)
-        mapInstance.off('mouseleave', layerId, onMouseLeave)
-        mapInstance.off('click', layerId, onClick)
         mapInstance.on('mouseenter', layerId, onMouseEnter)
         mapInstance.on('mouseleave', layerId, onMouseLeave)
         mapInstance.on('click', layerId, onClick)
       }
+      /**/
     }
-    mapInstance.on('styledata', styleDataHandler)
-    return () => {
+
+    function removeEvent(layerId) {
       if (mapInstance.getLayer(layerId)) {
         mapInstance.off('mouseenter', layerId, onMouseEnter)
         mapInstance.off('mouseleave', layerId, onMouseLeave)
         mapInstance.off('click', layerId, onClick)
       }
+    }
+
+    const styleDataHandler = () => {
+      removeEvent(layerId);
+      setEvent(layerId);
+      if(sourceLayerName === 'stops') {
+        removeEvent("otp-stops-highlight");
+        removeEvent("otp-stops-platforms");
+        setEvent("otp-stops-highlight");
+        setEvent("otp-stops-platforms");
+      }
+    }
+
+
+    mapInstance.on('styledata', styleDataHandler)
+    
+    return () => {
+      removeEvent(layerId);
       mapInstance.off('styledata', styleDataHandler)
+      if(sourceLayerName === 'stops') {
+        removeEvent("otp-stops-highlight");
+        removeEvent("otp-stops-platforms");
+      }
     }
   }, [map, sourceLayerName])
 
@@ -613,7 +654,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name }) => {
   // --- New default popup renderer: Print all properties ---
   const renderPopupContent = (hoverInfo) => {
     if (mergedConfig.popupRenderer) {
-      return mergedConfig.popupRenderer(hoverInfo.properties, hoverInfo)
+      return mergedConfig.popupRenderer(hoverInfo.properties, hoverInfo, setViewedStop, setLocation)
     }
     return (
       <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
@@ -686,7 +727,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name }) => {
           />
         </>
       )}
-      {hoverInfo && (
+      {/*{hoverInfo && (
         <Popup
           maxWidth="none"
           longitude={hoverInfo.geometry.coordinates[0]}
@@ -697,7 +738,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name }) => {
         >
           {renderPopupContent(hoverInfo)}
         </Popup>
-      )}
+      )}*/}
       {stickyInfo && (
         <Popup
           maxWidth="none"
@@ -709,12 +750,25 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name }) => {
           anchor="top"
         >
           {renderPopupContent(stickyInfo)}
-          <br />
-          <em>Click outside to dismiss.</em>
         </Popup>
       )}
     </>
   )
 }
 
-export default OTPVectorLayer
+const mapStateToProps = (state) => {
+  return {
+    ...state
+  }
+}
+
+const mapDispatchToProps = {
+  setViewedStop,
+  setLocation
+}
+
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(OTPVectorLayer)

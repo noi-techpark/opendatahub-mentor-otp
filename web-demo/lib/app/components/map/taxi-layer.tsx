@@ -69,7 +69,6 @@ const TaxiOverlay = (props: Props) => {
       try {
         const response = await fetch(url)
         const json = await response.json()
-        console.log(json)
         let taxis: any = {}
 
         json.data.forEach((taxi: any) => {
@@ -89,10 +88,9 @@ const TaxiOverlay = (props: Props) => {
               taxiPoi.state = taxi.mvalue
               break
             default:
-              console.log('Unknown type: ' + taxi.tname)
+              console.debug('Unknown type: ' + taxi.tname)
               break
           }
-          console.log(taxi)
         })
 
         let features: GeoJSON.Feature[] = []
@@ -101,7 +99,6 @@ const TaxiOverlay = (props: Props) => {
           if (taxi.coordinates) {
             // Only display available taxis
             //if (taxi.state === 'FREE' || taxi.state === 'AVAILABLE') {
-              console.log('pushing taxi', taxi)
               features.push({
                 type: 'Feature',
                 geometry: {

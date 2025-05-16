@@ -40,7 +40,7 @@ type LatLonObj = { lat: number; lon: number }
 type CurrentPosition = { coords?: { latitude: number; longitude: number } }
 
 type Props = {
-  currentPosition?: CurrentPosition
+  currentQuery?: any,
   defaultLatLon: LatLonObj | null,
   displayedCoords?: LatLonObj
   entityId?: string
@@ -67,7 +67,7 @@ const getNearbyItem = (place: any, handlePlanTripClick: any) => {
     case 'RentalVehicle':
       return <Vehicle fromToSlot={fromTo} vehicle={place} />
     case 'Stop':
-      return <Stop fromToSlot={fromTo} stopData={place} />
+      return <Stop fromToSlot={fromTo} stopData={{...place, code: place.platformCode}} />
     case 'VehicleParking':
       return <VehicleParking fromToSlot={fromTo} place={place} />
     case 'BikeRentalStation':
@@ -110,7 +110,7 @@ function getNearbyCoordsFromUrlOrLocationOrMapCenter(
 }
 
 function NoiNearbyView({
-  currentPosition,
+  currentQuery,
   defaultLatLon,
   displayedCoords,
   entityId,
@@ -131,18 +131,26 @@ function NoiNearbyView({
   const intl = useIntl()
   const [loading, setLoading] = useState(true)
   const firstItemRef = useRef<HTMLDivElement>(null)
+  
+  useEffect(() => {
+      if(currentQuery.to) { 
+        console.debug("set viewed coords", currentQuery.to);
+        setTimeout(() => 
+        setViewedNearbyCoords({lat: currentQuery.to.lat, lon: currentQuery.to.lon}), 100);
+      }
+  }, [currentQuery]);
+
+
   const finalNearbyCoords = useMemo(
     () =>
       getNearbyCoordsFromUrlOrLocationOrMapCenter(
-        currentPosition,
-        currentPosition,
+        nearbyViewCoords,
+        currentQuery.to,
         map,
         defaultLatLon
       ),
-    [nearbyViewCoords, currentPosition, map]
+    [nearbyViewCoords, currentQuery, map]
   )
-
-  console.log(finalNearbyCoords, nearbyViewCoords, currentPosition);
 
   // Make sure the highlighted location is cleaned up when leaving nearby
   useEffect(() => {
@@ -153,12 +161,12 @@ function NoiNearbyView({
 
   useEffect(() => {
     const moveListener = (e: mapboxgl.EventData) => {
-      // if (e.geolocateSource) {
-      //   setViewedNearbyCoords({
-      //     lat: e.viewState.latitude,
-      //     lon: e.viewState.longitude
-      //   })
-      // }
+      if (e.geolocateSource) {
+        setViewedNearbyCoords({
+          lat: e.viewState.latitude,
+          lon: e.viewState.longitude
+        })
+      }
     }
 
     const dragListener = (e: mapboxgl.EventData) => {
@@ -166,7 +174,7 @@ function NoiNearbyView({
         lat: e.viewState.latitude,
         lon: e.viewState.longitude
       }
-      // setViewedNearbyCoords(coords)
+      setViewedNearbyCoords(coords)
 
       // Briefly flash the highlight to alert the user that we've moved
       setHighlightedLocation(coords)
@@ -221,7 +229,7 @@ function NoiNearbyView({
     nearby?.map &&
     nearby
       ?.filter((n: any) => {
-        return validLocations.includes(n.place.__typename) && (n.place.__typename !== 'Stop' || n.place.stoptimesForPatterns.length > 0);
+        return (!validLocations || validLocations?.includes(n.place.__typename)) && (n.place.__typename !== 'Stop' || n.place.stoptimesForPatterns.length > 0);
       })
       .map((n: any) => (
         <li
@@ -311,11 +319,11 @@ const mapStateToProps = (state: AppReduxState) => {
   const { nearbyViewCoords } = ui
   const { nearby } = transitIndex
   const { entityId } = state.router.location.query
-  const currentPosition = state.otp.currentQuery.to;
+  const currentQuery = state.otp.currentQuery;
   const defaultLatLon =
     map?.initLat && map?.initLon ? { lat: map.initLat, lon: map.initLon } : null
   return {
-    currentPosition,
+    currentQuery,
     defaultLatLon,
     displayedCoords: nearby?.coords,
     entityId: entityId && decodeURIComponent(entityId),

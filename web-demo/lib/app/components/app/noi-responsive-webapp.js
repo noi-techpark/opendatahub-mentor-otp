@@ -46,6 +46,7 @@ import PopupWrapper from '@otp-react-redux/lib/components/app/popup'
 import SessionTimeout from '@otp-react-redux/lib/components/app/session-timeout'
 
 import LocationField from '@otp-react-redux/lib/components/form/connected-location-field'
+import { MainPanelContent } from '@otp-react-redux/lib/actions/ui-constants'
 
 const { isMobile } = coreUtils.ui
 
@@ -90,7 +91,7 @@ class NoiResponsiveWebapp extends Component {
       // current one AND trip is not being replanned already. This will
       // determine whether a search needs to be made, the mobile view needs
       // updating, etc.
-      console.log('form changed', prevProps.query, query);
+      console.debug('form changed', prevProps.query, query);
       formChanged(prevProps.query, query)
     }
 
@@ -123,7 +124,6 @@ class NoiResponsiveWebapp extends Component {
     // If the path changes (e.g., via a back button press) check whether the
     // main content needs to switch between, for example, a viewer and a search.
     if (!isEqual(location.pathname, prevProps.location.pathname)) {
-      // console.log('url changed to', location.pathname)
       matchContentToUrl(map, location)
     }
 
@@ -188,7 +188,7 @@ class NoiResponsiveWebapp extends Component {
         },
         // On error
         (error) => {
-          console.log('error in watchPosition', error)
+          console.debug('error in watchPosition', error)
         },
         // Options
         { enableHighAccuracy: true }
@@ -220,12 +220,14 @@ class NoiResponsiveWebapp extends Component {
   renderDesktopView = () => {
     const { sessionTimeoutSeconds } = this.props
     const { MainControls, MainPanel, MapWindows } = this.context
-    const { popupContent, query } = this.props
+    const { popupContent, query, mainPanelContent, isViewingStop } = this.props
+    const isWelcomeScreen = !isViewingStop && !query.from && !query.to &&
+      !mainPanelContent;
     return (
       <div className="otp">
         <DesktopNav />
         <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
-        {(!query.from && !query.to) ?
+        {(isWelcomeScreen) ?
           <Grid>
             <Row className="main-row">
               {MainControls && <MainControls />}
@@ -329,6 +331,7 @@ const mapStateToProps = (state) => {
     currentPosition: state.otp.location.currentPosition,
     locale: state.otp.ui.locale,
     mainPanelContent: state.otp.ui.mainPanelContent,
+    isViewingStop: !!state.otp.ui.viewedStop,
     mobileScreen: state.otp.ui.mobileScreen,
     modeGroups: state.otp.config.modeGroups,
     popupContent: state.otp.ui.popup,
