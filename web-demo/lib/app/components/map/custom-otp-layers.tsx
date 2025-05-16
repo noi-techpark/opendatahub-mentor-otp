@@ -87,13 +87,14 @@ const LAYER_CONFIG = {
         'default-icon'
       ],
       'icon-size': ['match', ['get', 'type'], 'BUS', 0.1, 'RAIL', 0.15, 0.1],
-      'icon-allow-overlap': false,
-      'text-field': ['get', 'name'],
+      'icon-allow-overlap': true,
+      'text-allow-overlap': true,
+      'text-field':  ["step", ["zoom"], ["get", "name"], 16, ["get", "platform"]],
       'text-offset': [0, 1.0],
       'text-size': 12,
       'text-anchor': 'top'
     },
-    minzoom: 17,
+    minzoom: 16,
     maxzoom: 20,
     popupRenderer: (properties, hoverInfo, setViewedStop, setLocation) => {
       let routesCount = 0
@@ -196,7 +197,7 @@ const LAYER_CONFIG = {
         'RAIL', 0.15,
         0.15
         ],
-      'icon-allow-overlap': false,
+      'icon-allow-overlap': true,
       'text-field': ['get', 'name'],
       'text-offset': [0, 1.0],
       'text-size': 12,
@@ -212,7 +213,7 @@ const LAYER_CONFIG = {
         ],
     },
     minzoom: 1,
-    maxzoom: 17,
+    maxzoom: 16,
     popupRenderer: (properties, hoverInfo) => {
       let routesCount = 0
       try {
@@ -672,7 +673,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
       {/* Render the main layer */}
       <Layer id={`otp-${sourceLayerName}`} {...mergedConfig} />
       {/* For stops, render extra highlight layers */}
-      {sourceLayerName === 'stops' && highlightParentStation && (
+      {sourceLayerName === 'stops' && (
         <>
           <Layer
             id="otp-stops-highlight"
@@ -696,7 +697,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
                 ['>', ['length', ['get', 'routes']], 0]
               ]
             ]}
-            minzoom={17}
+            minzoom={16}
             maxzoom={20}
           />
           <Layer
@@ -706,11 +707,11 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
             {...{ 'source-layer': sourceLayerName }}
             beforeId={`otp-${sourceLayerName}`}
             layout={{
-              'text-field': ['get', 'platform'],
+              'text-field': ['get', 'name'],
               'text-size': 12,
               'text-offset': [0, -1.5],
               'text-anchor': 'bottom',
-              'text-allow-overlap': true
+              'text-allow-overlap': false
             }}
             paint={{
               'text-color': '#000000',
@@ -719,10 +720,16 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
             }}
             filter={[
               'all',
-              ['==', ['get', 'parentStation'], highlightParentStation],
-              ['has', 'platform']
+              ['has', 'platform'],
+              ['has', 'routes'],
+              [
+                'case',
+                ['==', ['get', 'routes'], '[]'],
+                false,
+                ['>', ['length', ['get', 'routes']], 0]
+              ]
             ]}
-            minzoom={17}
+            minzoom={16}
             maxzoom={20}
           />
         </>
