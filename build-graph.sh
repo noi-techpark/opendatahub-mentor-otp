@@ -56,7 +56,7 @@ rm -f ${TRANSIT_NETEX_GZ} ${TRANSIT_NETEX_XML}
 echo "Downloading NeTEx transit data from ${TRANSIT_NETEX_URL}"
 ${CURL} "${TRANSIT_NETEX_URL}" -o ${TRANSIT_NETEX_GZ}
 gunzip ${TRANSIT_NETEX_GZ}
-mv sta.netex.xml ${TRANSIT_NETEX_XML}
+zip ${TRANSIT_NETEX_ZIP} ${TRANSIT_NETEX_XML}
 
 # download parking data and put it into a zip
 rm -f ${PARKING_NETEX_XML} ${PARKING_NETEX_ZIP}
