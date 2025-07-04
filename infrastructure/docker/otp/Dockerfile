@@ -1,5 +1,5 @@
 # Simon, do you know how we could use the value from .otp-version here?
-FROM opentripplanner/opentripplanner:2.8.0_2025-06-03T13-08
+FROM lehrenfried/opentripplanner:car-rental-spaces
 
 WORKDIR /var/otp
 

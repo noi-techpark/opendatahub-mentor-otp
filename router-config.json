@@ -108,13 +108,11 @@
       "sourceType" : "gbfs",
       "url" : "https://carsharing.otp.opendatahub.testingmachine.eu/noi/gbfs.json"
     },
-    // we can re-enable this updater when https://github.com/opentripplanner/OpenTripPlanner/pull/6363
-    // is merged
-    /*{
+    {
       "type": "stop-time-updater",
       "url": "https://amarillo.otp.opendatahub.testingmachine.eu/gtfs/amarillo.altoadige.gtfsrt.pbf",
       "feedId": "amarillo"
-    },*/
+    },
     {
       "type": "vehicle-parking",
       "feedId": "parking",
