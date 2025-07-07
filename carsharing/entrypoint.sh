@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2025 NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 while true; do 
     PROVIDER=opendatahub
     python -m x2gbfs.x2gbfs -p $PROVIDER -b ${CARSHARING_BASEURL}
