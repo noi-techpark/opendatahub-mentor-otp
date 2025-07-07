@@ -163,7 +163,7 @@ services:
       dockerfile: infrastructure/docker/carsharing/Dockerfile
     restart: unless-stopped
     volumes:
-       - carsharing-gbfs:/app/out/noi
+       - carsharing-gbfs:/app/out
 
   carsharing-ngnix:
     container_name: carsharing-ngnix
