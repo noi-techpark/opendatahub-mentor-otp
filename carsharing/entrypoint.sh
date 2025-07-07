@@ -15,7 +15,7 @@ while true; do
       "version": "3.0",
       "data": {
       "versions": [{
-          "version": "$(sed -n 's/"version"[: ]\+"\([^"]\+\)"/\1/p' out/$PROVIDER/gbfs.json)",
+          "version": "$(sed -n 's/^.*"version"[: ]\+"\([^"]\+\)".*/\1/p' out/$PROVIDER/gbfs.json)",
           "url": "$CARSHARING_BASEURL/$PROVIDER/gbfs.json"
         }
       ]}
