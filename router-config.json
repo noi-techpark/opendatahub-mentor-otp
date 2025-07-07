@@ -106,7 +106,7 @@
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://carsharing.otp.opendatahub.testingmachine.eu/noi/gbfs.json"
+      "url" : "https://carsharing.otp.opendatahub.testingmachine.eu/opendatahub/gbfs.json"
     },
     {
       "type": "stop-time-updater",
