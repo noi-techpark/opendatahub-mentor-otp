@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 while true; do 
-    PROVIDER=opendatahub
+    PROVIDER=alpsgo
     python -m x2gbfs.x2gbfs -p $PROVIDER -b ${CARSHARING_BASEURL}
 
     cat << EOF > ./out/manifest.json
