@@ -1,4 +1,4 @@
 # SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
 #
 # SPDX-License-Identifier: CC0-1.0
-export OTP_IMAGE="lehrenfried/opentripplanner:car-rental-spaces"
+export OTP_IMAGE="opentripplanner/opentripplanner:2.8.0_2025-08-25T13-49"
