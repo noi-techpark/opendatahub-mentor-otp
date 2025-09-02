@@ -35,7 +35,7 @@ const NoiFromToPicker = ({ className, place, setLocation, handlePlanTripClick, q
   return (
     <span className={className} role="group">
       <FromToLocationPicker
-        label
+        label={false}
         onFromClick={useCallback(() => {
           handlePlanTripClick && handlePlanTripClick()
           setLocation({ location, locationType: 'from', reverseGeocode: false })

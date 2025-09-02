@@ -13,6 +13,7 @@ import PatternViewer from '@otp-react-redux/lib/components/viewers/pattern-viewe
 import RouteViewer from '@otp-react-redux/lib/components/viewers/route-viewer'
 import StopScheduleViewer from '@otp-react-redux/lib/components/viewers/stop-schedule-viewer'
 import TripViewer from '@otp-react-redux/lib/components/viewers/trip-viewer'
+import PoiViewer from '../poi-viewer'
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   isViewingStop: boolean
@@ -35,6 +36,7 @@ const ViewerContainer = ({
     case MainPanelContent.TRIP_VIEWER:
       return <TripViewer hideBackButton />
     case MainPanelContent.NEARBY_VIEW:
+      return <NoiNearbyView  />
     default:
       // check for stop viewer
       if (isViewingStop) {

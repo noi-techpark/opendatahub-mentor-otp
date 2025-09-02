@@ -249,6 +249,7 @@ class NoiResponsiveWebapp extends Component {
               }>
                 <LocationField
                   locationType="to"
+                  handleLocationSelected={(intl, e) => {console.log(e);}}
                 />
               </div>
                 {MapWindows && <MapWindows />}
@@ -286,6 +287,7 @@ class NoiResponsiveWebapp extends Component {
                   }>
                     <LocationField
                       locationType="to"
+                      
                     />
                   </div>
                   {MapWindows && <MapWindows />}

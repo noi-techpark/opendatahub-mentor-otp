@@ -143,7 +143,14 @@ map:
       attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
   overlays:
     - type: taxi_noi
+      name: Taxi
       url: https://mobility.api.opendatahub.com/v2/flat,node/ON_DEMAND_VEHICLE/*/latest?where=sorigin.eq.%22smart-taxi-merano%22
+    - type: traffic
+      name: Traffic
+      url: https://traffic.otp.opendatahub.com/traffic/linkstations.json
+    - type: charger
+      name: E-Charger
+      url: https://charger.otp.opendatahub.com/charger/stations.json
     - type: otp2
       layers:
         #- type: citybikes # overlaps with rental stations
@@ -646,6 +653,15 @@ language:
 #         log-my-commute: Mes trajets verts
 #         traveler-tools: Outils du voyageur
     name: French
+  it:
+#     config:
+#       # App (hamburger) menu items
+#       menuItems:
+#         car-pool: Covoiturage
+#         give-us-feedback: Donnez votre avis
+#         log-my-commute: Mes trajets verts
+#         traveler-tools: Outils du voyageur
+    name: Italian
 
 #   ko:
 #     name: 한국인

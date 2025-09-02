@@ -40,6 +40,7 @@ import OTPVectorLayer from './custom-otp-layers';
 import ElevationPointMarker from '@otp-react-redux/lib/components/map/elevation-point-marker'
 import EndpointsOverlay from '@otp-react-redux/lib/components/map/connected-endpoints-overlay'
 import TaxiLayer from './taxi-layer'
+import ChargerOverlay from './charger-layer'
 import GeoJsonLayer from '@otp-react-redux/lib/components/map/connected-geojson-layer'
 import ItinSummaryOverlay from '@otp-react-redux/lib/components/map/itinerary-summary-overlay'
 import NearbyViewDotOverlay from '@otp-react-redux/lib/components/map/nearby-view-dot-overlay'
@@ -142,6 +143,10 @@ function getLayerName(overlay, config, intl) {
       return intl.formatMessage({ id: 'components.MapLayers.shared-vehicles' })
     case 'taxi_noi':
       return <IconWithText Icon={Taxi}>Taxi</IconWithText>
+    case 'charger':
+      return <IconWithText Icon={Car}>E-Charger</IconWithText>
+    //case 'traffic':
+    //  return <IconWithText Icon={Car}>Traffic</IconWithText>
     case 'vehicleParking':
       return <IconWithText Icon={Parking}>Parking</IconWithText>
     case 'otp2':
@@ -371,6 +376,14 @@ class DefaultMap extends Component {
                 return (
                   <TaxiLayer {...namedLayerProps} url={overlayConfig.url} />
                 )
+              case 'charger':
+                return (
+                  <ChargerOverlay {...namedLayerProps} url={overlayConfig.url} />
+                )
+              /*case 'traffic':
+                return (
+                  <TrafficLayer {...namedLayerProps} url={overlayConfig.url} />
+                )*/
               case 'geojson':
                 return (
                   <GeoJsonLayer {...namedLayerProps} url={overlayConfig.url} />
