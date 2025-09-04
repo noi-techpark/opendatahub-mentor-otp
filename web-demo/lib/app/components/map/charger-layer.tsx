@@ -97,8 +97,8 @@ const ChargerOverlay = (props: Props) => {
         for (let id in chargers) {
           let station = chargers[id]
           if (station.coordinates) {
-            // Only display available taxis
-            //if (taxi.state === 'FREE' || taxi.state === 'AVAILABLE') {
+            // Only display available stations
+            if (station.free > 0) {
               features.push({
                 type: 'Feature',
                 geometry: {
@@ -109,7 +109,7 @@ const ChargerOverlay = (props: Props) => {
                   ...station
                 }
               })
-            //}
+            }
           }
         }
 
@@ -214,7 +214,7 @@ const ChargerOverlay = (props: Props) => {
           <Layer
             id="charger_noi"
             type="symbol"
-            minzoom={1}
+            minzoom={14}
             layout={{
               'text-anchor': 'bottom',
               'text-size': 12,

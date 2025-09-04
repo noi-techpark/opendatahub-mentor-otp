@@ -55,3 +55,11 @@ env JS_CONFIG=my-custom-js.js CUSTOM_CSS=my-custom-css.css yarn build
 You can chat with the main OTP-RR developers in our [Gitter chat](https://gitter.im/opentripplanner/otp-react-redux). Support is not guaranteed, but we may be able to answer questions and assist people wishing to make contributions. 
 
 As of version 2.0, otp-react-redux utilizes React's context API in a number of components. This changed the way that some components receive props such that they will not work properly unless wrapped with the context provider used in the `ResponsiveWebapp` component.
+
+## Content integration
+
+Additional comments regarding current layers content integrated in the demo app
+
+### Parking
+
+OTP doesn't provide Bike parking separately, nor parking with real-time or availability information at the moment. This information isn't rendered for the user.

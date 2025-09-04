@@ -8,6 +8,8 @@ import { useMap, Popup, Source, Layer } from 'react-map-gl'
 import * as mapActions from '@otp-react-redux/lib/actions/map'
 import { SetLocationHandler } from '@otp-react-redux/lib/components/util/types'
 
+import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
+
 type Props = {
   visible: boolean,
   setLocation: SetLocationHandler,
@@ -152,7 +154,7 @@ const TaxiOverlay = (props: Props) => {
     if(!map) return
     const mapInstance = map.getMap()
     // If the layer doesn't exist yet, skip attaching listeners.
-    if (!mapInstance || !geoJsonData || !mapInstance.getLayer('parking_noi')) return
+    if (!mapInstance || !geoJsonData || !mapInstance.getLayer('taxi_noi')) return
 
     const onTaxiMouseEnter = (e: any) => {
       mapInstance.getCanvas().style.cursor = 'pointer'
@@ -185,14 +187,14 @@ const TaxiOverlay = (props: Props) => {
       }
     }
 
-    mapInstance.on('mouseenter', 'parking_noi', onTaxiMouseEnter)
-    mapInstance.on('mouseleave', 'parking_noi', onTaxiMouseLeave)
-    mapInstance.on('click', 'parking_noi', onTaxiClick)
+    mapInstance.on('mouseenter', 'taxi_noi', onTaxiMouseEnter)
+    mapInstance.on('mouseleave', 'taxi_noi', onTaxiMouseLeave)
+    mapInstance.on('click', 'taxi_noi', onTaxiClick)
 
     return () => {
-      mapInstance.off('mouseenter', 'parking_noi', onTaxiMouseEnter)
-      mapInstance.off('mouseleave', 'parking_noi', onTaxiMouseLeave)
-      mapInstance.off('click', 'parking_noi', onTaxiClick)
+      mapInstance.off('mouseenter', 'taxi_noi', onTaxiMouseEnter)
+      mapInstance.off('mouseleave', 'taxi_noi', onTaxiMouseLeave)
+      mapInstance.off('click', 'taxi_noi', onTaxiClick)
     }
   }, [map, geoJsonData])
 
@@ -200,9 +202,9 @@ const TaxiOverlay = (props: Props) => {
     <>
       {/* Render the source and layer using react-map-gl components */}
       {geoJsonData && (
-        <Source id="parking_noi" type="geojson" data={geoJsonData}>
+        <Source id="taxi_noi" type="geojson" data={geoJsonData}>
           <Layer
-            id="parking_noi"
+            id="taxi_noi"
             type="symbol"
             minzoom={12}
             layout={{
@@ -222,7 +224,7 @@ const TaxiOverlay = (props: Props) => {
       )}
 
       {/* Render popups using react-map-gl's Popup */}
-      {hoverInfo && (
+      {/* {hoverInfo && (
         <Popup
           longitude={hoverInfo.longitude}
           latitude={hoverInfo.latitude}
@@ -230,15 +232,22 @@ const TaxiOverlay = (props: Props) => {
           offsetTop={-10}
           anchor="top"
         >
-          <div>
-            <strong>{hoverInfo.properties.Name}</strong>
-            <br />
-            State: {hoverInfo.properties.State}
-            <br />
-            Region: {hoverInfo.properties.Region}
+          <div className="otp-ui-mapOverlayPopup">
+            <div className="otp-ui-mapOverlayPopup__popupHeader">
+              Taxi
+            </div>
+            <div className="otp-ui-mapOverlayPopup__popupTitle">
+              {hoverInfo.properties.Name}
+            </div>
+            <div className="otp-ui-mapOverlayPopup__popupRow">
+              State: {hoverInfo.properties.State}
+            </div>
+            <div className="otp-ui-mapOverlayPopup__popupRow">
+              Region: {hoverInfo.properties.Region}
+            </div>
           </div>
         </Popup>
-      )}
+      )} */}
       {stickyInfo && (
         <Popup
           longitude={stickyInfo.longitude}
@@ -248,14 +257,23 @@ const TaxiOverlay = (props: Props) => {
           offsetTop={-10}
           anchor="top"
         >
-          <div>
-            <strong>{stickyInfo.properties.Name}</strong>
-            <br />
-            State: {stickyInfo.properties.State}
-            <br />
-            Region: {stickyInfo.properties.Region}
-            <br />
-            <em>Click outside to dismiss.</em>
+          <div className="otp-ui-mapOverlayPopup" style={{minWidth: '300px'}}>
+            <div className="otp-ui-mapOverlayPopup__popupHeader">
+              <img src={taxiIconData} alt="Taxi Icon" width="24" height="24" />
+              &nbsp;Taxi
+            </div>
+            <div className="otp-ui-mapOverlayPopup__popupTitle">
+              {stickyInfo.properties.Name}
+            </div>
+            <div className="otp-ui-mapOverlayPopup__popupRow">
+              State: {stickyInfo.properties.State}
+            </div>
+            <div className="otp-ui-mapOverlayPopup__popupRow">
+              Region: {stickyInfo.properties.Region}
+            </div>
+            <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
+                <NoiFromToPicker place={{ lon: stickyInfo.longitude, lat: stickyInfo.latitude, name: stickyInfo.properties.Name, properties: stickyInfo.properties }} />
+            </div>
           </div>
         </Popup>
       )}

@@ -131,20 +131,19 @@ function NoiNearbyView({
   const intl = useIntl()
   const [loading, setLoading] = useState(true)
   const firstItemRef = useRef<HTMLDivElement>(null)
-  /*const oldTo = useRef<any>();
+  const oldTo = useRef<any>()
   useEffect(() => {
-    if(oldTo.current == null ||oldTo.current == currentQuery.to) {
-      console.log('skip, the same');
-      return;
+    if (oldTo.current === currentQuery.to) {
+      return
     }
-    console.log('update to ...');
-    oldTo.current = currentQuery.to;
-    if(currentQuery.to) { 
-      console.debug("set viewed coords", currentQuery.to);
-      setTimeout(() => 
-      setViewedNearbyCoords({lat: currentQuery.to.lat, lon: currentQuery.to.lon}), 100);
+    oldTo.current = currentQuery.to
+    if (currentQuery.to) {
+      setViewedNearbyCoords({
+        lat: currentQuery.to.lat,
+        lon: currentQuery.to.lon
+      })
     }
-  }, [currentQuery.to]);*/
+  }, [currentQuery.to, setViewedNearbyCoords])
 
 
   const finalNearbyCoords = useMemo(

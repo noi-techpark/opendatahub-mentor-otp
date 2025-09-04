@@ -148,9 +148,6 @@ map:
     - type: traffic
       name: Traffic
       url: https://traffic.otp.opendatahub.com/traffic/linkstations.json
-    - type: charger
-      name: E-Charger
-      url: https://charger.otp.opendatahub.com/charger/stations.json
     - type: otp2
       layers:
         #- type: citybikes # overlaps with rental stations
@@ -160,6 +157,9 @@ map:
         - type: stops
         #- type: areaStops # couldn't find any
         - type: stations # couldn't find any
+    - type: charger
+      name: E-Charger
+      url: https://charger.otp.opendatahub.com/charger/stations.json
         
   ### Optional transitive.js (route rendering) properties:
   ### - labeledModes: an array of OTP modes for which the route label should be

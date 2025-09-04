@@ -41,14 +41,8 @@ const NoiFromToPicker = ({ className, place, setLocation, handlePlanTripClick, q
           setLocation({ location, locationType: 'from', reverseGeocode: false })
         }, [location, setLocation])}
         onToClick={useCallback(() => {
-          let from = query.to;
           handlePlanTripClick && handlePlanTripClick()
-          //setLocation({ location: null, locationType: 'to', reverseGeocode: false })
-          setLocation({ location: from, locationType: 'from', reverseGeocode: false })
           setLocation({ location, locationType: 'to', reverseGeocode: false })
-          setTimeout(() => {routingQuery(), 100});
-          //setQueryParam({ entityId: place.properties?.id })
-
         }, [location, setLocation])}
       />
     </span>
