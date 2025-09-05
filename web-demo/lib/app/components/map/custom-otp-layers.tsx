@@ -270,7 +270,6 @@ const LAYER_CONFIG = {
               {!formFactors.includes('BICYCLE') && !formFactors.includes('CAR') &&
                 `${properties.vehiclesAvailable} vehicles available`
               }
-              {JSON.stringify(properties)}
             </div>
           </div>
           <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
