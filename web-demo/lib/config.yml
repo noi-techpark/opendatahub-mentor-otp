@@ -79,7 +79,7 @@ api:
 ### The localStorage strategy will use the browser application storage.
 ### It must be enabled to show the stored locations (see above).
 persistence:
-  enabled: true
+  enabled: false
   strategy: localStorage
   ### This variable defines the default state of the terms of storage checkbox.
   ### Possible values: 'visible-unchecked' (default) | 'visible-checked' | 'hidden-unchecked' | 'hidden-checked'
@@ -298,6 +298,7 @@ modes:
     enabledModeButtons: # Mode button keys enabled by default
       - transit
       - bicycle
+      - walk
   # Add additional mode settings to show up in mode selector hover panel
   modeSettingDefinitions:
     # Corresponding mode; if this mode is found in the button's mode list,
