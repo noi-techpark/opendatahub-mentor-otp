@@ -63,3 +63,5 @@ Additional comments regarding current layers content integrated in the demo app
 ### Parking
 
 OTP doesn't provide Bike parking separately, nor parking with real-time or availability information at the moment. This information isn't rendered for the user.
+
+    

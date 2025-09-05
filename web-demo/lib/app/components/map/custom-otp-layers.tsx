@@ -493,6 +493,15 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
     }
   }, [map, sourceLayerName])
 
+  // Track mount status to avoid state updates on unmounted component
+  const isMountedRef = useRef(true)
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   // --- Attach event listeners (hover, click) ---
   useEffect(() => {
     if (!map) return
@@ -501,35 +510,45 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
     const layerId = `otp-${sourceLayerName}`
     const onMouseEnter = (e) => {
       mapInstance.getCanvas().style.cursor = 'pointer'
+      if (!isMountedRef.current) return
       if (!stickyInfoRef.current && e.features && e.features.length) {
         const feature = e.features[0]
+        if (!isMountedRef.current) return
         setHoverInfo(feature)
         if (feature.properties.parentStation) {
+          if (!isMountedRef.current) return
           setHighlightParentStation(feature.properties.parentStation)
         }
         if(feature.properties.stops) {
+          if (!isMountedRef.current) return
           setHighlightParentStation(feature.properties.gtfsId)
         }
       }
     }
     const onMouseLeave = () => {
       mapInstance.getCanvas().style.cursor = ''
+      if (!isMountedRef.current) return
       setHoverInfo(null)
       if (!stickyInfoRef.current) {
+        if (!isMountedRef.current) return
         setHighlightParentStation(null)
       }
     }
     const onClick = (e) => {
+      if (!isMountedRef.current) return
       setHoverInfo(null)
       if (e.features && e.features.length) {
         const feature = e.features[0]
         if(!feature.properties.stops) {
+            if (!isMountedRef.current) return
             setStickyInfo(feature)
         }
         if (feature.properties.parentStation) {
+          if (!isMountedRef.current) return
           setHighlightParentStation(feature.properties.parentStation)
         }
         if(feature.properties.stops) {
+          if (!isMountedRef.current) return
           setHighlightParentStation(feature.properties.gtfsId)
         }
         const mapInstance = map.getMap();

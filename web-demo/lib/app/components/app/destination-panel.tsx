@@ -4,7 +4,7 @@
 
 import { connect } from 'react-redux'
 import { FormattedMessage, injectIntl, IntlShape } from 'react-intl'
-import React, { Component, FormEvent } from 'react'
+import React, { Component } from 'react'
 import { replace } from 'connected-react-router'
 
 import {
@@ -49,16 +49,10 @@ class DestinationPanel extends Component<Props> {
   state = {
     planTripClicked: false
   }
-  handleSubmit = (e: FormEvent) => e.preventDefault()
+  // No real form submission is needed; avoid browser form semantics to prevent
+  // "Form submission canceled because the form is not connected" warnings.
   
   handlePlanTripClick = () => {
-    if(this.props.query.to) {
-      this.props.routeTo(
-        "/nearby/" + this.props.query.to.lat + "," + this.props.query.to.lon,
-        "",
-        replace
-      )
-    }
     setTimeout(()=> this.setState({ planTripClicked: true }), 100)
   }
 
@@ -105,9 +99,8 @@ class DestinationPanel extends Component<Props> {
           />
         </div>)}
         {(planTripClicked || query.from) && (
-        <form
+        <div
           className="form"
-          onSubmit={this.handleSubmit}
           style={{ padding: '10px' }}
         >
           <span className="batch-routing-panel-location-fields">
@@ -136,7 +129,7 @@ class DestinationPanel extends Component<Props> {
               </div>
           </span>
           <BatchSettings  />
-        </form>
+        </div>
         )}
         
         {/* !activeSearch && showUserSettings && (

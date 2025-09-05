@@ -7,7 +7,12 @@ import { Place } from '@opentripplanner/types'
 import FromToLocationPicker from '@opentripplanner/from-to-location-picker'
 import React, { useCallback, useMemo } from 'react'
 
-import * as mapActions from '@otp-react-redux/lib/actions/map'
+import {
+  setLocation
+} from '@otp-react-redux/lib/actions/map'
+import {
+  clearLocation
+} from '@otp-react-redux/lib/actions/form'
 import { SetLocationHandler } from '@otp-react-redux/lib/components/util/types'
 import { MapboxGeoJSONFeature } from 'react-map-gl'
 import { setQueryParam } from '@otp-react-redux/lib/actions/form'
@@ -16,13 +21,22 @@ import { routingQuery } from '@otp-react-redux/lib/actions/api'
 interface Props {
   query: any
   className?: string
-  place: Place | MapboxGeoJSONFeature 
+  place: Place | MapboxGeoJSONFeature
   setLocation: SetLocationHandler
   handlePlanTripClick: () => void
   routingQuery: () => void
+  clearLocation: (arg: { locationType: 'from' | 'to' }) => void
 }
 
-const NoiFromToPicker = ({ className, place, setLocation, handlePlanTripClick, query, routingQuery }: Props) => {
+const NoiFromToPicker = ({
+  className,
+  place,
+  setLocation,
+  handlePlanTripClick,
+  query,
+  routingQuery,
+  clearLocation
+}: Props) => {
   const location = useMemo(
     () => ({
       lat: place.lat ?? place.geometry.coordinates[1],
@@ -38,26 +52,31 @@ const NoiFromToPicker = ({ className, place, setLocation, handlePlanTripClick, q
         label={false}
         onFromClick={useCallback(() => {
           handlePlanTripClick && handlePlanTripClick()
+          clearLocation({ locationType: 'from' })
+          clearLocation({ locationType: 'to' })
           setLocation({ location, locationType: 'from', reverseGeocode: false })
-        }, [location, setLocation])}
+        }, [location, setLocation, clearLocation])}
         onToClick={useCallback(() => {
           handlePlanTripClick && handlePlanTripClick()
+          clearLocation({ locationType: 'from' })
+          clearLocation({ locationType: 'to' })
           setLocation({ location, locationType: 'to', reverseGeocode: false })
-        }, [location, setLocation])}
+        }, [location, setLocation, clearLocation])}
       />
     </span>
   )
 }
 
 const mapDispatchToProps = {
-  setLocation: mapActions.setLocation,
-  routingQuery: routingQuery
+  setLocation,
+  clearLocation,
+  routingQuery
 }
 
 const mapStateToProps = (state) => {
   return {
     query: state.otp.currentQuery
-  };
+  }
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(NoiFromToPicker)

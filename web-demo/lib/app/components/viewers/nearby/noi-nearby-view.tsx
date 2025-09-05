@@ -86,13 +86,21 @@ function getNearbyCoordsFromUrlOrLocationOrMapCenter(
   map?: MapRef,
   defaultLatLon?: LatLonObj | null
 ): LatLonObj | null {
+  console.log("loading nearby coords, ", coordsFromUrl, currentPosition, defaultLatLon)
   if (coordsFromUrl) {
+    console.log("from url");
     return coordsFromUrl
   }
 
   if (currentPosition?.coords) {
+    console.log("from current positoin");
     const { latitude: lat, longitude: lon } = currentPosition.coords
     return { lat, lon }
+  }
+
+  if (currentPosition && currentPosition.lat && currentPosition.lon) {
+    console.log("from current position");
+    return { lat: currentPosition.lat, lon: currentPosition.lon }
   }
 
   const rawMapCoords = map?.getCenter()
@@ -133,16 +141,21 @@ function NoiNearbyView({
   const firstItemRef = useRef<HTMLDivElement>(null)
   const oldTo = useRef<any>()
   useEffect(() => {
-    if (oldTo.current === currentQuery.to) {
+    //console.log("checking for changes in query.to", oldTo.current, currentQuery.to);
+    //console.log(oldTo.current?.lat, oldTo.current?.lon, currentQuery.to?.lat, currentQuery.to?.lon);
+    /*if (oldTo.current?.lat == currentQuery.to?.lat && oldTo.current?.lon == currentQuery.to?.lon) {
       return
     }
     oldTo.current = currentQuery.to
+    
+    console.log("reloading from query.to", oldTo.current, currentQuery.to);
     if (currentQuery.to) {
       setViewedNearbyCoords({
         lat: currentQuery.to.lat,
         lon: currentQuery.to.lon
       })
-    }
+    }*/
+    
   }, [currentQuery.to, setViewedNearbyCoords])
 
 
@@ -154,7 +167,7 @@ function NoiNearbyView({
         map,
         defaultLatLon
       ),
-    [nearbyViewCoords, currentQuery, map]
+    [nearbyViewCoords, currentQuery.to, map]
   )
 
   // Make sure the highlighted location is cleaned up when leaving nearby

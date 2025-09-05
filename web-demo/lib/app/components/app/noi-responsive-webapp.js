@@ -221,88 +221,63 @@ class NoiResponsiveWebapp extends Component {
     const { sessionTimeoutSeconds } = this.props
     const { MainControls, MainPanel, MapWindows } = this.context
     const { popupContent, query, mainPanelContent, isViewingStop } = this.props
-    const isWelcomeScreen = !isViewingStop && !query.from && !query.to &&
-      !mainPanelContent;
-    return (
-      <div className="otp">
-        <DesktopNav />
-        <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
-        {(isWelcomeScreen) ?
+    const isWelcomeScreen =
+      !isViewingStop && !query.from && !query.to && !mainPanelContent
+
+    // If it's the welcome screen, show the full-screen map with an overlaid input.
+    if (isWelcomeScreen) {
+      return (
+        <div className="otp">
+          <DesktopNav />
+          <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
           <Grid>
             <Row className="main-row">
               {MainControls && <MainControls />}
               <Col className="map-container" md={12} sm={6}>
-              <div style={
-                {
-                  padding: "20px 20px 20px 20px",
-                  borderRadius: "10px",
-                  backgroundColor: "white",
-                  border: "1px white solid",
-                  opacity: 1,
-                  zIndex: 19,
-                  position:"absolute",
-                  float:"left",
-                  top: "50px",
-                  left: "50px",
-                  width:"400px"
-                }
-              }>
-                <LocationField
-                  locationType="to"
-                  handleLocationSelected={(intl, e) => {console.log(e);}}
-                />
-              </div>
+                <div
+                  style={{
+                    backgroundColor: 'white',
+                    border: '1px white solid',
+                    borderRadius: '10px',
+                    left: '50px',
+                    padding: '20px',
+                    position: 'absolute',
+                    top: '50px',
+                    width: '400px',
+                    zIndex: 19
+                  }}
+                >
+                  <LocationField locationType="to" />
+                </div>
                 {MapWindows && <MapWindows />}
                 <Map />
               </Col>
             </Row>
           </Grid>
-          :
-          <Grid>
-            <Row className="main-row">
-              <Col className="sidebar" md={4} sm={6}>
-                {/* Note: the main tag provides a way for users of screen readers to skip to the
-                    primary page content (tabindex = -1 needed for programmatic navigation skip). */}
-                <main tabIndex={-1}>
-                  <MainPanel />
-                </main>
-              </Col>
-              {MainControls && <MainControls />}
-              {!query.from ?
-                <Col className="map-container" md={8} sm={6}>
-                  <div style={
-                    {
-                      padding: "20px 20px 20px 20px",
-                      borderRadius: "10px",
-                      backgroundColor: "white",
-                      border: "1px white solid",
-                      opacity: 1,
-                      zIndex: 19,
-                      position:"absolute",
-                      float:"left",
-                      top: "50px",
-                      left: "50px",
-                      width:"400px"
-                    }
-                  }>
-                    <LocationField
-                      locationType="to"
-                      
-                    />
-                  </div>
-                  {MapWindows && <MapWindows />}
-                  <Map />
-                </Col>
-              : <Col className="map-container" md={8} sm={6}>
-              
+          {sessionTimeoutSeconds && <SessionTimeout />}
+        </div>
+      )
+    }
+
+    // Otherwise, show the main planning view with the sidebar.
+    return (
+      <div className="otp">
+        <DesktopNav />
+        <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
+        <Grid>
+          <Row className="main-row">
+            <Col className="sidebar" md={4} sm={6}>
+              <main tabIndex={-1}>
+                <MainPanel />
+              </main>
+            </Col>
+            {MainControls && <MainControls />}
+            <Col className="map-container" md={8} sm={6}>
               {MapWindows && <MapWindows />}
               <Map />
-            </Col> }
-            </Row>
-          </Grid>
-        }
-
-
+            </Col>
+          </Row>
+        </Grid>
         {sessionTimeoutSeconds && <SessionTimeout />}
       </div>
     )
