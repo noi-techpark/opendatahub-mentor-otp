@@ -91,17 +91,17 @@ class DestinationPanel extends Component<Props> {
             <FormattedMessage id="components.BatchSearchScreen.header" />
           </h1>
         </InvisibleA11yLabel>
-        {!(planTripClicked || query.from) && query.to && (<div>
+        {/* Keep both sections mounted; toggle visibility to avoid unmount-time async updates. */}
+        <div style={{ display: !(planTripClicked || query.from) && query.to ? 'block' : 'none' }}>
           <PoiViewer
             handlePlanTripClick={this.handlePlanTripClick}
             hideBackButton
             selectedPlace={query.to}
           />
-        </div>)}
-        {(planTripClicked || query.from) && (
+        </div>
         <div
           className="form"
-          style={{ padding: '10px' }}
+          style={{ padding: '10px', display: (planTripClicked || query.from) ? 'block' : 'none' }}
         >
           <span className="batch-routing-panel-location-fields">
               <LocationField
@@ -130,7 +130,6 @@ class DestinationPanel extends Component<Props> {
           </span>
           <BatchSettings  />
         </div>
-        )}
         
         {/* !activeSearch && showUserSettings && (
           <UserSettings style={{ margin: '0 10px', overflowY: 'auto' }} />

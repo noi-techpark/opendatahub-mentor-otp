@@ -31,6 +31,15 @@ const ChargerOverlay = (props: Props) => {
   const map = useMap().default
   const { setLocation, url } = props
 
+  // Track mount status to prevent state updates after unmount
+  const isMountedRef = useRef(true)
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   // State for storing taxi details, GeoJSON data, and popup info.
   const [locations, setLocations] = useState<any[]>([])
   const [geoJsonData, setGeoJsonData] = useState<GeoJSON.FeatureCollection>({
@@ -113,6 +122,7 @@ const ChargerOverlay = (props: Props) => {
           }
         }
 
+        if (!isMountedRef.current) return
         setGeoJsonData({
           type: 'FeatureCollection',
           features: features
@@ -152,6 +162,7 @@ const ChargerOverlay = (props: Props) => {
 
     const onChargerMouseEnter = (e: any) => {
       mapInstance.getCanvas().style.cursor = 'pointer'
+      if (!isMountedRef.current) return
       if (!stickyInfoRef.current && e.features && e.features.length) {
         const feature = e.features[0]
         const coordinates = feature.geometry.coordinates
@@ -162,6 +173,7 @@ const ChargerOverlay = (props: Props) => {
             feature.properties.plugsTypes = JSON.parse(feature.properties.plugsTypes);
         }
 
+        if (!isMountedRef.current) return
         setHoverInfo({
           lon: coordinates[0],
           lat: coordinates[1],
@@ -172,10 +184,12 @@ const ChargerOverlay = (props: Props) => {
 
     const onChargerMouseLeave = () => {
       mapInstance.getCanvas().style.cursor = ''
+      if (!isMountedRef.current) return
       setHoverInfo(null)
     }
 
     const onChargerClick = (e: any) => {
+      if (!isMountedRef.current) return
       setHoverInfo(null)
 
       if (e.features && e.features.length) {
@@ -187,6 +201,7 @@ const ChargerOverlay = (props: Props) => {
         if(feature.properties.plugsTypes) {
             feature.properties.plugsTypes = JSON.parse(feature.properties.plugsTypes);
         }
+        if (!isMountedRef.current) return
         setStickyInfo({
           lon: coordinates[0],
           lat: coordinates[1],

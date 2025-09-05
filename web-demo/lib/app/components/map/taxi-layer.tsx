@@ -65,6 +65,15 @@ const TaxiOverlay = (props: Props) => {
     carIcon.src = taxiIconData
   }, [map, taxiIconData])
 
+  // Track mount status to avoid state updates after unmount
+  const isMountedRef = useRef(true)
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   // --- 2. Data Refresh: Fetch Taxi Data and Update GeoJSON State ---
   useEffect(() => {
     async function downloadLocations() {
@@ -119,6 +128,7 @@ const TaxiOverlay = (props: Props) => {
           }
         }
 
+        if (!isMountedRef.current) return
         setGeoJsonData({
           type: 'FeatureCollection',
           features: features
@@ -158,9 +168,11 @@ const TaxiOverlay = (props: Props) => {
 
     const onTaxiMouseEnter = (e: any) => {
       mapInstance.getCanvas().style.cursor = 'pointer'
+      if (!isMountedRef.current) return
       if (!stickyInfoRef.current && e.features && e.features.length) {
         const feature = e.features[0]
         const coordinates = feature.geometry.coordinates
+        if (!isMountedRef.current) return
         setHoverInfo({
           longitude: coordinates[0],
           latitude: coordinates[1],
@@ -171,14 +183,17 @@ const TaxiOverlay = (props: Props) => {
 
     const onTaxiMouseLeave = () => {
       mapInstance.getCanvas().style.cursor = ''
+      if (!isMountedRef.current) return
       setHoverInfo(null)
     }
 
     const onTaxiClick = (e: any) => {
+      if (!isMountedRef.current) return
       setHoverInfo(null)
       if (e.features && e.features.length) {
         const feature = e.features[0]
         const coordinates = feature.geometry.coordinates
+        if (!isMountedRef.current) return
         setStickyInfo({
           longitude: coordinates[0],
           latitude: coordinates[1],

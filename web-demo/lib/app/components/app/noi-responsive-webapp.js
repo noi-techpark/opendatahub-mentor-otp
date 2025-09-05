@@ -225,6 +225,26 @@ class NoiResponsiveWebapp extends Component {
       !isViewingStop && !query.from && !query.to && !mainPanelContent
 
     // If it's the welcome screen, show the full-screen map with an overlaid input.
+    // Always render the to-location input overlay, toggle visibility only.
+    const welcomeOverlay = (
+      <div
+        style={{
+          backgroundColor: 'white',
+          border: '1px white solid',
+          borderRadius: '10px',
+          left: '50px',
+          padding: '20px',
+          position: 'absolute',
+          top: '50px',
+          width: '400px',
+          zIndex: 19,
+          //display: isWelcomeScreen ? 'block' : 'none'
+        }}
+      >
+        <LocationField locationType="to" />
+      </div>
+    )
+
     if (isWelcomeScreen) {
       return (
         <div className="otp">
@@ -233,22 +253,8 @@ class NoiResponsiveWebapp extends Component {
           <Grid>
             <Row className="main-row">
               {MainControls && <MainControls />}
-              <Col className="map-container" md={12} sm={6}>
-                <div
-                  style={{
-                    backgroundColor: 'white',
-                    border: '1px white solid',
-                    borderRadius: '10px',
-                    left: '50px',
-                    padding: '20px',
-                    position: 'absolute',
-                    top: '50px',
-                    width: '400px',
-                    zIndex: 19
-                  }}
-                >
-                  <LocationField locationType="to" />
-                </div>
+              <Col key="map" className="map-container" md={12} sm={6}>
+                {welcomeOverlay}
                 {MapWindows && <MapWindows />}
                 <Map />
               </Col>
@@ -266,13 +272,14 @@ class NoiResponsiveWebapp extends Component {
         <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
         <Grid>
           <Row className="main-row">
-            <Col className="sidebar" md={4} sm={6}>
+            <Col key="sidebar" className="sidebar" md={4} sm={6}>
               <main tabIndex={-1}>
                 <MainPanel />
               </main>
             </Col>
             {MainControls && <MainControls />}
-            <Col className="map-container" md={8} sm={6}>
+            <Col key="map" className="map-container" md={8} sm={6}>
+              {welcomeOverlay}
               {MapWindows && <MapWindows />}
               <Map />
             </Col>
