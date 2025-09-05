@@ -222,13 +222,47 @@ const LAYER_CONFIG = {
     filter: ['!=', 'formFactors', ''],
     layout: {
       'icon-image': [
-        'match',
-        ['get', 'formFactors'],
-        'BICYCLE', 'bicycle-icon',
-        'CAR', 'car-icon',
-        'BICYCLE,CAR', 'car-icon',
-        'CAR,BICYCLE', 'car-icon',
-        /* default */ 'default-icon'
+        'case',
+        // Realtime and vehicles available -> available variant
+        [
+          'all',
+          ['==', ['get', 'operative'], true],
+          ['>', ['coalesce', ['get', 'vehiclesAvailable'], 0], 0]
+        ],
+        [
+          'match',
+          ['get', 'formFactors'],
+          'BICYCLE', 'bicycle-icon-available',
+          'CAR', 'car-icon-available',
+          'BICYCLE,CAR', 'car-icon-available',
+          'CAR,BICYCLE', 'car-icon-available',
+          /* default */ 'bicycle-icon-available'
+        ],
+        // Realtime but no vehicles -> unavailable variant
+        [
+          'any',
+          ['==', ['get', 'operative'], false],
+          ['<=', ['coalesce', ['get', 'vehiclesAvailable'], 0], 0]
+        ],
+        [
+          'match',
+          ['get', 'formFactors'],
+          'BICYCLE', 'bicycle-icon-unavailable',
+          'CAR', 'car-icon-unavailable',
+          'BICYCLE,CAR', 'car-icon-unavailable',
+          'CAR,BICYCLE', 'car-icon-unavailable',
+          /* default */ 'bicycle-icon-unavailable'
+        ],
+        // Fallback: base icon without dot
+        [
+          'match',
+          ['get', 'formFactors'],
+          'BICYCLE', 'bicycle-icon',
+          'CAR', 'car-icon',
+          'BICYCLE,CAR', 'car-icon',
+          'CAR,BICYCLE', 'car-icon',
+          /* default */ 'bicycle-icon'
+        ]
       ],
       'icon-size': 0.1,
       'icon-allow-overlap': false,
@@ -464,6 +498,28 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
         }
       }
       carIcon.src = carDataUrl
+
+      // Add availability variants for car icon (top-right dot)
+      const makeCarVariant = (color: string) => {
+        const withDot = carSvgString.replace(
+          '</svg>',
+          `<circle cx="430" cy="70" r="80" fill="${color}" stroke="#ffffff" stroke-width="25"/></svg>`
+        )
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
+      }
+      const addCarVariant = (name: string, src: string) => {
+        if (mapInstance.hasImage(name)) return
+        const img = new Image()
+        img.width = 150
+        img.height = 150
+        img.onload = () => {
+          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
+        }
+        img.src = src
+      }
+      console.log("car", makeCarVariant('#22c55e'))
+      addCarVariant('car-icon-available', makeCarVariant('#22c55e'))
+      addCarVariant('car-icon-unavailable', makeCarVariant('#ef4444'))
     }
     // Train icon
     if (!mapInstance.hasImage('rail-icon')) {
@@ -523,6 +579,28 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
         }
       }
       bicycleIcon.src = bicycleDataUrl
+
+      // Add availability variants for bicycle icon (top-right dot)
+      const makeBikeVariant = (color: string) => {
+        const withDot = bicycleSvgString.replace(
+          '</svg>',
+          `<circle cx="90" cy="8" r="12" fill="${color}" stroke="#ffffff" stroke-width="3"/></svg>`
+        )
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
+      }
+      const addBikeVariant = (name: string, src: string) => {
+        if (mapInstance.hasImage(name)) return
+        const img = new Image()
+        img.width = 245
+        img.height = 150
+        img.onload = () => {
+          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
+        }
+        img.src = src
+      }
+      //console.log(makeBikeVariant('#22c55e'))
+      addBikeVariant('bicycle-icon-available', makeBikeVariant('#22c55e'))
+      addBikeVariant('bicycle-icon-unavailable', makeBikeVariant('#ef4444'))
     }
   }, [map, sourceLayerName])
 
@@ -739,27 +817,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
           />
         </>
       )}
-      {sourceLayerName === 'rentalStations' && (
-        <Layer
-          id="otp-rentalVehicles-realtime"
-          type="circle"
-          source="otp-source"
-          {...{ 'source-layer': sourceLayerName }}
-          layout={{}}
-          paint={{
-            'circle-radius': 3,
-            'circle-color': '#22c55e',
-            'circle-opacity': 1,
-            'circle-stroke-color': '#ffffff',
-            'circle-stroke-width': 1,
-            'circle-translate': [8, -8],
-            'circle-translate-anchor': 'viewport'
-          }}
-          filter={['all', ['==', ['get', 'operative'], true]]}
-          minzoom={16}
-          maxzoom={20}
-        />
-      )}
+      {/* Rental station realtime now indicated via icon variants. */}
       {/* For stations, render realtime indicator as well */}
       {sourceLayerName === 'stations' && (
         <Layer
