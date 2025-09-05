@@ -322,6 +322,12 @@ class DefaultMap extends Component {
     const baseLayerUrls = baseLayersWithNames?.map((bl) => bl.url)
     const baseLayerNames = baseLayersWithNames?.map((bl) => bl.name)
 
+    // Build a single shared vector source for all otp2 layer types to avoid
+    // duplicate sources and ordering issues.
+    const otp2LayerTypes = (overlays || [])
+      .filter((o) => o.type === 'otp2')
+      .flatMap((o) => (o.layers || []).map((l) => l.type))
+
     return (
       <MapContainer className="percy-hide">
         <BaseMap
@@ -352,17 +358,19 @@ class DefaultMap extends Component {
           <TripViewerOverlay />
           <ElevationPointMarker />
 
-          {/* Specific overlay sources */}
-          {overlays?.map((overlayConfig, k) => {
-            switch (overlayConfig.type) {
-              case 'otp2':
-                return <><Source id="otp-source" type="vector" url={vectorTilesEndpoint +
-                        '/' +
-                        overlayConfig.layers.map((l) => l.type).join(',') +
-                        '/tilejson.json'
-                  }></Source></>
-            }
-          })}
+          {/* Shared vector source for OTP2 tile layers */}
+          {otp2LayerTypes.length > 0 && (
+            <><Source
+              id="otp-source"
+              type="vector"
+              url={
+                vectorTilesEndpoint +
+                '/' +
+                otp2LayerTypes.join(',') +
+                '/tilejson.json'
+              }
+            /></>
+          )}
           {/* The configurable overlays */}
           {overlays?.map((overlayConfig, k) => {
             const namedLayerProps = {
