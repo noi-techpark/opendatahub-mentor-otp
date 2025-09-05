@@ -753,6 +753,61 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
           maxzoom={20}
         />
       )}
+      {sourceLayerName === 'vehicleParking' && (
+        <>
+          {/* Green dot when realtime indicates some slots available (car or bicycle). */}
+          <Layer
+            id="otp-vehicleParking-available"
+            type="circle"
+            source="otp-source"
+            {...{ 'source-layer': sourceLayerName }}
+            layout={{}}
+            paint={{
+              'circle-radius': 3.5,
+              'circle-color': '#22c55e',
+              'circle-opacity': 1,
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': 1,
+              'circle-translate': [10, -10],
+              'circle-translate-anchor': 'viewport'
+            }}
+            filter={[
+              'all',
+              [
+                'any',
+                ['>', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
+                ['>', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
+              ]
+            ]}
+            minzoom={14}
+            maxzoom={20}
+          />
+          {/* Red dot when realtime present but no slots available. */}
+          <Layer
+            id="otp-vehicleParking-unavailable"
+            type="circle"
+            source="otp-source"
+            {...{ 'source-layer': sourceLayerName }}
+            layout={{}}
+            paint={{
+              'circle-radius': 3.5,
+              'circle-color': '#ef4444',
+              'circle-opacity': 1,
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': 1,
+              'circle-translate': [10, -10],
+              'circle-translate-anchor': 'viewport'
+            }}
+            filter={[
+              'all',
+              ['<=', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
+              ['<=', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
+            ]}
+            minzoom={14}
+            maxzoom={20}
+          />
+        </>
+      )}
       {/*{hoverInfo && (
         <Popup
           maxWidth="none"
