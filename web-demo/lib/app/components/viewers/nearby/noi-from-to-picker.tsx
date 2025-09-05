@@ -6,6 +6,7 @@ import { connect } from 'react-redux'
 import { Place } from '@opentripplanner/types'
 import FromToLocationPicker from '@opentripplanner/from-to-location-picker'
 import React, { useCallback, useMemo } from 'react'
+import { usePlanning } from '../../../context/planning-context'
 
 import {
   setLocation
@@ -37,6 +38,7 @@ const NoiFromToPicker = ({
   routingQuery,
   clearLocation
 }: Props) => {
+  const { setIsPlanning } = usePlanning()
   const location = useMemo(
     () => ({
       lat: place.lat ?? place.geometry.coordinates[1],
@@ -54,14 +56,16 @@ const NoiFromToPicker = ({
           handlePlanTripClick && handlePlanTripClick()
           clearLocation({ locationType: 'from' })
           clearLocation({ locationType: 'to' })
+          setIsPlanning(true)
           setLocation({ location, locationType: 'from', reverseGeocode: false })
-        }, [location, setLocation, clearLocation])}
+        }, [location, setLocation, clearLocation, setIsPlanning])}
         onToClick={useCallback(() => {
           handlePlanTripClick && handlePlanTripClick()
           clearLocation({ locationType: 'from' })
           clearLocation({ locationType: 'to' })
+          setIsPlanning(true)
           setLocation({ location, locationType: 'to', reverseGeocode: false })
-        }, [location, setLocation, clearLocation])}
+        }, [location, setLocation, clearLocation, setIsPlanning])}
       />
     </span>
   )

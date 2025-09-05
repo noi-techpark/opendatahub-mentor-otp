@@ -21,6 +21,7 @@ import isEqual from 'lodash.isequal'
 import PropTypes from 'prop-types'
 import qs from 'qs'
 import React, { Component } from 'react'
+import { PlanningProvider, PlanningContext } from '../../context/planning-context'
 
 import * as authActions from '@otp-react-redux/lib/actions/auth'
 import * as callTakerActions from '@otp-react-redux/lib/actions/call-taker'
@@ -227,26 +228,31 @@ class NoiResponsiveWebapp extends Component {
     // If it's the welcome screen, show the full-screen map with an overlaid input.
     // Always render the to-location input overlay, toggle visibility only.
     const welcomeOverlay = (
-      <div
-        style={{
-          backgroundColor: 'white',
-          border: '1px white solid',
-          borderRadius: '10px',
-          left: '50px',
-          padding: '20px',
-          position: 'absolute',
-          top: '50px',
-          width: '400px',
-          zIndex: 19,
-          //display: isWelcomeScreen ? 'block' : 'none'
-        }}
-      >
-        <LocationField locationType="to" />
-      </div>
+      <PlanningContext.Consumer>
+        {({ isPlanning }) => (
+          <div
+            style={{
+              backgroundColor: 'white',
+              border: '1px white solid',
+              borderRadius: '10px',
+              left: '50px',
+              padding: '20px',
+              position: 'absolute',
+              top: '50px',
+              width: '400px',
+              zIndex: 19,
+              display: !isPlanning ? 'block' : 'none'
+            }}
+          >
+            <LocationField locationType="to" />
+          </div>
+        )}
+      </PlanningContext.Consumer>
     )
 
     if (isWelcomeScreen) {
       return (
+        <PlanningProvider>
         <div className="otp">
           <DesktopNav />
           <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
@@ -262,11 +268,13 @@ class NoiResponsiveWebapp extends Component {
           </Grid>
           {sessionTimeoutSeconds && <SessionTimeout />}
         </div>
+        </PlanningProvider>
       )
     }
 
     // Otherwise, show the main planning view with the sidebar.
     return (
+      <PlanningProvider>
       <div className="otp">
         <DesktopNav />
         <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
@@ -287,6 +295,7 @@ class NoiResponsiveWebapp extends Component {
         </Grid>
         {sessionTimeoutSeconds && <SessionTimeout />}
       </div>
+      </PlanningProvider>
     )
   }
 
@@ -294,10 +303,12 @@ class NoiResponsiveWebapp extends Component {
     const { popupContent } = this.props
 
     return (
-      <>
-        <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
-        <MobileMain />
-      </>
+      <PlanningProvider>
+        <>
+          <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
+          <MobileMain />
+        </>
+      </PlanningProvider>
     )
   }
 
