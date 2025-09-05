@@ -297,7 +297,7 @@ modes:
   initialState:
     enabledModeButtons: # Mode button keys enabled by default
       - transit
-      - bike
+      - bicycle
   # Add additional mode settings to show up in mode selector hover panel
   modeSettingDefinitions:
     # Corresponding mode; if this mode is found in the button's mode list,

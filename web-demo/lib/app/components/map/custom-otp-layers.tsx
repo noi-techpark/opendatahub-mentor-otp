@@ -238,7 +238,7 @@ const LAYER_CONFIG = {
       'text-size': 12,
       'text-anchor': 'top'
     },
-    minzoom: 14,
+    minzoom: 10,
     maxzoom: 20,
         popupRenderer: (properties, hoverInfo) => {
       let formFactors = properties.formFactors.split(",");
