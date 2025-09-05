@@ -41,6 +41,9 @@ const LAYER_CONFIG = {
         ['>', ['length', ['get', 'routes']], 0]
       ]
     ],
+    paint: {
+        'icon-opacity': 0.7,
+    },
     layout: {
       'icon-image': [
         'match',
@@ -49,7 +52,7 @@ const LAYER_CONFIG = {
         'bus-icon',
         'RAIL',
         'rail-icon',
-        'default-icon'
+        'rail-icon'
       ],
       'icon-size': ['match', ['get', 'type'], 'BUS', 0.1, 'RAIL', 0.15, 0.1],
       'icon-allow-overlap': true,
@@ -114,7 +117,7 @@ const LAYER_CONFIG = {
       [">=", ["zoom"],
         ["match", ["get", "type"],
             "BUS",  // rank
-            14, // minimum zoom level
+            15, // minimum zoom level
             "RAIL",  // etc.
             1,
             "BUS,RAIL",
@@ -125,6 +128,9 @@ const LAYER_CONFIG = {
         ]
       ]
     ],
+    paint: {
+      'icon-opacity': 0.8,
+    },
     layout: {
       'icon-image': [
         'match',
@@ -157,7 +163,7 @@ const LAYER_CONFIG = {
         'RAIL,BUS', ["get", "name"],
         "BUS,RAIL", ["get", "name"],
         ""
-      ], 15, ["get", "name"], 16, ["get", "platform"]],
+      ], 16, ["get", "platform"]],
       'text-offset': [0, 1.0],
       'text-size': 12,
       'text-anchor': 'top',
@@ -800,7 +806,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
             layout={{
               'text-field': ['get', 'name'],
               'text-size': 12,
-              'text-offset': [0, -1.5],
+              'text-offset': [0, -1.28],
               'text-anchor': 'bottom',
               'text-allow-overlap': false
             }}
