@@ -55,6 +55,10 @@ function OpenMoveModeIcon({ mode, ...props }) {
       return <Rail {...props} />;
     case "car":
       return <Car {...props} />;
+    case "car_rental":
+      return <CarSharing {...props} />;
+    case "park_ride":
+      return <ParkRide {...props} />;
     // case "streetcar":
     //   return <Streetcar {...props} />;
     // case "subway":

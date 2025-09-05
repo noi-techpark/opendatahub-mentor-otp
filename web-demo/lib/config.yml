@@ -284,13 +284,21 @@ modes:
         - mode: SCOOTER
           qualifier: RENT
 
-    - iconName: car
+    - iconName: car_rental
       key: car
       modes:
         # Modes can contain a qualifier
         # See OTP documentation for details
         - mode: CAR
           qualifier: RENT
+
+    - iconName: park_ride
+      key: parkride
+      modes:
+        # Modes can contain a qualifier
+        # See OTP documentation for details
+        - mode: CAR
+          qualifier: PARK
 
   # Allows initial state to be configured.
   # Which buttons enabled on load + overriding setting defaults
