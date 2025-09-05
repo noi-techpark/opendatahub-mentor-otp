@@ -47,6 +47,7 @@ import PopupWrapper from '@otp-react-redux/lib/components/app/popup'
 import SessionTimeout from '@otp-react-redux/lib/components/app/session-timeout'
 
 import LocationField from '@otp-react-redux/lib/components/form/connected-location-field'
+import PlanningObserver from './planning-observer'
 import { MainPanelContent } from '@otp-react-redux/lib/actions/ui-constants'
 
 const { isMobile } = coreUtils.ui
@@ -253,12 +254,13 @@ class NoiResponsiveWebapp extends Component {
     if (isWelcomeScreen) {
       return (
         <PlanningProvider>
-        <div className="otp">
-          <DesktopNav />
-          <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
-          <Grid>
-            <Row className="main-row">
-              {MainControls && <MainControls />}
+          <div className="otp">
+            <DesktopNav />
+            <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
+            <PlanningObserver />
+            <Grid>
+              <Row className="main-row">
+                {MainControls && <MainControls />}
               <Col key="map" className="map-container" md={12} sm={6}>
                 {welcomeOverlay}
                 {MapWindows && <MapWindows />}
@@ -275,12 +277,13 @@ class NoiResponsiveWebapp extends Component {
     // Otherwise, show the main planning view with the sidebar.
     return (
       <PlanningProvider>
-      <div className="otp">
-        <DesktopNav />
-        <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
-        <Grid>
-          <Row className="main-row">
-            <Col key="sidebar" className="sidebar" md={4} sm={6}>
+        <div className="otp">
+          <DesktopNav />
+          <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
+          <PlanningObserver />
+          <Grid>
+            <Row className="main-row">
+              <Col key="sidebar" className="sidebar" md={4} sm={6}>
               <main tabIndex={-1}>
                 <MainPanel />
               </main>
@@ -306,6 +309,7 @@ class NoiResponsiveWebapp extends Component {
       <PlanningProvider>
         <>
           <PopupWrapper content={popupContent} hideModal={this._hidePopup} />
+          <PlanningObserver />
           <MobileMain />
         </>
       </PlanningProvider>
