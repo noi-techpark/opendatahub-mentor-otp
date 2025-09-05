@@ -228,6 +228,9 @@ const TaxiOverlay = (props: Props) => {
               'text-field': 'Taxi',
               'icon-anchor': 'top',
               'icon-image': 'taxi',
+              'icon-allow-overlap': false,
+              'text-allow-overlap': false,
+              'text-optional': true,
               'icon-size': 0.1
             }}
             paint={{

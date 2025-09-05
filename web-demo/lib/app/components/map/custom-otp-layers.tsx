@@ -55,7 +55,8 @@ const LAYER_CONFIG = {
       'icon-allow-overlap': true,
       'text-allow-overlap': true,
       'text-optional': true,
-      'text-field':  ["step", ["zoom"], ["get", "name"], 16, ["get", "platform"]],
+      // Only show stop names once zoomed in (>=18) to reduce clutter.
+      'text-field':  ["step", ["zoom"], ["get", "name"], 16, "", 17, ["get", "platform"]],
       'text-offset': [0, 1.0],
       'text-size': 12,
       'text-anchor': 'top'
@@ -149,7 +150,14 @@ const LAYER_CONFIG = {
         ],
       'icon-allow-overlap': true,
       'text-optional': true,
-      'text-field': ['get', 'name'],
+      'text-field':  ["step", ["zoom"], [
+        'match',
+        ['get', 'type'],
+        'BUS', '',
+        'RAIL,BUS', ["get", "name"],
+        "BUS,RAIL", ["get", "name"],
+        ""
+      ], 15, ["get", "name"], 16, ["get", "platform"]],
       'text-offset': [0, 1.0],
       'text-size': 12,
       'text-anchor': 'top',
@@ -267,7 +275,7 @@ const LAYER_CONFIG = {
       'icon-size': 0.1,
       'icon-allow-overlap': false,
       'text-optional': true,
-      'text-field': ['get', 'name'],
+      'text-field':  ["step", ["zoom"], "", 17, ["get", "name"]],
       'text-offset': [0, 1],
       'text-size': 12,
       'text-anchor': 'top'
@@ -340,7 +348,7 @@ const LAYER_CONFIG = {
     'icon-size': 0.15,
     'icon-allow-overlap': false,
     'text-optional': true,
-    'text-field': ['get', 'name'],
+    'text-field':  ["step", ["zoom"], "", 17, ["get", "name"]],
     'text-offset': [0, 1],
     'text-size': 12,
     'text-anchor': 'top'
