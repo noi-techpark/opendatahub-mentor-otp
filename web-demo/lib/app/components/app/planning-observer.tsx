@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 NOI Techpark <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: MIT
+
 import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 import { usePlanning } from '../../context/planning-context'

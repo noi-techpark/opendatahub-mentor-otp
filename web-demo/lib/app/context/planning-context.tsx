@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 NOI Techpark <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: MIT
+
 import React, { createContext, useContext, useMemo, useState } from 'react'
 
 type PlanningContextValue = {

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 NOI Techpark <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: MIT
+
 import React from 'react'
 // Reuse the previous OpenMove icons (journey implementation)
 // to render distinct glyphs for bikeshare (and other modes).
