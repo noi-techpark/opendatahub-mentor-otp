@@ -105,21 +105,35 @@ const ChargerOverlay = (props: Props) => {
         let features: GeoJSON.Feature[] = []
         for (let id in chargers) {
           let station = chargers[id]
-          if (station.coordinates) {
-            // Only display available stations
-            if (station.free > 0) {
-              features.push({
-                type: 'Feature',
-                geometry: {
-                  type: 'Point',
-                  coordinates: station.coordinates
-                },
-                properties: {
-                  ...station
-                }
-              })
-            }
+          if (!station.coordinates) continue
+
+          // Filter out chargers with unknown/undefined plug types.
+          const types = Array.isArray(station.plugsTypes) ? station.plugsTypes : []
+          const hasUnknownType = types.some(
+            (t: any) => String(t || '').toLowerCase() === 'unknown' || String(t || '').toLowerCase() === 'undefined'
+          )
+          let allPlugsUnknown = false
+          if (!types.length && Array.isArray(station.plugs)) {
+            allPlugsUnknown = station.plugs.length > 0 && station.plugs.every(
+              (p: any) => {
+                const code = String(p?.outletTypeCode || '').toLowerCase()
+                return !code || code === 'unknown' || code === 'undefined'
+              }
+            )
           }
+          if (hasUnknownType || allPlugsUnknown) continue
+
+          // Include station feature
+          features.push({
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: station.coordinates
+            },
+            properties: {
+              ...station
+            }
+          })
         }
 
         if (!isMountedRef.current) return
@@ -229,7 +243,7 @@ const ChargerOverlay = (props: Props) => {
           <Layer
             id="charger_noi"
             type="symbol"
-            minzoom={14}
+            minzoom={10}
             layout={{
               'text-anchor': 'bottom',
               'text-size': 12,
@@ -238,6 +252,7 @@ const ChargerOverlay = (props: Props) => {
               'icon-image': 'charger-icon',
               'icon-size': 1
             }}
+            filter={['any', ['>', ['get', 'free'], 0], ['>=', ['zoom'], 10]]}
             paint={{
               'icon-opacity': ['case', [">", ['get', 'free'], 0], 1.0, 0.3],
               'text-opacity': ['case', [">", ['get', 'free'], 0], 1.0, 0.3]
@@ -341,7 +356,7 @@ const ChargerOverlay = (props: Props) => {
             </div>
             </div>
             <div className="otp-ui-mapOverlayPopup__popupAvailableSlots">
-            {stickyInfo.properties.plugs.map((plug, key) => {
+            {(Array.isArray(stickyInfo.properties.plugs) && stickyInfo.properties.plugs.length > 0) ? stickyInfo.properties.plugs.map((plug, key) => {
                 const ava = plug.available ? "bg-success" : "bg-danger";
 
                 plug.maxPower = Math.round(plug.maxPower);
@@ -365,7 +380,9 @@ const ChargerOverlay = (props: Props) => {
                     </div>
                 </div>
                 );
-            })}
+            }) : (
+              <div style={{ padding: '8px 0' }}>No plug details available.</div>
+            )}
             </div>
 
             <div className="otp-ui-mapOverlayPopup__popupRow">
