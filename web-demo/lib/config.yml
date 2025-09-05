@@ -145,9 +145,6 @@ map:
     - type: taxi_noi
       name: Taxi
       url: https://mobility.api.opendatahub.com/v2/flat,node/ON_DEMAND_VEHICLE/*/latest?where=sorigin.eq.%22smart-taxi-merano%22
-    - type: traffic
-      name: Traffic
-      url: https://traffic.otp.opendatahub.com/traffic/linkstations.json
     - type: otp2
       layers:
         #- type: citybikes # overlaps with rental stations

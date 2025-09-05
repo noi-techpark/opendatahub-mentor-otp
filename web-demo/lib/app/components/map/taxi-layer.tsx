@@ -241,31 +241,6 @@ const TaxiOverlay = (props: Props) => {
         </Source>
       )}
 
-      {/* Render popups using react-map-gl's Popup */}
-      {/* {hoverInfo && (
-        <Popup
-          longitude={hoverInfo.longitude}
-          latitude={hoverInfo.latitude}
-          closeButton={false}
-          offsetTop={-10}
-          anchor="top"
-        >
-          <div className="otp-ui-mapOverlayPopup">
-            <div className="otp-ui-mapOverlayPopup__popupHeader">
-              Taxi
-            </div>
-            <div className="otp-ui-mapOverlayPopup__popupTitle">
-              {hoverInfo.properties.Name}
-            </div>
-            <div className="otp-ui-mapOverlayPopup__popupRow">
-              State: {hoverInfo.properties.State}
-            </div>
-            <div className="otp-ui-mapOverlayPopup__popupRow">
-              Region: {hoverInfo.properties.Region}
-            </div>
-          </div>
-        </Popup>
-      )} */}
       {stickyInfo && (
         <Popup
           longitude={stickyInfo.longitude}
