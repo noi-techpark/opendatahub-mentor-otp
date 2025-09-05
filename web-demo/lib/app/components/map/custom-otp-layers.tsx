@@ -282,7 +282,27 @@ const LAYER_CONFIG = {
   vehicleParking: {
     type: 'symbol',
     layout: {
-    'icon-image': 'parking-icon',
+    'icon-image': [
+      'case',
+      [
+        'all',
+        //['==', ['get', 'realTimeData'], true],
+        [
+          'any',
+          ['>', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
+          ['>', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
+        ]
+      ],
+      'parking-available-icon',
+      [
+        'all',
+        //['==', ['get', 'realTimeData'], true],
+        ['<=', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
+        ['<=', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
+      ],
+      'parking-unavailable-icon',
+      'parking-icon'
+    ],
     'icon-size': 0.15,
     'icon-allow-overlap': false,
     'text-optional': true,
@@ -376,26 +396,35 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
     if (!map) return
     const mapInstance = map.getMap()
     if (!mapInstance) return
-    // Parking icon
-    if (!mapInstance.hasImage('parking-icon')) {
-        const busSvgString = ReactDOMServer.renderToStaticMarkup(
-          <Parking />
+    // Parking icon and availability variants
+    {
+      const parkingSvgString = ReactDOMServer.renderToStaticMarkup(<Parking />)
+      const baseUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(parkingSvgString)}`
+      const makeVariant = (color: string) => {
+        // Inject a prominent corner circle (top-right) into the base SVG.
+        // Coordinates chosen for FA-style viewBox (≈ 448x512) so the dot is clearly visible.
+        const withDot = parkingSvgString.replace(
+          '</svg>',
+          `<circle cx="380" cy="85" r="60" fill="${color}" stroke="#ffffff" stroke-width="20"/></svg>`
         )
-        const busDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-          busSvgString
-        )}`
-        const busIcon = new Image()
-        
-        busIcon.width = 131  // Set appropriate size
-        busIcon.height = 150 // Set appropriate size
-        
-        busIcon.onload = () => {
-          if (!mapInstance.hasImage('parking-icon')) {
-            mapInstance.addImage('parking-icon', busIcon, {sdf: true})
-          }
-        }
-        busIcon.src = busDataUrl
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
       }
+      const addImg = (name: string, src: string) => {
+        if (mapInstance.hasImage(name)) return
+        const img = new Image()
+        img.width = 131
+        img.height = 150
+        img.onload = () => {
+          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
+        }
+        img.src = src
+      }
+      console.log(baseUrl);
+      console.log(makeVariant('#22c55e'));
+      addImg('parking-icon', baseUrl)
+      addImg('parking-available-icon', makeVariant('#22c55e'))
+      addImg('parking-unavailable-icon', makeVariant('#ef4444'))
+    }
     // Bus icon
     if (!mapInstance.hasImage('bus-icon')) {
       const busSvgString = ReactDOMServer.renderToStaticMarkup(
@@ -753,61 +782,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
           maxzoom={20}
         />
       )}
-      {sourceLayerName === 'vehicleParking' && (
-        <>
-          {/* Green dot when realtime indicates some slots available (car or bicycle). */}
-          <Layer
-            id="otp-vehicleParking-available"
-            type="circle"
-            source="otp-source"
-            {...{ 'source-layer': sourceLayerName }}
-            layout={{}}
-            paint={{
-              'circle-radius': 3.5,
-              'circle-color': '#22c55e',
-              'circle-opacity': 1,
-              'circle-stroke-color': '#ffffff',
-              'circle-stroke-width': 1,
-              'circle-translate': [10, -10],
-              'circle-translate-anchor': 'viewport'
-            }}
-            filter={[
-              'all',
-              [
-                'any',
-                ['>', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
-                ['>', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
-              ]
-            ]}
-            minzoom={14}
-            maxzoom={20}
-          />
-          {/* Red dot when realtime present but no slots available. */}
-          <Layer
-            id="otp-vehicleParking-unavailable"
-            type="circle"
-            source="otp-source"
-            {...{ 'source-layer': sourceLayerName }}
-            layout={{}}
-            paint={{
-              'circle-radius': 3.5,
-              'circle-color': '#ef4444',
-              'circle-opacity': 1,
-              'circle-stroke-color': '#ffffff',
-              'circle-stroke-width': 1,
-              'circle-translate': [10, -10],
-              'circle-translate-anchor': 'viewport'
-            }}
-            filter={[
-              'all',
-              ['<=', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
-              ['<=', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
-            ]}
-            minzoom={14}
-            maxzoom={20}
-          />
-        </>
-      )}
+      {/* Parking availability indicators are now part of the icon variant. */}
       {/*{hoverInfo && (
         <Popup
           maxWidth="none"
