@@ -54,6 +54,7 @@ const LAYER_CONFIG = {
       'icon-size': ['match', ['get', 'type'], 'BUS', 0.1, 'RAIL', 0.15, 0.1],
       'icon-allow-overlap': true,
       'text-allow-overlap': true,
+      'text-optional': true,
       'text-field':  ["step", ["zoom"], ["get", "name"], 16, ["get", "platform"]],
       'text-offset': [0, 1.0],
       'text-size': 12,
@@ -147,6 +148,7 @@ const LAYER_CONFIG = {
         0.15
         ],
       'icon-allow-overlap': true,
+      'text-optional': true,
       'text-field': ['get', 'name'],
       'text-offset': [0, 1.0],
       'text-size': 12,
@@ -206,7 +208,7 @@ const LAYER_CONFIG = {
     layout: {
       'icon-image': 'scooter-icon', 
       'icon-size': 0.1,
-      'icon-allow-overlap': false,
+      'icon-allow-overlap': true,
       'text-field': ['get', 'name'],
       'text-offset': [0, 1],
       'text-size': 10,
@@ -230,6 +232,7 @@ const LAYER_CONFIG = {
       ],
       'icon-size': 0.1,
       'icon-allow-overlap': false,
+      'text-optional': true,
       'text-field': ['get', 'name'],
       'text-offset': [0, 1],
       'text-size': 12,
@@ -267,6 +270,7 @@ const LAYER_CONFIG = {
               {!formFactors.includes('BICYCLE') && !formFactors.includes('CAR') &&
                 `${properties.vehiclesAvailable} vehicles available`
               }
+              {JSON.stringify(properties)}
             </div>
           </div>
           <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
@@ -282,6 +286,7 @@ const LAYER_CONFIG = {
     'icon-image': 'parking-icon',
     'icon-size': 0.15,
     'icon-allow-overlap': false,
+    'text-optional': true,
     'text-field': ['get', 'name'],
     'text-offset': [0, 1],
     'text-size': 12,
@@ -627,6 +632,26 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
       {/* For stops, render extra highlight layers */}
       {sourceLayerName === 'stops' && (
         <>
+          {/* Small green dot indicating realtime availability */}
+          <Layer
+            id="otp-stops-realtime"
+            type="circle"
+            source="otp-source"
+            {...{ 'source-layer': sourceLayerName }}
+            layout={{}}
+            paint={{
+              'circle-radius': 3,
+              'circle-color': '#22c55e',
+              'circle-opacity': 1,
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': 1,
+              'circle-translate': [8, -8],
+              'circle-translate-anchor': 'viewport'
+            }}
+            filter={['all', ['==', ['get', 'realTimeData'], true]]}
+            minzoom={16}
+            maxzoom={20}
+          />
           <Layer
             id="otp-stops-highlight"
             type="circle"
@@ -685,6 +710,49 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
             maxzoom={20}
           />
         </>
+      )}
+      {sourceLayerName === 'rentalStations' && (
+        <Layer
+          id="otp-rentalVehicles-realtime"
+          type="circle"
+          source="otp-source"
+          {...{ 'source-layer': sourceLayerName }}
+          layout={{}}
+          paint={{
+            'circle-radius': 3,
+            'circle-color': '#22c55e',
+            'circle-opacity': 1,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 1,
+            'circle-translate': [8, -8],
+            'circle-translate-anchor': 'viewport'
+          }}
+          filter={['all', ['==', ['get', 'operative'], true]]}
+          minzoom={16}
+          maxzoom={20}
+        />
+      )}
+      {/* For stations, render realtime indicator as well */}
+      {sourceLayerName === 'stations' && (
+        <Layer
+          id="otp-stations-realtime"
+          type="circle"
+          source="otp-source"
+          {...{ 'source-layer': sourceLayerName }}
+          layout={{}}
+          paint={{
+            'circle-radius': 3.5,
+            'circle-color': '#22c55e',
+            'circle-opacity': 1,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 1,
+            'circle-translate': [10, -10],
+            'circle-translate-anchor': 'viewport'
+          }}
+          filter={['all', ['==', ['get', 'realTimeData'], true]]}
+          minzoom={12}
+          maxzoom={20}
+        />
       )}
       {/*{hoverInfo && (
         <Popup
