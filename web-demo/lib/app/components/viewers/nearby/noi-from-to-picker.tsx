@@ -8,9 +8,8 @@ import FromToLocationPicker from '@opentripplanner/from-to-location-picker'
 import React, { useCallback, useMemo } from 'react'
 import { usePlanning } from '../../../context/planning-context'
 
-import {
-  setLocation
-} from '@otp-react-redux/lib/actions/map'
+import { setLocation } from '@otp-react-redux/lib/actions/map'
+import { setMainPanelContent } from '@otp-react-redux/lib/actions/ui'
 import {
   clearLocation
 } from '@otp-react-redux/lib/actions/form'
@@ -27,6 +26,7 @@ interface Props {
   handlePlanTripClick: () => void
   routingQuery: () => void
   clearLocation: (arg: { locationType: 'from' | 'to' }) => void
+  setMainPanelContent: (payload: any) => void
 }
 
 const NoiFromToPicker = ({
@@ -36,7 +36,8 @@ const NoiFromToPicker = ({
   handlePlanTripClick,
   query,
   routingQuery,
-  clearLocation
+  clearLocation,
+  setMainPanelContent
 }: Props) => {
   const { setIsPlanning } = usePlanning()
   const location = useMemo(
@@ -57,15 +58,19 @@ const NoiFromToPicker = ({
           clearLocation({ locationType: 'from' })
           clearLocation({ locationType: 'to' })
           setIsPlanning(true)
+          // Ensure we leave Nearby view and show the main planning panel.
+          setMainPanelContent(null)
           setLocation({ location, locationType: 'from', reverseGeocode: false })
-        }, [location, setLocation, clearLocation, setIsPlanning])}
+        }, [location, setLocation, clearLocation, setIsPlanning, setMainPanelContent])}
         onToClick={useCallback(() => {
           handlePlanTripClick && handlePlanTripClick()
           clearLocation({ locationType: 'from' })
           clearLocation({ locationType: 'to' })
           setIsPlanning(true)
+          // Ensure we leave Nearby view and show the main planning panel.
+          setMainPanelContent(null)
           setLocation({ location, locationType: 'to', reverseGeocode: false })
-        }, [location, setLocation, clearLocation, setIsPlanning])}
+        }, [location, setLocation, clearLocation, setIsPlanning, setMainPanelContent])}
       />
     </span>
   )
@@ -74,7 +79,8 @@ const NoiFromToPicker = ({
 const mapDispatchToProps = {
   setLocation,
   clearLocation,
-  routingQuery
+  routingQuery,
+  setMainPanelContent
 }
 
 const mapStateToProps = (state) => {
