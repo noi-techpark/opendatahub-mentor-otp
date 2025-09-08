@@ -160,12 +160,17 @@ class PoiViewer extends Component<Props, State> {
           poiId: selectedPlace.rawGeocodedFeature.properties.source_id
         };
       } else {
-        let poiData = selectedPlace.rawGeocodedFeature.properties;
+        const feature = selectedPlace.rawGeocodedFeature
+        const poiData = {
+          ...feature.properties,
+          lat: feature.geometry.coordinates[1],
+          lon: feature.geometry.coordinates[0]
+        }
         this.state = {
-            date: getCurrentDate(props.homeTimezone),
-            poiData,
-            poiId: selectedPlace.rawGeocodedFeature.properties.source_id
-        };
+          date: getCurrentDate(props.homeTimezone),
+          poiData,
+          poiId: feature.properties.source_id
+        }
       }
     } else {
         this.state = getDefaultState(props.homeTimezone);
@@ -193,12 +198,17 @@ class PoiViewer extends Component<Props, State> {
             poiId: selectedPlace.rawGeocodedFeature.properties.source_id
           });
         } else {
-          let poiData = selectedPlace.rawGeocodedFeature.properties;
+          const feature = selectedPlace.rawGeocodedFeature
+          const poiData = {
+            ...feature.properties,
+            lat: feature.geometry.coordinates[1],
+            lon: feature.geometry.coordinates[0]
+          }
           this.setState({
-              date: getCurrentDate(this.props.homeTimezone),
-              poiData,
-              poiId: selectedPlace.rawGeocodedFeature.properties.source_id
-          });
+            date: getCurrentDate(this.props.homeTimezone),
+            poiData,
+            poiId: feature.properties.source_id
+          })
         }
       } else if (selectedPlace && selectedPlace.properties) {
         let poiData = selectedPlace.properties;

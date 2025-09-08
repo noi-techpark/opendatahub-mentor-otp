@@ -6,8 +6,13 @@ import { connect } from 'react-redux'
 import { Place } from '@opentripplanner/types'
 import FromToLocationPicker from '@opentripplanner/from-to-location-picker'
 import React, { useCallback, useMemo } from 'react'
+import { usePlanning } from '../../../context/planning-context'
 
-import * as mapActions from '@otp-react-redux/lib/actions/map'
+import { setLocation } from '@otp-react-redux/lib/actions/map'
+import { setMainPanelContent } from '@otp-react-redux/lib/actions/ui'
+import {
+  clearLocation
+} from '@otp-react-redux/lib/actions/form'
 import { SetLocationHandler } from '@otp-react-redux/lib/components/util/types'
 import { MapboxGeoJSONFeature } from 'react-map-gl'
 import { setQueryParam } from '@otp-react-redux/lib/actions/form'
@@ -16,13 +21,25 @@ import { routingQuery } from '@otp-react-redux/lib/actions/api'
 interface Props {
   query: any
   className?: string
-  place: Place | MapboxGeoJSONFeature 
+  place: Place | MapboxGeoJSONFeature
   setLocation: SetLocationHandler
   handlePlanTripClick: () => void
   routingQuery: () => void
+  clearLocation: (arg: { locationType: 'from' | 'to' }) => void
+  setMainPanelContent: (payload: any) => void
 }
 
-const NoiFromToPicker = ({ className, place, setLocation, handlePlanTripClick, query, routingQuery }: Props) => {
+const NoiFromToPicker = ({
+  className,
+  place,
+  setLocation,
+  handlePlanTripClick,
+  query,
+  routingQuery,
+  clearLocation,
+  setMainPanelContent
+}: Props) => {
+  const { setIsPlanning } = usePlanning()
   const location = useMemo(
     () => ({
       lat: place.lat ?? place.geometry.coordinates[1],
@@ -35,35 +52,41 @@ const NoiFromToPicker = ({ className, place, setLocation, handlePlanTripClick, q
   return (
     <span className={className} role="group">
       <FromToLocationPicker
-        label
+        label={false}
         onFromClick={useCallback(() => {
           handlePlanTripClick && handlePlanTripClick()
+          clearLocation({ locationType: 'from' })
+          clearLocation({ locationType: 'to' })
+          setIsPlanning(true)
+          // Ensure we leave Nearby view and show the main planning panel.
+          setMainPanelContent(null)
           setLocation({ location, locationType: 'from', reverseGeocode: false })
-        }, [location, setLocation])}
+        }, [location, setLocation, clearLocation, setIsPlanning, setMainPanelContent])}
         onToClick={useCallback(() => {
-          let from = query.to;
           handlePlanTripClick && handlePlanTripClick()
-          //setLocation({ location: null, locationType: 'to', reverseGeocode: false })
-          setLocation({ location: from, locationType: 'from', reverseGeocode: false })
+          clearLocation({ locationType: 'from' })
+          clearLocation({ locationType: 'to' })
+          setIsPlanning(true)
+          // Ensure we leave Nearby view and show the main planning panel.
+          setMainPanelContent(null)
           setLocation({ location, locationType: 'to', reverseGeocode: false })
-          setTimeout(() => {routingQuery(), 100});
-          //setQueryParam({ entityId: place.properties?.id })
-
-        }, [location, setLocation])}
+        }, [location, setLocation, clearLocation, setIsPlanning, setMainPanelContent])}
       />
     </span>
   )
 }
 
 const mapDispatchToProps = {
-  setLocation: mapActions.setLocation,
-  routingQuery: routingQuery
+  setLocation,
+  clearLocation,
+  routingQuery,
+  setMainPanelContent
 }
 
 const mapStateToProps = (state) => {
   return {
     query: state.otp.currentQuery
-  };
+  }
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(NoiFromToPicker)

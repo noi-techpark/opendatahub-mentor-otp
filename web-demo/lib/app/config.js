@@ -11,7 +11,8 @@
  * - other files
  * - modules not installed in the node_modules of this project.
  */
-import { ClassicLegIcon, ClassicModeIcon } from '@opentripplanner/icons'
+import { ClassicLegIcon } from '@opentripplanner/icons'
+import NoiModeIcon from './noi-mode-icon'
 import React from 'react'
 
 import {
@@ -23,7 +24,7 @@ import {
 
 const ItineraryBody = MetroItinerary
 const LegIcon = ClassicLegIcon
-const ModeIcon = ClassicModeIcon
+const ModeIcon = NoiModeIcon
 /**
  * Renders additional information below itinerary details.
  */

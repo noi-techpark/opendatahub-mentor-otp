@@ -95,6 +95,10 @@ function getNearbyCoordsFromUrlOrLocationOrMapCenter(
     return { lat, lon }
   }
 
+  if (currentPosition && currentPosition.lat && currentPosition.lon) {
+    return { lat: currentPosition.lat, lon: currentPosition.lon }
+  }
+
   const rawMapCoords = map?.getCenter()
   const mapCoords = rawMapCoords !== undefined && {
     lat: rawMapCoords.lat,
@@ -131,14 +135,7 @@ function NoiNearbyView({
   const intl = useIntl()
   const [loading, setLoading] = useState(true)
   const firstItemRef = useRef<HTMLDivElement>(null)
-  
-  useEffect(() => {
-      if(currentQuery.to) { 
-        console.debug("set viewed coords", currentQuery.to);
-        setTimeout(() => 
-        setViewedNearbyCoords({lat: currentQuery.to.lat, lon: currentQuery.to.lon}), 100);
-      }
-  }, [currentQuery]);
+  const oldTo = useRef<any>()
 
 
   const finalNearbyCoords = useMemo(
@@ -149,7 +146,7 @@ function NoiNearbyView({
         map,
         defaultLatLon
       ),
-    [nearbyViewCoords, currentQuery, map]
+    [nearbyViewCoords, currentQuery.to, map]
   )
 
   // Make sure the highlighted location is cleaned up when leaving nearby

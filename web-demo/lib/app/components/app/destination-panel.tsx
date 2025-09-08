@@ -4,7 +4,7 @@
 
 import { connect } from 'react-redux'
 import { FormattedMessage, injectIntl, IntlShape } from 'react-intl'
-import React, { Component, FormEvent } from 'react'
+import React, { Component } from 'react'
 import { replace } from 'connected-react-router'
 
 import {
@@ -29,6 +29,7 @@ import * as uiActions from '@otp-react-redux/lib/actions/ui'
 import * as formActions from '@otp-react-redux/lib/actions/form'
 
 import NoiNearbyView from '../viewers/nearby/noi-nearby-view'
+import { PlanningContext } from '../../context/planning-context'
 
 interface Props {
   routeTo: (url: string, arg2: any, arg3: any) => void
@@ -49,16 +50,13 @@ class DestinationPanel extends Component<Props> {
   state = {
     planTripClicked: false
   }
-  handleSubmit = (e: FormEvent) => e.preventDefault()
+  // No real form submission is needed; avoid browser form semantics to prevent
+  // "Form submission canceled because the form is not connected" warnings.
   
   handlePlanTripClick = () => {
-    if(this.props.query.to) {
-      this.props.routeTo(
-        "/nearby/" + this.props.query.to.lat + "," + this.props.query.to.lon,
-        "",
-        replace
-      )
-    }
+    // Also flip global planning state so welcome overlay/nearby list hide.
+    const ctx: any = (this as any).context
+    if (ctx && typeof ctx.setIsPlanning === 'function') ctx.setIsPlanning(true)
     setTimeout(()=> this.setState({ planTripClicked: true }), 100)
   }
 
@@ -71,6 +69,8 @@ class DestinationPanel extends Component<Props> {
   render() {
     const { activeSearch, intl, mobile, query, showUserSettings, isViewingStop } = this.props
     const { planTripClicked } = this.state
+    const planningCtx: any = (this as any).context || { isPlanning: false }
+    const isPlanning = planningCtx.isPlanning
 
     let validLocationsStop = ['Stop', 'RentalVehicle', 'VehicleParking', 'BikeRentalStation'];
     let validLocationsPoi = ['Stop', 'RentalVehicle', 'VehicleParking', 'BikeRentalStation'];
@@ -97,18 +97,17 @@ class DestinationPanel extends Component<Props> {
             <FormattedMessage id="components.BatchSearchScreen.header" />
           </h1>
         </InvisibleA11yLabel>
-        {!(planTripClicked || query.from) && query.to && (<div>
+        {/* Keep both sections mounted; toggle visibility to avoid unmount-time async updates. */}
+        <div style={{ display: !(isPlanning || query.from) && query.to ? 'block' : 'none' }}>
           <PoiViewer
             handlePlanTripClick={this.handlePlanTripClick}
             hideBackButton
             selectedPlace={query.to}
           />
-        </div>)}
-        {(planTripClicked || query.from) && (
-        <form
+        </div>
+        <div
           className="form"
-          onSubmit={this.handleSubmit}
-          style={{ padding: '10px' }}
+          style={{ padding: '10px', display: (isPlanning || query.from) ? 'block' : 'none' }}
         >
           <span className="batch-routing-panel-location-fields">
               <LocationField
@@ -118,7 +117,7 @@ class DestinationPanel extends Component<Props> {
                 )}
                 isRequired
                 locationType="from"
-                selfValidate={planTripClicked}
+                selfValidate={planTripClicked || isPlanning}
                 showClearButton={!mobile}
               />
               <LocationField
@@ -128,7 +127,7 @@ class DestinationPanel extends Component<Props> {
                 )}
                 isRequired
                 locationType="to"
-                selfValidate={planTripClicked}
+                selfValidate={planTripClicked || isPlanning}
                 showClearButton={!mobile}
               />
               <div className="switch-button-container">
@@ -136,8 +135,7 @@ class DestinationPanel extends Component<Props> {
               </div>
           </span>
           <BatchSettings  />
-        </form>
-        )}
+        </div>
         
         {/* !activeSearch && showUserSettings && (
           <UserSettings style={{ margin: '0 10px', overflowY: 'auto' }} />
@@ -153,7 +151,7 @@ class DestinationPanel extends Component<Props> {
             <NarrativeItineraries />
           </div>
         )}
-        {!(planTripClicked || query.from) &&
+        {!(isPlanning || query.from) &&
           <NoiNearbyView
             handlePlanTripClick={this.handlePlanTripClick}
             validLocations={query.to?.rawGeocodedFeature?.properties?.layer === 'stops' ? validLocationsStop : validLocationsPoi }
@@ -197,3 +195,6 @@ export default connect(
   mapStateToProps,
   mapDispatchToProps
 )(injectIntl(DestinationPanel))
+
+// Attach planning context to class component
+;(DestinationPanel as any).contextType = PlanningContext

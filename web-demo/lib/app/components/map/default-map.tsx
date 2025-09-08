@@ -40,6 +40,7 @@ import OTPVectorLayer from './custom-otp-layers';
 import ElevationPointMarker from '@otp-react-redux/lib/components/map/elevation-point-marker'
 import EndpointsOverlay from '@otp-react-redux/lib/components/map/connected-endpoints-overlay'
 import TaxiLayer from './taxi-layer'
+import ChargerOverlay from './charger-layer'
 import GeoJsonLayer from '@otp-react-redux/lib/components/map/connected-geojson-layer'
 import ItinSummaryOverlay from '@otp-react-redux/lib/components/map/itinerary-summary-overlay'
 import NearbyViewDotOverlay from '@otp-react-redux/lib/components/map/nearby-view-dot-overlay'
@@ -136,12 +137,11 @@ function getLayerName(overlay, config, intl) {
     case 'stations':
       return intl.formatMessage({ id: 'components.MapLayers.stations' })
     case 'rentalVehicles':
-      //if (overlay.network)
-      //  return getCompanyNames([overlay.network], config, intl)
-
       return intl.formatMessage({ id: 'components.MapLayers.shared-vehicles' })
     case 'taxi_noi':
       return <IconWithText Icon={Taxi}>Taxi</IconWithText>
+    case 'charger':
+      return <IconWithText Icon={Car}>E-Charger</IconWithText>
     case 'vehicleParking':
       return <IconWithText Icon={Parking}>Parking</IconWithText>
     case 'otp2':
@@ -317,6 +317,12 @@ class DefaultMap extends Component {
     const baseLayerUrls = baseLayersWithNames?.map((bl) => bl.url)
     const baseLayerNames = baseLayersWithNames?.map((bl) => bl.name)
 
+    // Build a single shared vector source for all otp2 layer types to avoid
+    // duplicate sources and ordering issues.
+    const otp2LayerTypes = (overlays || [])
+      .filter((o) => o.type === 'otp2')
+      .flatMap((o) => (o.layers || []).map((l) => l.type))
+
     return (
       <MapContainer className="percy-hide">
         <BaseMap
@@ -347,17 +353,19 @@ class DefaultMap extends Component {
           <TripViewerOverlay />
           <ElevationPointMarker />
 
-          {/* Specific overlay sources */}
-          {overlays?.map((overlayConfig, k) => {
-            switch (overlayConfig.type) {
-              case 'otp2':
-                return <><Source id="otp-source" type="vector" url={vectorTilesEndpoint +
-                        '/' +
-                        overlayConfig.layers.map((l) => l.type).join(',') +
-                        '/tilejson.json'
-                  }></Source></>
-            }
-          })}
+          {/* Shared vector source for OTP2 tile layers */}
+          {otp2LayerTypes.length > 0 && (
+            <><Source
+              id="otp-source"
+              type="vector"
+              url={
+                vectorTilesEndpoint +
+                '/' +
+                otp2LayerTypes.join(',') +
+                '/tilejson.json'
+              }
+            /></>
+          )}
           {/* The configurable overlays */}
           {overlays?.map((overlayConfig, k) => {
             const namedLayerProps = {
@@ -370,6 +378,10 @@ class DefaultMap extends Component {
               case 'taxi_noi':
                 return (
                   <TaxiLayer {...namedLayerProps} url={overlayConfig.url} />
+                )
+              case 'charger':
+                return (
+                  <ChargerOverlay {...namedLayerProps} url={overlayConfig.url} />
                 )
               case 'geojson':
                 return (

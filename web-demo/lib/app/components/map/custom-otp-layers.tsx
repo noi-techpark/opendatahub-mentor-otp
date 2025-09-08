@@ -8,53 +8,18 @@ import { Label as BsLabel } from 'react-bootstrap'
 import ReactDOMServer from 'react-dom/server'
 import { FormattedMessage, injectIntl } from 'react-intl'
 import { ClassicModeIcon } from '@opentripplanner/icons'
-import { Bicycle, Bus, C, Car, Parking, Train } from '@styled-icons/fa-solid'
+import { Parking } from '@styled-icons/fa-solid'
 import { Rss } from '@styled-icons/fa-solid/Rss'
 import { Wheelchair } from '@styled-icons/fa-solid/Wheelchair'
 import { setViewedStop } from '@otp-react-redux/lib/actions/ui'
 import { setLocation } from '@otp-react-redux/lib/actions/map'
 import { IconWithText } from '@otp-react-redux/lib/components/util/styledIcon'
 import styled from 'styled-components'
-import { Card, CardBody, CardHeader, CardSubheader, CardTitle, CardAside } from '@otp-react-redux/lib/components/viewers/nearby/styled'
 import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
-import { grey } from '@otp-react-redux/lib/components/util/colors'
 import { connect } from 'react-redux'
 import { Button } from '@opentripplanner/endpoints-overlay/lib/styled'
 
-//  
-const StyledCard = styled(Card)`
-  text-align: center;
-`
 
-const StyledCardHeader = styled(CardHeader)`
-  align-items: center;
-  display: grid;
-`
-
-const StyledCardTitle = styled(CardTitle)`
-  align-items: center;
-  display: block;
-`
-
-const StyledCardSubheader = styled(CardSubheader)`
-  color: ${grey[900]};
-  font-size: 16px;
-  font-weight: 400;
-  grid-column: 1;
-  margin: 0;
-`
-const StyledCardAside = styled(CardAside)`
-  color: ${grey[900]}
-  grid-column: -1;
-  grid-row: 1;
-  text-align: right;
-`
-
-const StyledCardBody = styled(CardBody)`
-  margin-bottom: 1rem;
-  margin-top: 1rem;
-  padding: 0rem 1.2rem;
-`
 
 const PulsingRss = styled(Rss)`
   animation: pulse-opacity 2s ease-in-out infinite;
@@ -76,6 +41,9 @@ const LAYER_CONFIG = {
         ['>', ['length', ['get', 'routes']], 0]
       ]
     ],
+    paint: {
+        'icon-opacity': 0.7,
+    },
     layout: {
       'icon-image': [
         'match',
@@ -84,54 +52,41 @@ const LAYER_CONFIG = {
         'bus-icon',
         'RAIL',
         'rail-icon',
-        'default-icon'
+        'rail-icon'
       ],
       'icon-size': ['match', ['get', 'type'], 'BUS', 0.1, 'RAIL', 0.15, 0.1],
-      'icon-allow-overlap': false,
-      'text-field': ['get', 'name'],
+      'icon-allow-overlap': true,
+      'text-allow-overlap': true,
+      'text-optional': true,
+      // Only show stop names once zoomed in (>=18) to reduce clutter.
+      'text-field':  ["step", ["zoom"], ["get", "name"], 16, "", 17, ["get", "platform"]],
       'text-offset': [0, 1.0],
       'text-size': 12,
       'text-anchor': 'top'
     },
-    minzoom: 17,
+    minzoom: 16,
     maxzoom: 20,
     popupRenderer: (properties, hoverInfo, setViewedStop, setLocation) => {
-      let routesCount = 0
-      try {
-        const parsedRoutes =
-          typeof properties.routes === 'string'
-            ? JSON.parse(properties.routes)
-            : properties.routes
-        if (Array.isArray(parsedRoutes)) routesCount = parsedRoutes.length
-      } catch (err) {
-        routesCount = 0
-      }
       return (
-        <div style={{width: '300px'}}>
-          <StyledCard>
-            <StyledCardHeader>
-              <StyledCardTitle>
-              {properties.type.includes('BUS') && 
-                  <IconWithText icon={<ClassicModeIcon mode="bus" />}>
-                  </IconWithText>}
-              {properties.type.includes('RAIL') && 
-                  <IconWithText icon={<ClassicModeIcon mode="rail" />}>
-                  </IconWithText>}
-                  <Button onClick={() => { setViewedStop({...properties, stopId: properties.gtfsId}, "nearby");}}>{properties.name}</Button>
-              </StyledCardTitle>
-              <StyledCardSubheader>
-                <strong>Platform:</strong> {properties.platform}
-              </StyledCardSubheader>
-              <StyledCardAside>
-                {properties.realTimeData && (
-                  <PulsingRss width="16px" />
-                )}
-              </StyledCardAside>
-            </StyledCardHeader>
-            <StyledCardBody>
-                <NoiFromToPicker place={hoverInfo} />
-            </StyledCardBody>
-          </StyledCard>
+        <div className="otp-ui-mapOverlayPopup" style={{width: '300px'}}>
+          <div className="otp-ui-mapOverlayPopup__popupHeader">
+            {properties.type.includes('BUS') && <IconWithText icon={<ClassicModeIcon mode="bus" />} />}
+            {properties.type.includes('RAIL') && <IconWithText icon={<ClassicModeIcon mode="rail" />} />}
+            &nbsp;
+            Stop
+            {properties.realTimeData && (
+              <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
+            )}
+          </div>
+          <div className="otp-ui-mapOverlayPopup__popupTitle" style={{padding: '5px 0'}}>
+            <Button onClick={() => { setViewedStop({...properties, stopId: properties.gtfsId}, "nearby");}}>{properties.name}</Button>
+          </div>
+          {properties.platform && <div>
+            <strong>Platform:</strong> {properties.platform}
+          </div>}
+          <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
+            <NoiFromToPicker place={hoverInfo} />
+          </div>
         </div>
       )
     }
@@ -162,7 +117,7 @@ const LAYER_CONFIG = {
       [">=", ["zoom"],
         ["match", ["get", "type"],
             "BUS",  // rank
-            14, // minimum zoom level
+            15, // minimum zoom level
             "RAIL",  // etc.
             1,
             "BUS,RAIL",
@@ -173,6 +128,9 @@ const LAYER_CONFIG = {
         ]
       ]
     ],
+    paint: {
+      'icon-opacity': 0.8,
+    },
     layout: {
       'icon-image': [
         'match',
@@ -196,8 +154,16 @@ const LAYER_CONFIG = {
         'RAIL', 0.15,
         0.15
         ],
-      'icon-allow-overlap': false,
-      'text-field': ['get', 'name'],
+      'icon-allow-overlap': true,
+      'text-optional': true,
+      'text-field':  ["step", ["zoom"], [
+        'match',
+        ['get', 'type'],
+        'BUS', '',
+        'RAIL,BUS', ["get", "name"],
+        "BUS,RAIL", ["get", "name"],
+        ""
+      ], 16, ["get", "platform"]],
       'text-offset': [0, 1.0],
       'text-size': 12,
       'text-anchor': 'top',
@@ -212,44 +178,25 @@ const LAYER_CONFIG = {
         ],
     },
     minzoom: 1,
-    maxzoom: 17,
+    maxzoom: 16,
     popupRenderer: (properties, hoverInfo) => {
-      let routesCount = 0
-      try {
-        const parsedRoutes =
-          typeof properties.routes === 'string'
-            ? JSON.parse(properties.routes)
-            : properties.routes
-        if (Array.isArray(parsedRoutes)) routesCount = parsedRoutes.length
-      } catch (err) {
-        routesCount = 0
-      }
       return (
-        <div style={{width: '300px'}}>
-          <StyledCard>
-            <StyledCardHeader>
-              <StyledCardTitle>
-              {properties.type.includes('BUS') && 
-                  <IconWithText icon={<ClassicModeIcon mode="bus" />}>
-                  </IconWithText>}
-              {properties.type.includes('RAIL') && 
-                  <IconWithText icon={<ClassicModeIcon mode="rail" />}>
-                  </IconWithText>}
-              {properties.name}
-              </StyledCardTitle>
-              <StyledCardAside>
-                {properties.realTimeData && (
-                  <PulsingRss width="16px" />
-                )}
-              </StyledCardAside>
-            </StyledCardHeader>
-            <StyledCardBody>
-                <br />
-
-                <NoiFromToPicker place={hoverInfo} />
-
-            </StyledCardBody>
-          </StyledCard>
+        <div className="otp-ui-mapOverlayPopup" style={{width: '300px'}}>
+          <div className="otp-ui-mapOverlayPopup__popupHeader">
+            {properties.type.includes('BUS') && <IconWithText icon={<ClassicModeIcon mode="bus" />} />}
+            {properties.type.includes('RAIL') && <IconWithText icon={<ClassicModeIcon mode="rail" />} />}
+            &nbsp;
+            Station
+            {properties.realTimeData && (
+              <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
+            )}
+          </div>
+          <div className="otp-ui-mapOverlayPopup__popupTitle" style={{padding: '5px 0'}}>
+            {properties.name}
+          </div>
+          <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
+            <NoiFromToPicker place={hoverInfo} />
+          </div>
         </div>
       )
     }
@@ -275,7 +222,7 @@ const LAYER_CONFIG = {
     layout: {
       'icon-image': 'scooter-icon', 
       'icon-size': 0.1,
-      'icon-allow-overlap': false,
+      'icon-allow-overlap': true,
       'text-field': ['get', 'name'],
       'text-offset': [0, 1],
       'text-size': 10,
@@ -289,59 +236,93 @@ const LAYER_CONFIG = {
     filter: ['!=', 'formFactors', ''],
     layout: {
       'icon-image': [
-        'match',
-        ['get', 'formFactors'],
-        'BICYCLE', 'bicycle-icon',
-        'CAR', 'car-icon',
-        'BICYCLE,CAR', 'car-icon',
-        'CAR,BICYCLE', 'car-icon',
-        /* default */ 'default-icon'
+        'case',
+        // Realtime and vehicles available -> available variant
+        [
+          'all',
+          ['==', ['get', 'operative'], true],
+          ['>', ['coalesce', ['get', 'vehiclesAvailable'], 0], 0]
+        ],
+        [
+          'match',
+          ['get', 'formFactors'],
+          'BICYCLE', 'bicycle-icon-available',
+          'CAR', 'car-icon-available',
+          'BICYCLE,CAR', 'car-icon-available',
+          'CAR,BICYCLE', 'car-icon-available',
+          /* default */ 'bicycle-icon-available'
+        ],
+        // Realtime but no vehicles -> unavailable variant
+        [
+          'any',
+          ['==', ['get', 'operative'], false],
+          ['<=', ['coalesce', ['get', 'vehiclesAvailable'], 0], 0]
+        ],
+        [
+          'match',
+          ['get', 'formFactors'],
+          'BICYCLE', 'bicycle-icon-unavailable',
+          'CAR', 'car-icon-unavailable',
+          'BICYCLE,CAR', 'car-icon-unavailable',
+          'CAR,BICYCLE', 'car-icon-unavailable',
+          /* default */ 'bicycle-icon-unavailable'
+        ],
+        // Fallback: base icon without dot
+        [
+          'match',
+          ['get', 'formFactors'],
+          'BICYCLE', 'bicycle-icon',
+          'CAR', 'car-icon',
+          'BICYCLE,CAR', 'car-icon',
+          'CAR,BICYCLE', 'car-icon',
+          /* default */ 'bicycle-icon'
+        ]
       ],
       'icon-size': 0.1,
       'icon-allow-overlap': false,
-      'text-field': ['get', 'name'],
+      'text-optional': true,
+      'text-field':  ["step", ["zoom"], "", 17, ["get", "name"]],
       'text-offset': [0, 1],
       'text-size': 12,
       'text-anchor': 'top'
     },
-    minzoom: 14,
+    minzoom: 10,
     maxzoom: 20,
-    popupRenderer: (properties, hoverInfo) => {
+        popupRenderer: (properties, hoverInfo) => {
       let formFactors = properties.formFactors.split(",");
       return (
-        <div style={{width: '300px'}}>
-          <StyledCard>
-            <StyledCardHeader>
-              <StyledCardTitle>
-                
-              {formFactors.includes('BICYCLE') &&
-                  <IconWithText icon={<ClassicModeIcon mode="bicycle" />}>
-                  </IconWithText>
-                }
-                {formFactors.includes('CAR') &&
-                  <IconWithText icon={<ClassicModeIcon mode="car" />}>
-                  </IconWithText>
-                }
-                {properties.name}
-              </StyledCardTitle>
-              <StyledCardAside>
-                {properties.operative && (
-                  <PulsingRss width="16px" />
-                )}
-              </StyledCardAside>
-            </StyledCardHeader>
-            <StyledCardBody>
-              <div>
-                <FormattedMessage
-                  id="components.NearbyView.bikesAvailable"
-                  values={{bikesAvailable:properties.vehiclesAvailable}}
-                />
-              </div>
-                <br />
-                <NoiFromToPicker place={hoverInfo} />
-
-            </StyledCardBody>
-          </StyledCard>
+        <div className="otp-ui-mapOverlayPopup" style={{width: '300px'}}>
+          <div className="otp-ui-mapOverlayPopup__popupHeader">
+            {formFactors.includes('BICYCLE') && <IconWithText icon={<ClassicModeIcon mode="bicycle" />} />}
+            {formFactors.includes('CAR') && <IconWithText icon={<ClassicModeIcon mode="car" />} />}
+            &nbsp;
+            Rental Station
+            {properties.operative && (
+              <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
+            )}
+          </div>
+          <div className="otp-ui-mapOverlayPopup__popupTitle" style={{padding: '5px 0'}}>
+            {properties.name}
+          </div>
+          <div className="otp-ui-mapOverlayPopup__popupRow">
+            <div>
+              {formFactors.includes('BICYCLE') && !formFactors.includes('CAR') &&
+                `${properties.vehiclesAvailable} bikes available`
+              }
+              {formFactors.includes('CAR') && !formFactors.includes('BICYCLE') &&
+                `${properties.vehiclesAvailable} cars available`
+              }
+              {formFactors.includes('BICYCLE') && formFactors.includes('CAR') &&
+                `${properties.vehiclesAvailable} vehicles available`
+              }
+              {!formFactors.includes('BICYCLE') && !formFactors.includes('CAR') &&
+                `${properties.vehiclesAvailable} vehicles available`
+              }
+            </div>
+          </div>
+          <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
+            <NoiFromToPicker place={hoverInfo} />
+          </div>
         </div>
       );
     }
@@ -349,10 +330,31 @@ const LAYER_CONFIG = {
   vehicleParking: {
     type: 'symbol',
     layout: {
-    'icon-image': 'parking-icon',
+    'icon-image': [
+      'case',
+      [
+        'all',
+        //['==', ['get', 'realTimeData'], true],
+        [
+          'any',
+          ['>', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
+          ['>', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
+        ]
+      ],
+      'parking-available-icon',
+      [
+        'all',
+        //['==', ['get', 'realTimeData'], true],
+        ['<=', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
+        ['<=', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
+      ],
+      'parking-unavailable-icon',
+      'parking-icon'
+    ],
     'icon-size': 0.15,
     'icon-allow-overlap': false,
-    'text-field': ['get', 'name'],
+    'text-optional': true,
+    'text-field':  ["step", ["zoom"], "", 17, ["get", "name"]],
     'text-offset': [0, 1],
     'text-size': 12,
     'text-anchor': 'top'
@@ -368,42 +370,46 @@ const LAYER_CONFIG = {
     minzoom: 14,
     maxzoom: 20,
     popupRenderer: (properties, hoverInfo) => {
-        const name = properties.name && properties.name.trim() ? ` (${properties.name.trim()})` : '';
+        const name = properties.name && properties.name.trim() ? properties.name.trim() : 'Parking';
         return (
-            <div style={{minWidth: '200px'}}>
-              <StyledCard>
-                <StyledCardHeader>
-                  <StyledCardTitle>Parking {name}</StyledCardTitle>
-                  <StyledCardSubheader>
+            <div className="otp-ui-mapOverlayPopup" style={{minWidth: '200px'}}>
+                <div className="otp-ui-mapOverlayPopup__popupHeader">
+                    <IconWithText icon={<Parking />} />
+                    &nbsp;Parking
+                    {properties.realTimeData && (
+                      <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
+                    )}
+                </div>
+                <div className="otp-ui-mapOverlayPopup__popupTitle" style={{padding: '5px 0'}}>
+                    {name}
+                </div>
+                <div style={{padding: '5px 0'}}>
                     {properties.wheelchairAccessibleCarPlaces && <BsLabel bsStyle="primary">
                       <IconWithText Icon={Wheelchair}>
                         <FormattedMessage id="components.TripViewer.accessible" />
                       </IconWithText>
-                    </BsLabel>} 
-                  </StyledCardSubheader>
-                  <StyledCardAside>
-                    {properties.realTimeData && (
-                      <PulsingRss width="16px" />
-                    )}
-                  </StyledCardAside>
-                </StyledCardHeader>
-                <StyledCardBody>
+                    </BsLabel>}
                   <div> { properties.carPlaces &&
                       <IconWithText icon={<ClassicModeIcon mode="car" />}>
-                        {properties['availability.carPlaces']} / {properties['capacity.carPlaces']}
+                        {properties.realTimeData && properties['availability.carPlaces'] !== undefined
+                          ? `${properties['availability.carPlaces']} / ${properties['capacity.carPlaces']}`
+                          : properties['capacity.carPlaces']}
                       </IconWithText>
                     }
                   </div>
                   <div>
                     { properties.bicyclePlaces &&
                     <IconWithText icon={<ClassicModeIcon mode="bicycle" />}>
-                      {properties['availability.bicyclePlaces']} / {properties['capacity.bicyclePlaces']}
+                      {properties.realTimeData && properties['availability.bicyclePlaces'] !== undefined
+                        ? `${properties['availability.bicyclePlaces']} / ${properties['capacity.bicyclePlaces']}`
+                        : properties['capacity.bicyclePlaces']}
                     </IconWithText>
                     }
                   </div>
-                  <NoiFromToPicker place={hoverInfo} />
-                </StyledCardBody>
-              </StyledCard>
+                </div>
+                <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
+                    <NoiFromToPicker place={hoverInfo} />
+                </div>
             </div>
         );
       }
@@ -438,26 +444,35 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
     if (!map) return
     const mapInstance = map.getMap()
     if (!mapInstance) return
-    // Parking icon
-    if (!mapInstance.hasImage('parking-icon')) {
-        const busSvgString = ReactDOMServer.renderToStaticMarkup(
-          <Parking />
+    // Parking icon and availability variants
+    {
+      const parkingSvgString = ReactDOMServer.renderToStaticMarkup(<Parking />)
+      const baseUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(parkingSvgString)}`
+      const makeVariant = (color: string) => {
+        // Inject a prominent corner circle (top-right) into the base SVG.
+        // Coordinates chosen for FA-style viewBox (≈ 448x512) so the dot is clearly visible.
+        const withDot = parkingSvgString.replace(
+          '</svg>',
+          `<circle cx="380" cy="85" r="60" fill="${color}" stroke="#ffffff" stroke-width="20"/></svg>`
         )
-        const busDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-          busSvgString
-        )}`
-        const busIcon = new Image()
-        
-        busIcon.width = 131  // Set appropriate size
-        busIcon.height = 150 // Set appropriate size
-        
-        busIcon.onload = () => {
-          if (!mapInstance.hasImage('parking-icon')) {
-            mapInstance.addImage('parking-icon', busIcon, {sdf: true})
-          }
-        }
-        busIcon.src = busDataUrl
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
       }
+      const addImg = (name: string, src: string) => {
+        if (mapInstance.hasImage(name)) return
+        const img = new Image()
+        img.width = 131
+        img.height = 150
+        img.onload = () => {
+          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
+        }
+        img.src = src
+      }
+      console.log(baseUrl);
+      console.log(makeVariant('#22c55e'));
+      addImg('parking-icon', baseUrl)
+      addImg('parking-available-icon', makeVariant('#22c55e'))
+      addImg('parking-unavailable-icon', makeVariant('#ef4444'))
+    }
     // Bus icon
     if (!mapInstance.hasImage('bus-icon')) {
       const busSvgString = ReactDOMServer.renderToStaticMarkup(
@@ -497,6 +512,28 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
         }
       }
       carIcon.src = carDataUrl
+
+      // Add availability variants for car icon (top-right dot)
+      const makeCarVariant = (color: string) => {
+        const withDot = carSvgString.replace(
+          '</svg>',
+          `<circle cx="430" cy="70" r="80" fill="${color}" stroke="#ffffff" stroke-width="25"/></svg>`
+        )
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
+      }
+      const addCarVariant = (name: string, src: string) => {
+        if (mapInstance.hasImage(name)) return
+        const img = new Image()
+        img.width = 150
+        img.height = 150
+        img.onload = () => {
+          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
+        }
+        img.src = src
+      }
+      console.log("car", makeCarVariant('#22c55e'))
+      addCarVariant('car-icon-available', makeCarVariant('#22c55e'))
+      addCarVariant('car-icon-unavailable', makeCarVariant('#ef4444'))
     }
     // Train icon
     if (!mapInstance.hasImage('rail-icon')) {
@@ -556,8 +593,39 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
         }
       }
       bicycleIcon.src = bicycleDataUrl
+
+      // Add availability variants for bicycle icon (top-right dot)
+      const makeBikeVariant = (color: string) => {
+        const withDot = bicycleSvgString.replace(
+          '</svg>',
+          `<circle cx="90" cy="8" r="12" fill="${color}" stroke="#ffffff" stroke-width="3"/></svg>`
+        )
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
+      }
+      const addBikeVariant = (name: string, src: string) => {
+        if (mapInstance.hasImage(name)) return
+        const img = new Image()
+        img.width = 245
+        img.height = 150
+        img.onload = () => {
+          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
+        }
+        img.src = src
+      }
+      //console.log(makeBikeVariant('#22c55e'))
+      addBikeVariant('bicycle-icon-available', makeBikeVariant('#22c55e'))
+      addBikeVariant('bicycle-icon-unavailable', makeBikeVariant('#ef4444'))
     }
   }, [map, sourceLayerName])
+
+  // Track mount status to avoid state updates on unmounted component
+  const isMountedRef = useRef(true)
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   // --- Attach event listeners (hover, click) ---
   useEffect(() => {
@@ -567,35 +635,45 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
     const layerId = `otp-${sourceLayerName}`
     const onMouseEnter = (e) => {
       mapInstance.getCanvas().style.cursor = 'pointer'
+      if (!isMountedRef.current) return
       if (!stickyInfoRef.current && e.features && e.features.length) {
         const feature = e.features[0]
+        if (!isMountedRef.current) return
         setHoverInfo(feature)
         if (feature.properties.parentStation) {
+          if (!isMountedRef.current) return
           setHighlightParentStation(feature.properties.parentStation)
         }
         if(feature.properties.stops) {
+          if (!isMountedRef.current) return
           setHighlightParentStation(feature.properties.gtfsId)
         }
       }
     }
     const onMouseLeave = () => {
       mapInstance.getCanvas().style.cursor = ''
+      if (!isMountedRef.current) return
       setHoverInfo(null)
       if (!stickyInfoRef.current) {
+        if (!isMountedRef.current) return
         setHighlightParentStation(null)
       }
     }
     const onClick = (e) => {
+      if (!isMountedRef.current) return
       setHoverInfo(null)
       if (e.features && e.features.length) {
         const feature = e.features[0]
         if(!feature.properties.stops) {
+            if (!isMountedRef.current) return
             setStickyInfo(feature)
         }
         if (feature.properties.parentStation) {
+          if (!isMountedRef.current) return
           setHighlightParentStation(feature.properties.parentStation)
         }
         if(feature.properties.stops) {
+          if (!isMountedRef.current) return
           setHighlightParentStation(feature.properties.gtfsId)
         }
         const mapInstance = map.getMap();
@@ -672,8 +750,28 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
       {/* Render the main layer */}
       <Layer id={`otp-${sourceLayerName}`} {...mergedConfig} />
       {/* For stops, render extra highlight layers */}
-      {sourceLayerName === 'stops' && highlightParentStation && (
+      {sourceLayerName === 'stops' && (
         <>
+          {/* Small green dot indicating realtime availability */}
+          <Layer
+            id="otp-stops-realtime"
+            type="circle"
+            source="otp-source"
+            {...{ 'source-layer': sourceLayerName }}
+            layout={{}}
+            paint={{
+              'circle-radius': 3,
+              'circle-color': '#22c55e',
+              'circle-opacity': 1,
+              'circle-stroke-color': '#ffffff',
+              'circle-stroke-width': 1,
+              'circle-translate': [8, -8],
+              'circle-translate-anchor': 'viewport'
+            }}
+            filter={['all', ['==', ['get', 'realTimeData'], true]]}
+            minzoom={16}
+            maxzoom={20}
+          />
           <Layer
             id="otp-stops-highlight"
             type="circle"
@@ -696,7 +794,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
                 ['>', ['length', ['get', 'routes']], 0]
               ]
             ]}
-            minzoom={17}
+            minzoom={16}
             maxzoom={20}
           />
           <Layer
@@ -706,11 +804,11 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
             {...{ 'source-layer': sourceLayerName }}
             beforeId={`otp-${sourceLayerName}`}
             layout={{
-              'text-field': ['get', 'platform'],
+              'text-field': ['get', 'name'],
               'text-size': 12,
-              'text-offset': [0, -1.5],
+              'text-offset': [0, -1.28],
               'text-anchor': 'bottom',
-              'text-allow-overlap': true
+              'text-allow-overlap': false
             }}
             paint={{
               'text-color': '#000000',
@@ -719,14 +817,44 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
             }}
             filter={[
               'all',
-              ['==', ['get', 'parentStation'], highlightParentStation],
-              ['has', 'platform']
+              ['has', 'platform'],
+              ['has', 'routes'],
+              [
+                'case',
+                ['==', ['get', 'routes'], '[]'],
+                false,
+                ['>', ['length', ['get', 'routes']], 0]
+              ]
             ]}
-            minzoom={17}
+            minzoom={16}
             maxzoom={20}
           />
         </>
       )}
+      {/* Rental station realtime now indicated via icon variants. */}
+      {/* For stations, render realtime indicator as well */}
+      {sourceLayerName === 'stations' && (
+        <Layer
+          id="otp-stations-realtime"
+          type="circle"
+          source="otp-source"
+          {...{ 'source-layer': sourceLayerName }}
+          layout={{}}
+          paint={{
+            'circle-radius': 3.5,
+            'circle-color': '#22c55e',
+            'circle-opacity': 1,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 1,
+            'circle-translate': [10, -10],
+            'circle-translate-anchor': 'viewport'
+          }}
+          filter={['all', ['==', ['get', 'realTimeData'], true]]}
+          minzoom={12}
+          maxzoom={20}
+        />
+      )}
+      {/* Parking availability indicators are now part of the icon variant. */}
       {/*{hoverInfo && (
         <Popup
           maxWidth="none"

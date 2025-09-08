@@ -79,7 +79,7 @@ api:
 ### The localStorage strategy will use the browser application storage.
 ### It must be enabled to show the stored locations (see above).
 persistence:
-  enabled: true
+  enabled: false
   strategy: localStorage
   ### This variable defines the default state of the terms of storage checkbox.
   ### Possible values: 'visible-unchecked' (default) | 'visible-checked' | 'hidden-unchecked' | 'hidden-checked'
@@ -143,6 +143,7 @@ map:
       attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
   overlays:
     - type: taxi_noi
+      name: Taxi
       url: https://mobility.api.opendatahub.com/v2/flat,node/ON_DEMAND_VEHICLE/*/latest?where=sorigin.eq.%22smart-taxi-merano%22
     - type: otp2
       layers:
@@ -153,6 +154,9 @@ map:
         - type: stops
         #- type: areaStops # couldn't find any
         - type: stations # couldn't find any
+    - type: charger
+      name: E-Charger
+      url: https://charger.otp.opendatahub.com/charger/stations.json
         
   ### Optional transitive.js (route rendering) properties:
   ### - labeledModes: an array of OTP modes for which the route label should be
@@ -277,7 +281,7 @@ modes:
         - mode: SCOOTER
           qualifier: RENT
 
-    - iconName: car
+    - iconName: car_rental
       key: car
       modes:
         # Modes can contain a qualifier
@@ -285,12 +289,21 @@ modes:
         - mode: CAR
           qualifier: RENT
 
+    - iconName: park_ride
+      key: parkride
+      modes:
+        # Modes can contain a qualifier
+        # See OTP documentation for details
+        - mode: CAR
+          qualifier: PARK
+
   # Allows initial state to be configured.
   # Which buttons enabled on load + overriding setting defaults
   initialState:
     enabledModeButtons: # Mode button keys enabled by default
       - transit
-      - bike
+      - bicycle
+      - walk
   # Add additional mode settings to show up in mode selector hover panel
   modeSettingDefinitions:
     # Corresponding mode; if this mode is found in the button's mode list,
@@ -646,6 +659,15 @@ language:
 #         log-my-commute: Mes trajets verts
 #         traveler-tools: Outils du voyageur
     name: French
+  it:
+#     config:
+#       # App (hamburger) menu items
+#       menuItems:
+#         car-pool: Covoiturage
+#         give-us-feedback: Donnez votre avis
+#         log-my-commute: Mes trajets verts
+#         traveler-tools: Outils du voyageur
+    name: Italian
 
 #   ko:
 #     name: 한국인

@@ -1,0 +1,13 @@
+{
+  "name": "openmove-icons",
+  "version": "1.0.0",
+  "description": "convert svt to js",
+  "main": "index.js",
+  "scripts": {
+  },
+  "author": "Stefano Cudini stefano.cudini@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "svg-to-jsx": "^1.0.3"
+  }
+}
