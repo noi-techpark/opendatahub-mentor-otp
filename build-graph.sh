@@ -28,6 +28,13 @@ PARKING_NETEX_URL=https://transmodel.api.opendatahub.com/netex/parking
 PARKING_NETEX_XML=data/shared-data.xml
 PARKING_NETEX_ZIP=data/parking-netex.xml.zip
 
+# config for transforming the ids of scheduled stop points
+SAXON_URL="https://github.com/Saxonica/Saxon-HE/releases/download/SaxonHE12-9/SaxonHE12-9J.zip"
+SAXON_ZIP="saxon.zip"
+SAXON_JAR="saxon/saxon-he-12.9.jar"
+XSL_FILE="transform-scheduled-stop-point-ids.xsl"
+SSIDS_TRANSFORMED_XML="data/sta.netex.correct-ssids.xml"
+
 # when on github actions then install the required tools
 if [ -n "${CI+isset}" ]; then
   sudo apt-get -qq install osmium-tool pyosmium wget zip
@@ -56,7 +63,18 @@ rm -f ${TRANSIT_NETEX_GZ} ${TRANSIT_NETEX_XML}
 echo "Downloading NeTEx transit data from ${TRANSIT_NETEX_URL}"
 ${CURL} "${TRANSIT_NETEX_URL}" -o ${TRANSIT_NETEX_GZ}
 gunzip ${TRANSIT_NETEX_GZ}
-zip ${TRANSIT_NETEX_ZIP} ${TRANSIT_NETEX_XML}
+
+#mv NX-PI_01_it_apb_LINE_apb__*.xml ${TRANSIT_NETEX_XML}
+# Configuration
+if [ ! -f "${SAXON_JAR}" ]; then
+  $CURL $SAXON_URL -o $SAXON_ZIP
+  unzip $SAXON_ZIP -d saxon
+fi
+# the scheduled stop point ids and the SIRI StopPointRefs do not match, so we have to transform
+# the NeTEx feed so that they do: https://github.com/noi-techpark/odh-mentor-otp/issues/215
+echo "Running Saxon transformation..."
+java -jar "$SAXON_JAR" -s:"${TRANSIT_NETEX_XML}" -xsl:"$XSL_FILE" -o:"$SSIDS_TRANSFORMED_XML"
+zip --junk-paths ${TRANSIT_NETEX_ZIP} ${SSIDS_TRANSFORMED_XML}
 
 # download parking data and put it into a zip
 rm -f ${PARKING_NETEX_XML} ${PARKING_NETEX_ZIP}
