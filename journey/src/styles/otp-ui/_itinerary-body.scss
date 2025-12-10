@@ -273,7 +273,7 @@
 
   &__diagramElevationLoss {
     font-size: xx-small;
-    color: green;
+    color: $brand-primary-dark;
   }
 }
 
@@ -421,8 +421,8 @@
     margin-right: 6px;
   }
 
-  &__shortName {    
-    background-color: #095980;
+  &__shortName {
+    background-color: #000000;
     border-radius: 30px;
     border: 2px solid white;
     box-shadow: 0 0 0.5em #000;
@@ -462,7 +462,7 @@
   font-size: inherit;
   text-decoration: none;
   padding-left: 0px;
-  color: #095980;
+  color: #333333;
   cursor: pointer;
   margin-left: 5px;
 
@@ -483,7 +483,7 @@
     position: absolute;
     top: 11px;
     z-index: 10;
-    background-color: #095980;
+    background-color: #000000;
     left: 21px;
     right: 21px;
 

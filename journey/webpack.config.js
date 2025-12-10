@@ -77,7 +77,8 @@ module.exports = async env => {
       new HtmlWebpackPlugin({
         template: HTML_FILE,
         inject: 'body',
-        filename: 'index.html'
+        filename: 'index.html',
+        favicon: "src/images/NOI_1_BK.svg"
       }),
       new MiniCssExtractPlugin(),
       new webpack.DefinePlugin({

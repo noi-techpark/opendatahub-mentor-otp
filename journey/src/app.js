@@ -25,6 +25,7 @@ import interreg from './images/interreg.png'
 import openmove from './images/openmove.png'
 import merano from './images/merano.png'
 import bolzano from './images/ComuneBolzano.png'
+import opendatahub from './images/opendatahub.png'
 
 import MatomoIntegration from './util/matomo-integration';
 
@@ -97,15 +98,22 @@ class JourneyWebapp extends Component {
       <div className='otp'>
         <Navbar fluid collapseOnSelect fixedTop>
           <Navbar.Header>
-          { brandLogo &&
+          {/* { brandLogo &&
             <img className='brandLogo' src={brandLogo} />
-          }
+          } */}
             <Navbar.Brand> {brandNavbar} <span>BETA</span></Navbar.Brand>
             <Navbar.Toggle />
           </Navbar.Header>
           <Navbar.Collapse>
-            <Nav pullRight>
+            {/* <Nav pullRight>
+              <AppMenu /> */}
+            <Nav>
               <AppMenu />
+            </Nav>
+            <Nav pullRight>
+              <a href='https://opendatahub.com/' target='_blank' rel='noopener noreferrer'>
+                <img className='odhLogo' src={opendatahub} alt='Open Data Hub' />
+              </a>
             </Nav>
           </Navbar.Collapse>
         </Navbar>

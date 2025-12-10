@@ -176,7 +176,7 @@ map:
       visible: true
       iconWidth: 15
       iconHeight: 15
-      iconMarkerColor: "#095980"
+      iconMarkerColor: "#000000"
       iconColor: "#fff"
       minZoom: 15
       parentStations: true
@@ -367,10 +367,10 @@ map:
       pollingInterval: 5000
       iconWidth: 15
       iconHeight: 15
-      iconMarkerColor: "#095980"
-      iconVehicleColor: "#095980"
+      iconMarkerColor: "#000000"
+      iconVehicleColor: "#000000"
       iconColor: "#fff"
-      pathColor: "#3388ff"
+      pathColor: "#333333"
       pathDash: 1,1
       areas:
         1:

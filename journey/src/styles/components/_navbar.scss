@@ -4,23 +4,39 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
+.navbar {
+  border-bottom: 1px solid #e7e7e7;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.navbar-default {
+  .navbar-nav > li > a {
+    color: #000 !important;
+
+    &:hover,
+    &:focus {
+      color: #333 !important;
+      background-color: transparent;
+    }
+  }
+}
+
 .navbar-brand {
   font-weight: bold;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #444 !important;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+  color: #000 !important;
+  text-shadow: none;
   span {
     background: $brand-warning;
-    color:white;
-    border-radius:5px;
+    color: white;
+    border-radius: 5px;
     padding: 0 4px;
     margin-left: 10px;
     vertical-align: top;
-    font-size:12px;
+    font-size: 12px;
     font-weight: normal;
     display: inline-block;
-/*     transform: rotate(-20deg); */
   }
 }
 
@@ -29,7 +45,24 @@
     float: left;
     height: 50px;
     margin: 0 5px 0 -15px;
+
+    &.odh-logo {
+      height: 40px;
+      margin: 5px 10px 5px 15px;
+    }
+
+    &.journey-logo {
+      margin-left: 5px;
+    }
   }
+
+  .odhLogo {
+      height: 40px;
+      margin-top: 5px;
+      margin-right: 15px;
+      vertical-align: middle;
+      display: inline-block;
+    }
 }
 
 .mobile {
@@ -39,11 +72,72 @@
       height: 50px;
       margin: 0;
       position: absolute;
+
+      &.odh-logo {
+        left: 0;
+      }
+
+      &.journey-logo {
+        left: 55px;
+      }
     }
   }
   .navbar-brand {
     span {
-      margin-left: 50px;
+      margin-left: 110px;
+    }
+  }
+  .odhLogo {
+    height: 30px;
+    margin-top: 10px;
+    margin-right: 10px;
+  }
+}
+
+.navbar-collapse {
+  display: flex;
+  align-items: center;
+
+  .navbar-text {
+    flex: 1;
+  }
+
+  .navbar-nav {
+    flex: 0;
+  }
+
+  .navbar-logo-wrapper {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.odhLogo {
+  height: 40px;
+  margin: 10px;
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .navbar-collapse {
+    display: flex !important;
+    align-items: center !important;
+    // justify-content: flex-start;
+
+    .navbar-nav {
+      display: flex !important;
+      align-items: center !important;
+    }
+  }
+}
+
+@media (max-width: 767px){
+  .navbar-collapse {
+    display: none !important;
+
+    &.in {
+      display: block !important;
     }
   }
 }

@@ -32,6 +32,8 @@
         }
         svg path {
           fill: #fff;
+          stroke: #000;
+          stroke-width: 1px;
         }
 
         &.active {
@@ -107,15 +109,23 @@
                 &.active {
                   background-color: $brand-primary;
 
-    
+
                   svg path {
-                    fill: currentColor;
+                    fill: #fff;
+                    stroke: #000;
+                    stroke-width: 1px;
                   }
                 }
-    
+
                 svg {
                   margin-bottom: 8px;
                   height: 30px;
+
+                  path {
+                    fill: #000;
+                    stroke: #000;
+                    stroke-width: 0.5px;
+                  }
                 }    
               }
             }
