@@ -19,7 +19,7 @@ ELEVATION_URL=https://leonard.io/srtm/srtm_39_03.zip
 ELEVATION_ZIP=data/srtm_39_03.zip
 # transit data
 today=$(date +"%Y%m%d")
-TRANSIT_NETEX_URL="ftp://ftp.sta.bz.it/netex/2025/plan/EU_profil/daily/NX-PI_01_it_apb_LINE_apb__${today}.xml.zip"
+TRANSIT_NETEX_URL="ftp://ftp.sta.bz.it/netex/2026/plan/EU_profil/daily/NX-PI_01_it_apb_LINE_apb__${today}.xml.zip"
 TRANSIT_NETEX_XML=data/sta-netex.xml
 TRANSIT_NETEX_GZ=${TRANSIT_NETEX_XML}.gz
 TRANSIT_NETEX_ZIP=${TRANSIT_NETEX_XML}.zip
