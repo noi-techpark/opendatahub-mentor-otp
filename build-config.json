@@ -11,7 +11,7 @@
       "groupFilePattern": "(.*)\\.xml"
     },
     {
-      "source": "https://gtfs.api.opendatahub.com/v1/dataset/skyalps-flight-data/raw",
+      "source": "https://gtfs.api.opendatahub.testingmachine.eu/v1/dataset/skyalps-flight-data/raw",
       "type": "gtfs",
       "feedId": "skyalps"
     },
