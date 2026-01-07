@@ -169,6 +169,7 @@ jobs:
   deploy-prod:
     runs-on: ubuntu-22.04
     concurrency: deploy-prod
+    if: github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod'
     env:
       API_HOST: "https://v2.otp.opendatahub.com"
       API_PORT: "443"
@@ -277,7 +278,6 @@ jobs:
         # the script uses error handling with +e, so please don't run it with bash prepended in this line
         run: ./build-graph.sh
 
-
       - name: Store artifact for sta.netex.correct-ssids.xml
         uses: actions/upload-artifact@v4
         with:
@@ -285,7 +285,6 @@ jobs:
           path: data/sta.netex.correct-ssids.xml
 
       - name: Build and push
-        if: github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod'
         uses: noi-techpark/github-actions/docker-build-and-push@v2
         with:
           docker-username: ${{ github.actor }}
@@ -293,10 +292,9 @@ jobs:
           docker-compose-file: docker-compose.build.yml
 
       - name: Deploy application
-        if: github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod'
         uses: noi-techpark/github-actions/docker-deploy@v2
         with:
-          hosts: 'test'
+          hosts: 'prod'
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
           docker-username: 'noi-techpark-bot'
           docker-password: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
