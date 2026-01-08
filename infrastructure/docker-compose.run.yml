@@ -78,7 +78,7 @@ services:
     ports:
       - ${DOCKER_AMARILLO_PORT}:80
     volumes:
-      - /opt/odh-mentor-otp/amarillo/:/app/data/
+      - amarillo/:/app/data/
     depends_on:
       graphhopper:
         condition: service_healthy
@@ -98,7 +98,7 @@ services:
     environment:
       - JAVA_OPTS=-Xmx4g
     volumes:
-      - /opt/odh-mentor-otp/graphhopper/:/data/
+      - graphhopper/:/data/
 
   carsharing-cron:
     image: ${DOCKER_IMAGE_CARSHARING}:${DOCKER_TAG}
