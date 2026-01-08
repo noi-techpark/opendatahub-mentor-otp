@@ -65,8 +65,9 @@ fi
 rm -f ${TRANSIT_NETEX_GZ} ${TRANSIT_NETEX_XML}
 echo "Downloading NeTEx transit data from ${TRANSIT_NETEX_URL}"
 ${CURL} "${TRANSIT_NETEX_URL}" -o ${TRANSIT_NETEX_GZ}
-unzip ${TRANSIT_NETEX_GZ}
-mv NX-PI_01_it_apb_LINE_apb__*.xml ${TRANSIT_NETEX_XML}
+gunzip ${TRANSIT_NETEX_GZ}
+# unzip ${TRANSIT_NETEX_GZ}
+# mv NX-PI_01_it_apb_LINE_apb__*.xml ${TRANSIT_NETEX_XML}
 
 # Configuration
 if [ ! -f "${SAXON_JAR}" ]; then
