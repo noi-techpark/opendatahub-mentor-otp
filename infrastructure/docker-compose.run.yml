@@ -1,11 +1,11 @@
 services:
-  journey:
-    image: ${DOCKER_IMAGE_JOURNEY}:${DOCKER_TAG}
-    restart: unless-stopped
-    env_file:
-      - .env
-    ports:
-      - ${SERVER_PORT_JOURNEY}:80
+  # journey:
+  #   image: ${DOCKER_IMAGE_JOURNEY}:${DOCKER_TAG}
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - ${SERVER_PORT_JOURNEY}:80
 
   otp-react:
     image: ${DOCKER_IMAGE_OTP_REACT}:${DOCKER_TAG}
@@ -23,13 +23,13 @@ services:
     ports:
       - ${SERVER_PORT_OTP}:8080
     depends_on:
-     - geocoder
+    #  - geocoder
      - amarillo
-     - parking
+    #  - parking
      - charger
      - carsharing-cron
-     - traffic
-     - drt
+    #  - traffic
+    #  - drt
   
   gbfs:
     image: ${DOCKER_IMAGE_GBFS}:${DOCKER_TAG}
@@ -37,25 +37,25 @@ services:
     ports:
      - ${DOCKER_GBFS_PORT}:8089
 
-  geocoder:
-    image: ${DOCKER_IMAGE_GEOCODER}:${DOCKER_TAG}
-    restart: unless-stopped
-    ports:
-      - ${DOCKER_GEOCODER_PORT}:8088
-    env_file:
-      - .env
+  # geocoder:
+  #   image: ${DOCKER_IMAGE_GEOCODER}:${DOCKER_TAG}
+  #   restart: unless-stopped
+  #   ports:
+  #     - ${DOCKER_GEOCODER_PORT}:8088
+  #   env_file:
+  #     - .env
 
-  parking:
-    image: ${DOCKER_IMAGE_PARKING}:${DOCKER_TAG}
-    restart: unless-stopped
-    ports:
-      - ${DOCKER_PARKING_PORT}:8092
+  # parking:
+  #   image: ${DOCKER_IMAGE_PARKING}:${DOCKER_TAG}
+  #   restart: unless-stopped
+  #   ports:
+  #     - ${DOCKER_PARKING_PORT}:8092
 
-  drt:
-    image: ${DOCKER_IMAGE_DRT}:${DOCKER_TAG}
-    restart: unless-stopped
-    ports:
-      - ${DOCKER_DRT_PORT}:8095
+  # drt:
+  #   image: ${DOCKER_IMAGE_DRT}:${DOCKER_TAG}
+  #   restart: unless-stopped
+  #   ports:
+  #     - ${DOCKER_DRT_PORT}:8095
 
   charger:
     image: ${DOCKER_IMAGE_ECHARGING}:${DOCKER_TAG}
@@ -63,11 +63,11 @@ services:
     ports:
       - ${DOCKER_ECHARGING_PORT}:8093
 
-  traffic:
-    image: ${DOCKER_IMAGE_TRAFFIC}:${DOCKER_TAG}
-    restart: unless-stopped
-    ports:
-      - ${DOCKER_TRAFFIC_PORT}:8094
+  # traffic:
+  #   image: ${DOCKER_IMAGE_TRAFFIC}:${DOCKER_TAG}
+  #   restart: unless-stopped
+  #   ports:
+  #     - ${DOCKER_TRAFFIC_PORT}:8094
 
   amarillo:
     # image: ${DOCKER_IMAGE_AMARILLO}:${DOCKER_TAG}
@@ -85,10 +85,17 @@ services:
 
   graphhopper:
     image: israelhikingmap/graphhopper:8.0
-    # Disable direct download because it's very slow.
-    # command: --host 0.0.0.0 --url https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf
-    # The local file is just the link above, but downloaded manually.
-    command: --host 0.0.0.0 -i /data/nord_est_latest.osm.pbf
+    # If OSM file is older than 30 days, download a new version before starting
+    # command: --host 0.0.0.0 -o /data/default-gh/ --url https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf
+    entrypoint: |
+      sh -c "
+      FILE=/data/nord_est_latest.osm.pbf
+      if [ ! -f $$FILE ] || [ $$(find $$FILE -mtime +30 | wc -l) -eq 1 ]; then
+        echo 'Downloading new file...'
+        wget -q https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf -O $$FILE
+      fi
+      exec ./graphhopper.sh -c config-example.yml --host 0.0.0.0 -i $$FILE
+      "
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8989/health"]
       interval: 10s
