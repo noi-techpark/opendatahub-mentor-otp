@@ -118,3 +118,5 @@ services:
 
 volumes:
   carsharing-gbfs:
+  amarillo:
+  graphhopper:
