@@ -1,6 +1,42 @@
 {
-	"useTransfersTxt": false,
-	"embedRouterConfig": true,
-	"parentStopLinking": true,
-	"stopClusterMode": "parentStation"
+  "embedRouterConfig": true,
+  "areaVisibility": true,
+  "staticParkAndRide": false,
+  "transitModelTimeZone": "Europe/Rome",
+  "transitFeeds": [
+    {
+      "source": "data/sta-netex.xml.zip",
+      "type": "netex",
+      "feedId": "sta",
+      "groupFilePattern": "(.*)\\.xml"
+    },
+    {
+      "source": "https://gtfs.api.opendatahub.com/v1/dataset/skyalps-flight-data/raw",
+      "type": "gtfs",
+      "feedId": "skyalps"
+    },
+    {
+      "source": "https://amarillo.otp.opendatahub.testingmachine.eu/gtfs/amarillo.altoadige.gtfs.zip",
+      "type": "gtfs",
+      "feedId": "amarillo"
+    },
+    {
+      "source": "data/parking-netex.xml.zip",
+      "type": "netex",
+      "feedId": "parking",
+      "ignoreParking": false
+    }
+  ],
+  "osm": [
+    {
+      "source": "data/south-tyrol.osm.pbf",
+      "timeZone": "Europe/Rome",
+      "osmTagMapping": "default"
+    }
+  ],
+  "dem" : [
+    {
+      "source" : "data/srtm_39_03.tif"
+    }
+  ]
 }

@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+env = 'PROD'
+graphhopper_base_url = 'http://graphhopper:8989'
+stop_sources_file = 'conf/stop_sources.json'
+# TODO make ride2go_query_data optional
+ride2go_query_data='{}'

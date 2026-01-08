@@ -1,11 +1,10 @@
-FROM node:16.14.0-alpine3.14
+FROM ghcr.io/mobidata-bw/x2gbfs:2025-07-14T12-29
 
-WORKDIR /home
+ARG CARSHARING_BASEURL=https://carsharing.otp.opendatahub.testingmachine.eu
 
-COPY base /base
-RUN cd /base && npm install
+ENV CARSHARING_BASEURL=$CARSHARING_BASEURL
 
-COPY carsharing/ ./
-RUN npm install
+COPY ./carsharing/entrypoint.sh .
 
-CMD ["node", "index.js"]
+ENTRYPOINT sh entrypoint.sh
+

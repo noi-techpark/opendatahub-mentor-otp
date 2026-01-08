@@ -1,45 +1,123 @@
 {
-	"updaters": [
-		{
-			"type": "stop-time-updater",
-			"sourceType": "gtfs-http",
-			"frequencySec": 60,
-			"feedId": "${GTFS_FEED_ID}",
-			"url": "${GTFS_RT_URL}"
-		},
-		{
-			"type": "bike-rental",
-			"frequencySec": 120,
-			"sourceType": "gbfs",
-			"network": "BZ",
-			"url": "${GBFS_HOST}/bz/${GBFS_VERSION}/"
-		},
-		{
-			"type": "bike-rental",
-			"frequencySec": 120,
-			"sourceType": "gbfs",
-			"network": "ME",
-			"url": "${GBFS_HOST}/me/${GBFS_VERSION}/"
-		},
-		{
-			"type": "bike-rental",
-			"frequencySec": 120,
-			"sourceType": "gbfs",
-			"network": "PAPIN",
-			"url": "${GBFS_HOST}/papin/${GBFS_VERSION}/"
-		},
-		{
-		    "type": "car-rental-updater",
-		    "sourceType": "car2go",
-		    "frequencySec": 30,
-		    "vehiclesUrl": "${CARSHARING_HOST}/carsharing/vehicles.json",
-		    "regionsUrl": "${CARSHARING_HOST}/carsharing/regions.json"
-		},
-        {
-			"type": "car-park",
-			"sourceType": "park-and-ride",
-			"frequencySec": 60,
-			"url": "${PARKING_HOST}/parking/park-ride.json"
-		}
-	]
+  "routingDefaults" : {
+    "numItineraries": 5
+  },
+  "transit": {
+    "dynamicSearchWindow": {
+      "minWindow": "4h",
+      "maxWindow": "16h"
+    }
+  },
+  "vectorTiles": {
+    "layers": [
+      {
+        "name": "stops",
+        "type": "Stop",
+        "mapper": "Digitransit",
+        "maxZoom": 20,
+        "minZoom": 14,
+        "cacheMaxSeconds": 600
+      },
+      // flex zones
+      {
+        "name": "areaStops",
+        "type": "AreaStop",
+        "mapper": "OTPRR",
+        "maxZoom": 20,
+        "minZoom": 14,
+        "cacheMaxSeconds": 600
+      },
+      {
+        "name": "stations",
+        "type": "Station",
+        "mapper": "Digitransit",
+        "maxZoom": 20,
+        "minZoom": 12,
+        "cacheMaxSeconds": 600
+      },
+      // all rental places: stations and free-floating vehicles
+      {
+        "name": "citybikes",
+        "type": "VehicleRental",
+        "mapper": "Digitransit",
+        "maxZoom": 20,
+        "minZoom": 14,
+        "cacheMaxSeconds": 60,
+        "expansionFactor": 0.25
+      },
+      // just free-floating vehicles
+      {
+        "name": "rentalVehicles",
+        "type": "VehicleRentalVehicle",
+        "mapper": "DigitransitRealtime",
+        "maxZoom": 20,
+        "minZoom": 14,
+        "cacheMaxSeconds": 60
+      },
+      // just rental stations
+      {
+        "name": "rentalStations",
+        "type": "VehicleRentalStation",
+        "mapper": "DigitransitRealtime",
+        "maxZoom": 20,
+        "minZoom": 14,
+        "cacheMaxSeconds": 600
+      },
+      // no real-time, translatable fields are translated based on accept-language header
+      // and contains less fields than the Stadtnavi mapper
+      {
+        "name": "vehicleParking",
+        "type": "VehicleParking",
+        "mapper": "Stadtnavi",
+        "maxZoom": 20,
+        "minZoom": 14,
+        "cacheMaxSeconds": 600,
+        "expansionFactor": 0.25
+      }
+    ]
+  },
+  "updaters": [
+    {
+      "type": "siri-et-lite",
+      "feedId": "sta",
+      "url": "https://efa.sta.bz.it/siri-lite/estimated-timetable/xml",
+      "fuzzyTripMatching": true
+    },
+    {
+      "type": "siri-sx-lite",
+      "feedId": "sta",
+      "url": "https://efa.sta.bz.it/siri-lite/situation-exchange/xml"
+    },
+    {
+      "type" : "vehicle-rental",
+      "sourceType" : "gbfs",
+      "url" : "https://gbfs.otp.opendatahub.com/bz/2.1/gbfs.json"
+    },
+    {
+      "type" : "vehicle-rental",
+      "sourceType" : "gbfs",
+      "url" : "https://gbfs.otp.opendatahub.com/me/2.1/gbfs.json"
+    },
+    {
+      "type" : "vehicle-rental",
+      "sourceType" : "gbfs",
+      "url" : "https://gbfs.otp.opendatahub.com/papin/2.1/gbfs.json"
+    },
+    {
+      "type" : "vehicle-rental",
+      "sourceType" : "gbfs",
+      "url" : "https://carsharing.otp.opendatahub.testingmachine.eu/alpsgo/gbfs.json"
+    },
+    {
+      "type": "stop-time-updater",
+      "url": "https://amarillo.otp.opendatahub.testingmachine.eu/gtfs/amarillo.altoadige.gtfsrt.pbf",
+      "feedId": "amarillo"
+    },
+    {
+      "type": "vehicle-parking",
+      "feedId": "parking",
+      "sourceType": "siri-fm",
+      "url": "https://transmodel.api.opendatahub.com/siri-lite/facility-monitoring/parking"
+    }
+  ]
 }

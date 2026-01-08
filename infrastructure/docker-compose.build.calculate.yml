@@ -1,6 +1,0 @@
-services:
-  otp:
-    image: ${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
-    build:
-      context: ../
-      dockerfile: infrastructure/docker/otp/Dockerfile

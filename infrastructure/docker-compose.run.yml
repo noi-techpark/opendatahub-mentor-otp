@@ -1,0 +1,120 @@
+services:
+  journey:
+    image: ${DOCKER_IMAGE_JOURNEY}:${DOCKER_TAG}
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - ${SERVER_PORT_JOURNEY}:80
+
+  otp-react:
+    image: ${DOCKER_IMAGE_OTP_REACT}:${DOCKER_TAG}
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - ${SERVER_PORT_OTP_REACT}:80
+
+  otp:
+    image: ${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - ${SERVER_PORT_OTP}:8080
+    depends_on:
+     - geocoder
+     - amarillo
+     - parking
+     - charger
+     - carsharing-cron
+     - traffic
+     - drt
+  
+  gbfs:
+    image: ${DOCKER_IMAGE_GBFS}:${DOCKER_TAG}
+    restart: unless-stopped
+    ports:
+     - ${DOCKER_GBFS_PORT}:8089
+
+  geocoder:
+    image: ${DOCKER_IMAGE_GEOCODER}:${DOCKER_TAG}
+    restart: unless-stopped
+    ports:
+      - ${DOCKER_GEOCODER_PORT}:8088
+    env_file:
+      - .env
+
+  parking:
+    image: ${DOCKER_IMAGE_PARKING}:${DOCKER_TAG}
+    restart: unless-stopped
+    ports:
+      - ${DOCKER_PARKING_PORT}:8092
+
+  drt:
+    image: ${DOCKER_IMAGE_DRT}:${DOCKER_TAG}
+    restart: unless-stopped
+    ports:
+      - ${DOCKER_DRT_PORT}:8095
+
+  charger:
+    image: ${DOCKER_IMAGE_ECHARGING}:${DOCKER_TAG}
+    restart: unless-stopped
+    ports:
+      - ${DOCKER_ECHARGING_PORT}:8093
+
+  traffic:
+    image: ${DOCKER_IMAGE_TRAFFIC}:${DOCKER_TAG}
+    restart: unless-stopped
+    ports:
+      - ${DOCKER_TRAFFIC_PORT}:8094
+
+  amarillo:
+    # image: ${DOCKER_IMAGE_AMARILLO}:${DOCKER_TAG}
+    image: ${DOCKER_IMAGE_AMARILLO}:b533c53c9e7542a6108934e7417460221287432c-test
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - ${DOCKER_AMARILLO_PORT}:80
+    volumes:
+      - /opt/odh-mentor-otp/amarillo/:/app/data/
+    depends_on:
+      graphhopper:
+        condition: service_healthy
+
+  graphhopper:
+    image: israelhikingmap/graphhopper:8.0
+    # Disable direct download because it's very slow.
+    # command: --host 0.0.0.0 --url https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf
+    # The local file is just the link above, but downloaded manually.
+    command: --host 0.0.0.0 -i /data/nord_est_latest.osm.pbf
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/health"]
+      interval: 10s
+      timeout: 3s
+      # the .pdf download is very slow sometimes
+      # start_period: 1000s
+    environment:
+      - JAVA_OPTS=-Xmx4g
+    volumes:
+      - /opt/odh-mentor-otp/graphhopper/:/data/
+
+  carsharing-cron:
+    image: ${DOCKER_IMAGE_CARSHARING}:${DOCKER_TAG}
+    restart: unless-stopped
+    volumes:
+       - carsharing-gbfs:/app/out
+    env_file:
+      - .env
+
+  carsharing-nginx:
+    image: nginx:1.25.4-alpine
+    restart: unless-stopped
+    volumes:
+       - carsharing-gbfs:/usr/share/nginx/html
+    ports:
+      - "${DOCKER_CARSHARING_PORT}:80"
+
+volumes:
+  carsharing-gbfs:

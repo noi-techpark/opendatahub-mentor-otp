@@ -9,3 +9,9 @@ journey/node_modules
 journey/.env
 journey/tmp
 geocoder/.env
+
+graph.obj
+
+*.xml
+*.zip
+saxon

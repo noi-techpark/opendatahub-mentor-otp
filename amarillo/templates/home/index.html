@@ -1,0 +1,94 @@
+<!-- SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+    SPDX-License-Identifier: CC0-1.0 -->
+
+{% extends "shared/layout.html" %}
+
+{% block content %}
+
+    <h1>
+        Amarillo - The carpooling intermediary
+    </h1>
+    <h2>Background</h2>
+    <p>
+        An "Amarillo" is a <a href="https://hitchwiki.org/en/index.php?title=Cuba">traffic controller dressed in yellow</a> who gives hitchhikers in Cuba the best possible ride.
+    </p>
+    <p>
+        Just like a Cuban Amarillo, this Amarillo service also helps to arrange suitable rides. Ridesharing platforms can publish rideshare offers from their users via the Amarillo REST API and thus make them available to travel planners or meta search engines.
+    </p>
+    <p>
+        Amarillo enriches these ride-sharing offers with the presumed route as well as pick-up and drop-off points along these routes, so that travel planners can suggest easily accessible meeting points for ride-sharing passengers that can be reached with minimal detours, such as ride-along parking lots, train stations or bus stops.
+    </p>
+    <p>
+        For easy integration into travel planners, Amarillo provides the ride offers from all published ride sharing platforms nightly as regional GTFS feeds or every minute as GTFS-RT feeds. The GTFS-RT feed contains all ride offers added, updated or deleted since midnight the previous day as ADDED or CANCELED TripUpdates. The amarillo-specific extensions are defined in this <a href="https://github.com/mfdz/amarillo/blob/main/app/proto/realtime_extension.proto">prototype extension</a>.
+    </p>
+    <p>
+        NOI Techpark, as the operator of this Amarillo service, is open to adding additional ride-sharing platforms. If the ride-sharing platform wants to provide up-to-the-minute ride offers, it should call the carpool POST/PUT/DELETE endpoints for every update of an advertisement. If you are interested in an integration or to obtain the API key required for this, please contact us via <a href="https://noi.bz.it/en/for-companies/help-contact-info-for-companies">our contact form</a>.
+    </p>
+    
+    <h3>Dokumentation</h3>
+    <p>
+        The documentation for this service is available as <a href="/docs">OpenAPI dokumentation</a>. The source code can be viewed and accessed under the AGPL license in this <a href="https://github.com/mfdz/amarillo">Github-Repository</a>.
+    </p>
+    <hr>
+    <h1>
+        Amarillo - L'intermediario del carpooling
+    </h1>
+    <h2>
+        sfondo
+    </h2>
+    <p>
+        Un "Amarillo" è un controllore del traffico vestito di giallo che offre agli autostoppisti di Cuba il miglior passaggio possibile.
+    </p>
+    <p>
+        Proprio come un Amarillo cubano, anche questo servizio Amarillo aiuta a organizzare corse adatte. Le piattaforme di ridesharing possono pubblicare offerte di rideshare dai propri utenti tramite l'API REST di Amarillo e renderle così disponibili ai pianificatori di viaggio o ai metamotori di ricerca.
+    </p>
+    <p>
+        Amarillo arricchisce queste offerte di ride-sharing con il percorso presunto e con i punti di raccolta e riconsegna lungo questi percorsi, in modo che i pianificatori di viaggio possano suggerire punti di incontro facilmente accessibili per i passeggeri del ride-sharing che possono essere raggiunti con deviazioni minime, come come parcheggi, stazioni ferroviarie o fermate degli autobus.
+    </p>
+    <p>
+        Per una facile integrazione nei pianificatori di viaggio, Amarillo fornisce le offerte di corse da tutte le piattaforme di ride sharing pubblicate ogni notte come feed GTFS regionali o ogni minuto come feed GTFS-RT. Il feed GTFS-RT contiene tutte le offerte di corsa aggiunte, aggiornate o cancellate dalla mezzanotte del giorno precedente come TripUpdate AGGIUNTI o ANNULLATI. Le estensioni specifiche di amarillo sono definite in questa estensione prototipo .
+    </p>
+    <p>
+        NOI Techpark, in qualità di operatore di questo servizio Amarillo, è aperta all'aggiunta di ulteriori piattaforme di ride-sharing. Se la piattaforma di condivisione delle corse desidera fornire offerte di corse aggiornate al minuto, dovrebbe chiamare gli endpoint POST/PUT/DELETE del carpool per ogni aggiornamento di un annuncio. Se sei interessato a un'integrazione o per ottenere la chiave API necessaria a tale scopo, contattaci per <a href="https://noi.bz.it/en/for-companies/help-contact-info-for-companies">our contact form</a>.
+    </p>
+    <h2>
+        Documentazione
+    </h2>
+    <p>
+        La documentazione per questo servizio è disponibile come <a href="/docs">documentazione OpenAPI</a>. È possibile visualizzare e accedere al codice sorgente con la licenza AGPL in questo <a href="https://github.com/mfdz/amarillo">repository Github</a>.
+    </p>
+    
+    <hr>
+
+    <h1>
+        Amarillo - Der Carpooling-Intermediär
+    </h1>
+    <h2>Hintergrund</h2>
+    <p>
+        Ein "Amarillo" ist ein <a href="https://hitchwiki.org/en/index.php?title=Cuba">gelb gekleideter Verkehrsregler</a>, der auf Kuba Trampern eine möglichst passsende Mitfahrgelegenheit vermittelt.
+    </p>
+    <p>
+        Ebenso wie ein kubanischer Amarillo hilft auch dieser Amarillo-Dienst, passende Mitfahrgelegenheiten zu vermitteln. Mitfahrplattformen können Mitfahrangebote ihrer
+        Nutzerinnen über die Amarillo-REST-API publizieren und so Reiseplanern oder Meta-Suchmaschinen zur Verfügung stellen.
+    </p>
+    <p>
+        Amarillo reichert diese Mitfahrangebote um die mutmaßliche Fahrtroute sowie entlang 
+        dieser liegenden Zustiegs- und Ausstiegspunkte an, so dass Reiseplaner für Mitfahrene gut erreichbare Treffpunkte vorschlagen können, die mit geringen Umwegen  angefahren werden können, wie z.B. Parken-und-Mitfahren-Parkplätze, Bahnhöfe oder Bushaltestellen.
+    </p>
+    <p>
+        Für die einfache Integration in Reiseplaner stellt Amarillo die Mitfahrangebote aller
+        publizierenen Mitfahrbörsen nächtlich als regionale GTFS-Feeds bzw. minütlich als GTFS-RT Feeds bereit. Der GTFS-RT-Feed enthält alle seit dem Vortag um Mitternacht hinzugefügten, aktualisierten oder gelöschten Mitfahrangebote als ADDED bzw. CANCELED TripUpdates. Die amarillo-spezifischen Erweiterungen werden in dieser <a href="https://github.com/mfdz/amarillo/blob/main/app/proto/realtime_extension.proto">Prototype-Extension</a> definiert.
+    </p>
+    <p>
+        NOI Techpark als Betreiberin dieses Amarillo-Dienstes ist offen für die Aufnahme weiterer Mitfahrplattformen. Möchte die Mitfahrplatfform minutenaktuelle Mitfahrangebote bereitstellen, sollte sie die carpool-POST/PUT/DELETE-Endpunkte für jede Aktualisierung eines Inserats aufrufen. Bei Interesse an einer Integration bzw. um den hierfür notwendigen API-Key zu erhalten, nehmen Sie gerne Kontakt über <a href="https://noi.bz.it/en/for-companies/help-contact-info-for-companies">unser Kontakt-Formular</a> zu uns auf.
+    </p>
+    
+    <h3>Dokumentation</h3>
+    <p>
+        Die Dokumentation dieses Dienstes ist als <a href="/docs">OpenAPI-Dokumentation</a> verfügbar.
+        Der Quellcode ist unter AGPL-Lizenz in diesem <a href="https://github.com/mfdz/amarillo">Github-Repository</a> einseh- und abrufbar.
+    </p>
+
+
+{% endblock %}

@@ -1,0 +1,68 @@
+{
+  "logger": {
+    "level": "debug",
+    "timestamp": false
+  },
+  "esclient": {
+    "apiVersion": "7.5",
+    "hosts": [
+      { "host": "elasticsearch" }
+    ]
+  },
+  "elasticsearch": {
+    "settings": {
+      "index": {
+        "refresh_interval": "10s",
+        "number_of_replicas": "0",
+        "number_of_shards": "1"
+      }
+    }
+  },
+  "api": {
+    "targets": {
+      "csv": ["stops","venue"],
+      "auto_discover": true
+    },
+    "services": {
+      "pip": { "url": "http://pip:4200" },
+      "libpostal": { "url": "http://libpostal:4400" },
+      "placeholder": { "url": "http://placeholder:4100" },
+      "interpolation": { "url": "http://interpolation:4300" }
+    }
+  },
+  "imports": {
+    "adminLookup": {
+      "enabled": true
+    },
+    "openstreetmap": {
+      "download": [
+        { "sourceURL": "https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf" }
+      ],
+      "leveldbpath": "/tmp",
+      "datapath": "/data/openstreetmap",
+      "import": [{
+        "filename": "nord-est-latest.osm.pbf"
+      }]
+    },
+    "csv": {
+      "datapath": "/data/csv-importer",
+      "files": ["stops.csv", "accomodation-poi.csv", "touristic-poi.csv"],
+      "download": [
+      ]
+    },
+    "openaddresses": {
+      "datapath": "/data/openaddresses",
+      "files": ["it/32/south-tyrol-it.csv"]
+    },
+    "polyline": {
+      "datapath": "/data/polylines",
+      "files": [ "extract.0sv" ]
+    },
+    "whosonfirst": {
+      "datapath": "/data/whosonfirst",
+      "countryCode": "IT",
+      "importPostalcodes": true,
+      "importPlace": [ "85685271" ]
+    }
+  }
+}

@@ -1,9 +1,0 @@
-OTP mentor needs a separate EC2 instance to recalculate graph data.
-This instance is usually dormant and only activated on demand when data changes.
-
-So on repo push, the docker image is created regularily and pushed to the repo,
-but not deployed yet (as the instance doesn't exist).
-
-Once a graph recalculation is needed, a separate github action spins up the
-instance,deploys/runs the image, then spins it down again.
-This is either triggered manually or via REST api.

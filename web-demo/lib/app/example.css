@@ -1,0 +1,57 @@
+/*
+ * SPDX-FileCopyrightText: 2024 Conveyal <support@conveyal.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+.otp .navbar {
+  border-radius: 0;
+  background-color: #444;
+  margin: 0px;
+}
+
+.otp .navbar .container {
+  margin-left: 0;
+}
+
+.otp .navbar-brand {
+  padding: 7px 10px;
+}
+
+.otp .navbar-title {
+  color: #fff;
+  font-size: 24px;
+  padding-top: 7px;
+}
+
+.otp.mobile .navbar-title {
+  padding-top: 2px;
+}
+
+.main-row {
+  position: fixed;
+  top: 52px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  padding: 0px 15px;
+}
+
+/* Necessary for defining the height in the main panel nested elements. */
+.main-row main {
+  height: 100%;
+}
+
+.sidebar {
+  height: 100%;
+  padding: 0;
+  box-shadow: 3px 0px 12px #00000052;
+  z-index: 1000;
+}
+
+.map-container {
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+  

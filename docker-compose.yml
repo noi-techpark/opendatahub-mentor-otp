@@ -6,16 +6,9 @@
 # Require a .env file contains all environment vars
 # look contents of file _dot.env.example
 #
-version: '3'
-
-networks:
-  default:
-    driver: bridge
-
 services:
-
   journey:
-    container_name: openmove-journey
+    container_name: journey
     ports:
       - "8081:80"
     image: openmove_journey:latest
@@ -49,33 +42,12 @@ services:
      - otp
      - parking
      - charger
-     - carsharing
+     - carsharing-cron
      - traffic
      - drt
-
-  test:
-    container_name: test
-    image: node:16.14.0-alpine3.14
-    depends_on:
-     - carsharing
-     - charger
-     - drt
-     - gbfs
-     - geocoder
-     - parking
-     - traffic
-
-  carsharing:
-    container_name: openmove-carsharing
-    ports:
-      - "8091:8091"
-    image: openmove_carsharing:latest
-    build:
-      context: ./
-      dockerfile: infrastructure/docker/carsharing/Dockerfile
 
   charger:
-    container_name: openmove-charger
+    container_name: charger
     ports:
       - "8093:8093"
     image: openmove_charger:latest
@@ -84,7 +56,7 @@ services:
       dockerfile: infrastructure/docker/charger/Dockerfile
 
   drt:
-      container_name: openmove-drt
+      container_name: drt
       ports:
         - "8095:8095"
       image: openmove_drt:latest
@@ -93,7 +65,7 @@ services:
         dockerfile: infrastructure/docker/drt/Dockerfile
 
   gbfs:
-      container_name: openmove-gbfs
+      container_name: gbfs
       ports:
         - "8089:8089"
       image: openmove_gbfs:latest
@@ -102,7 +74,7 @@ services:
         dockerfile: infrastructure/docker/gbfs/Dockerfile
 
   geocoder:
-    container_name: openmove-geocoder
+    container_name: geocoder
     ports:
       - "8088:8088"
     image: openmove_geocoder:latest
@@ -122,7 +94,7 @@ services:
       HERE_APIKEY: ''
 
   parking:
-    container_name: openmove-parking
+    container_name: parking
     ports:
       - "8092:8092"
     image: openmove_parking:latest
@@ -131,7 +103,7 @@ services:
       dockerfile: infrastructure/docker/parking/Dockerfile
 
   traffic:
-    container_name: openmove-traffic
+    container_name: traffic
     ports:
       - "8094:8094"
     image: openmove_traffic:latest
@@ -140,7 +112,7 @@ services:
       dockerfile: infrastructure/docker/traffic/Dockerfile
 
   otp:
-    container_name: openmove-otp
+    container_name: otp
     ports:
       - "8080:8080"
     image: openmove_otp:latest
@@ -149,46 +121,57 @@ services:
       dockerfile: infrastructure/docker/otp/Dockerfile
     environment:
       - JAVA_MX=4G
-      - BUILD_GRAPH=False
-      - OTP_OFFICIAL=False
-      - GTFS_FILE=latestGTFS.zip
-      - GTFS_URL=ftp://ftp.sta.bz.it/gtfs/google_transit_shp.zip
-      - GTFS_URL_UPDATETIME=0 * * * *
-      - GTFS_URL_UPDATEHOOK=''
-    volumes:
-      - /opt/odh-mentor-otp/:/data/
     depends_on:
       #TODO - drt
+      - amarillo
       - gbfs
       - parking
       - charger
-      - carsharing
-
-  build:
-    container_name: openmove-build
-    ports:
-      - "8090:8080"
-    restart: "no"
-    image: openmove_otp:latest
+      - carsharing-cron
+  
+  amarillo:
+    container_name: amarillo
     build:
       context: ./
-      dockerfile: infrastructure/docker/otp/Dockerfile
+      dockerfile: infrastructure/docker/amarillo/Dockerfile
     environment:
-      - JAVA_MX=10G
-      - BUILD_GRAPH=True
-      - OTP_OFFICIAL=False
-      - DOWNLOAD_DATA=False
-      - BACKUP_GRAPH=False
-      - GTFS_FILE=latestGTFS.zip
-      - UPDATERS=True
-      - GBFS_HOST=http://gbfs:8089
-      - GBFS_VERSION=1
-      #- GBFS_VERSION=2.1
-      - GTFS_RT_URL=https://efa.sta.bz.it/gtfs-r/
-      - GTFS_FEED_ID=1
-      - CARSHARING_HOST=http://carsharing:8091
-      - PARKING_HOST=http://parking:8092
+      - AMARILLO_BASEURL=${AMARILLO_BASEURL:?missing/empty}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:?missing/empty}
+    ports:
+      - 9095:80
+    volumes:
+      - /opt/odh-mentor-otp/amarillo/:/app/data/
+      # Assumption: latestGTFS.zip is in /opt/otp-mentor-otp (?)
+      - /opt/odh-mentor-otp/:/data/
+      
+    depends_on:
+      - graphhopper
+
+  graphhopper:
+    container_name: graphhopper 
+    image: israelhikingmap/graphhopper:8.0
+    command: --host 0.0.0.0 --url https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf
+    environment:
+      - JAVA_OPTS=-Xmx4g
     volumes:
       - /opt/odh-mentor-otp/:/data/
-      #- infrastructure/docker/docker-entrypoint.sh:/docker-entrypoint.sh
-      #uncomment to test script    
+  
+  carsharing-cron:
+    container_name: carsharing-cron
+    build:
+      context: ./
+      dockerfile: infrastructure/docker/carsharing/Dockerfile
+    restart: unless-stopped
+    volumes:
+       - carsharing-gbfs:/app/out
+
+  carsharing-ngnix:
+    container_name: carsharing-ngnix
+    ports:
+      - "8091:80"
+    image: nginx:1.25.4-alpine
+    volumes:
+       - carsharing-gbfs:/usr/share/nginx/html
+
+volumes:
+  carsharing-gbfs:

@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+##### VSCODE / REST Client https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+# Create a .env file and set the corresponding variables
+# See all $dotenv fields below
+
+
+
+#########################
+# Amarillo sync
+#########################
+
+POST https://amarillo.otp.opendatahub.testingmachine.eu/agency/ummadum/sync
+X-API-Key: {{ $dotenv ADMIN_TOKEN }}
+Accept: application/json

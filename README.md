@@ -6,7 +6,7 @@ SPDX-License-Identifier: CC0-1.0
 
 # Mentor
 
-This project contains a Docker images for stable [OpenTripPlanner](http://opentripplanner.org) releases and tools to auto download Openstreetmap data related to a certain gtfs file.
+This project contains automation for building an [OpenTripPlanner](http://opentripplanner.org) container image that includes OSM and GTFS data for South Tyrol.
 
 [![REUSE Compliance](https://github.com/noi-techpark/odh-mentor-otp/actions/workflows/reuse.yml/badge.svg)](https://github.com/noi-techpark/odh-docs/wiki/REUSE#badges)
 [![CI](https://github.com/noi-techpark/odh-mentor-otp/actions/workflows/ci.yml/badge.svg)](https://github.com/noi-techpark/odh-mentor-otp/actions/workflows/ci.yml)
@@ -48,19 +48,13 @@ cd odh-mentor-otp
 
 #### Scripts and sub folders
 
-```docker-entrypoint.sh``` download and build data graph
-
-```otp.sh``` a script to run otp by command line
-
-```otp-unofficial.sh``` a script to run otp unofficial version by command line
-
 ```router-config.json``` define OTP updaters(GTFS-RT) and router settings from environment vars
 
-```build-config.json``` default OTP build config from environment vars
+```build-config.json``` OTP build config that includes which sources (GTFS, OSM) constitutes the graph
 
-```osm.url``` a pregenerated urls list of downloadable Openstreetmap data for SouthTyrol area.
+```south-tyrol.geojson``` the geographic extend that is extracted and processed by OTP
 
-```journey/``` static javascript client side react/redux UI component to interact with Opentriplanner instance.
+```journey/``` static javascript client side react/redux UI component to interact with OpenTripPlanner instance.
 
 ```gbfs/``` service that fetch bikesharing data from ODH and provide them as GBFS for otp.
 
@@ -75,9 +69,7 @@ Below is a list of env variables for each container:
 
 ##### otp
 
-```JAVA_MX``` the amount of heap space available to OpenTripPlanner. (The `otp.sh` script adds `-Xmx$JAVA_MX` to the `java` command.) Default: 2G
-
-```OTP_OFFICIAL``` if *True* will use the OpenTripPlanner Official Version, otherwise the IBI-Group Version [(see Compatibility)](#compatibility)
+```JAVA_TOOL_OPTIONS``` the JVM configuration of OpenTripPlanner, for example `JAVA_TOOL_OPTIONS=-Xmx6G`.
 
 ##### build
 
@@ -154,37 +146,25 @@ Below is a list of Docker args variables for each container:
 
 Then you can start the application using the following command:
 
-#### First build Graph and Cache
+## Running OTP
 
-```bash
-docker-compose up build
+If you don't want to build the graph yourself, you can simply run the following to start OTP
+
+```
+docker run -it -p 8080:8080 ghcr.io/noi-techpark/odh-mentor-otp/odh-mentor-otp:df65ce3c8656f4431cb89d79df6b2cc1db4d7cc9
 ```
 
-#### Compatibility
+You can find the latest version of the image on its [repository page](https://github.com/noi-techpark/odh-mentor-otp/pkgs/container/odh-mentor-otp%2Fodh-mentor-otp).
 
-In OpenTripPlanner is not allowed running a graph built with a different version.
-In case you change the OpenTripPlanner version or switch from/to Ufficial/IBI-Group Version **you have to rebuild the graph**.  
+## Building a graph
 
-#### Execute OTP instance
+If you want to build graph on your local machine there are convenience scripts available that
+download the requisites and builds the graph.
 
-```bash
-docker-compose up otp
 ```
-After the graph has been built, the planner is available at port *8080*.
-
-
-#### Services
-
-defined in docker-compose.yml, both of these services are defined by the same docker image which behaves differently according to the defined environment parameters.
-
-```build``` build a new OTP graph by gtfs file in /opt/odh-mentor-otp/ directory, automatically stopped on finish, ```docker logs``` notice if the building was successful.
-
-```otp``` run a new instance of OTP by /opt/odh-mentor-otp/, distribute API rest and default UI on port 8080, need restart: "always"
-
-#### Volumes
-
-```/opt/odh-mentor-otp/:/data/``` the path used in reading and writing in which the Osm, Altimetric data are downloaded. It must contains the GTFS zip file before building the graph. Here where the graph generated will be written by OTP, in path:
-```/opt/odh-mentor-otp/openmove/Graph.obj```
+./build-graph.sh
+./run-otp.sh
+```
 
 ## Information
 

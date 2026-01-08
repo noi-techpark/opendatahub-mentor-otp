@@ -1,0 +1,4 @@
+[
+    {"id": "gtfs-stops", "url": "https://gtfs.api.opendatahub.com/v1/dataset/sta-time-tables/raw", "type": "gtfs", "vicinity": 50},
+    {"id": "osm-stops", "area_selector": "[\"boundary\"=\"administrative\"][\"ISO3166-2\"=\"IT-BZ\"]", "type": "overpass", "vicinity": 500}
+]
