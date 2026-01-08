@@ -16,61 +16,61 @@ env:
   DOCKER_TAG: ${{ github.sha }}
 
 jobs:
-  run-calculate-test:
-    runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' 
-    concurrency: build-calc-test
-    steps:
-      - name: Checkout source code
-        uses: noi-techpark/github-actions/checkout@v2
+  # run-calculate-test:
+  #   runs-on: ubuntu-22.04
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' 
+  #   concurrency: build-calc-test
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: noi-techpark/github-actions/checkout@v2
 
-      - name: Create .env file
-        uses: noi-techpark/github-actions/env-file@v2
-        env:
-          X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
-          X_DOCKER_IMAGE_OTP: ${{ env.DOCKER_IMAGE_OTP }}
-          X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
+  #     - name: Create .env file
+  #       uses: noi-techpark/github-actions/env-file@v2
+  #       env:
+  #         X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
+  #         X_DOCKER_IMAGE_OTP: ${{ env.DOCKER_IMAGE_OTP }}
+  #         X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
           
-          X_EFS_FOLDER: "/opt/odh-mentor-otp-test/"
+  #         X_EFS_FOLDER: "/opt/odh-mentor-otp-test/"
 
-          X_GBFS_HOST : "https://gbfs.otp.opendatahub.testingmachine.eu/"
+  #         X_GBFS_HOST : "https://gbfs.otp.opendatahub.testingmachine.eu/"
 
-          X_JAVA_MX: "16G"
-          X_BUILD_GRAPH: "True"
-          X_DOWNLOAD_DATA: "False"
-          X_BACKUP_GRAPH: "True"
+  #         X_JAVA_MX: "16G"
+  #         X_BUILD_GRAPH: "True"
+  #         X_DOWNLOAD_DATA: "False"
+  #         X_BACKUP_GRAPH: "True"
 
-          X_CARSHARING_HOST: "https://carsharing.otp.opendatahub.testingmachine.eu"
-          X_PARKING_HOST: "https://parking.otp.opendatahub.testingmachine.eu"
-          X_DRT_HOST: "https://drt.otp.opendatahub.testingmachine.eu"
-          X_CHARGER_HOST: "https://charger.otp.opendatahub.testingmachine.eu"
-          X_UPDATERS: "True"
-          X_GTFS_FILE: "latestGTFS.zip"
-          X_OTP_OFFICIAL: "False"
-          X_GBFS_VERSION: 1
-          X_GTFS_RT_URL: "https://efa.sta.bz.it/gtfs-r/"
-          X_GTFS_FEED_ID: 1
+  #         X_CARSHARING_HOST: "https://carsharing.otp.opendatahub.testingmachine.eu"
+  #         X_PARKING_HOST: "https://parking.otp.opendatahub.testingmachine.eu"
+  #         X_DRT_HOST: "https://drt.otp.opendatahub.testingmachine.eu"
+  #         X_CHARGER_HOST: "https://charger.otp.opendatahub.testingmachine.eu"
+  #         X_UPDATERS: "True"
+  #         X_GTFS_FILE: "latestGTFS.zip"
+  #         X_OTP_OFFICIAL: "False"
+  #         X_GBFS_VERSION: 1
+  #         X_GTFS_RT_URL: "https://efa.sta.bz.it/gtfs-r/"
+  #         X_GTFS_FEED_ID: 1
 
-          X_GEOCODER_BASEURL: "https://geocoder.otp.opendatahub.testingmachine.eu"
-          X_PARKING_BASEURL: "https://parking.otp.opendatahub.testingmachine.eu"
-          X_DRT_BASEURL: "https://drt.otp.opendatahub.testingmachine.eu"
-          X_CHARGER_BASEURL: "https://charger.otp.opendatahub.testingmachine.eu"
-          X_TRAFFIC_BASEURL: "https://traffic.otp.opendatahub.testingmachine.eu"
+  #         X_GEOCODER_BASEURL: "https://geocoder.otp.opendatahub.testingmachine.eu"
+  #         X_PARKING_BASEURL: "https://parking.otp.opendatahub.testingmachine.eu"
+  #         X_DRT_BASEURL: "https://drt.otp.opendatahub.testingmachine.eu"
+  #         X_CHARGER_BASEURL: "https://charger.otp.opendatahub.testingmachine.eu"
+  #         X_TRAFFIC_BASEURL: "https://traffic.otp.opendatahub.testingmachine.eu"
 
-      - name: Deploy / run calculation
-        uses: noi-techpark/github-actions/docker-deploy@v2
-        with:
-          hosts: 'calculate-test'
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          docker-username: 'noi-techpark-bot'
-          docker-password: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          project-name: ${{ env.PROJECT_NAME }}
-          playbook-file: deploy.calculate.test.yml
+  #     - name: Deploy / run calculation
+  #       uses: noi-techpark/github-actions/docker-deploy@v2
+  #       with:
+  #         hosts: 'calculate-test'
+  #         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         docker-username: 'noi-techpark-bot'
+  #         docker-password: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+  #         project-name: ${{ env.PROJECT_NAME }}
+  #         playbook-file: deploy.calculate.test.yml
 
   run-calculate-prod:
-    runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/prod' && github.event_name == 'workflow_dispatch' 
-    concurrency: build-calc-prod
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/v1-prod' && github.event_name == 'workflow_dispatch' 
+    concurrency: build-calc-prod-v1
     steps:
       - name: Checkout source code
         uses: noi-techpark/github-actions/checkout@v2

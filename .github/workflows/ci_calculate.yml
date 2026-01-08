@@ -14,9 +14,9 @@ env:
 
 jobs:
   ci-calculate:
-    runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prod'
-    concurrency: build-calc
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/v1-prod'
+    concurrency: build-calc-v1
     steps:
       - name: Checkout source code
         uses: noi-techpark/github-actions/checkout@v2

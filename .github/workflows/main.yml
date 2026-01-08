@@ -21,12 +21,12 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
       - name: REUSE Compliance Check
-        uses: fsfe/reuse-action@v1
+        uses: fsfe/reuse-action@v5
         
       - name: Build docker file
         uses: noi-techpark/github-actions/docker-build@v2
