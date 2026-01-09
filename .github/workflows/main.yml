@@ -30,6 +30,7 @@ jobs:
   deploy-test:
     runs-on: ubuntu-22.04
     concurrency: deploy-test
+    if: github.ref != 'refs/heads/prod'
     env:
       API_HOST: "https://otp.opendatahub.testingmachine.eu"
       API_PORT: "443"
@@ -146,6 +147,7 @@ jobs:
         with:
           name: sta-netex-correct-ssids
           path: data/sta.netex.correct-ssids.xml
+          if-no-files-found: ignore
 
       - name: Build and push
         if: github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/main'
@@ -282,6 +284,7 @@ jobs:
         with:
           name: sta-netex-correct-ssids
           path: data/sta.netex.correct-ssids.xml
+          if-no-files-found: ignore
 
       - name: Build and push
         uses: noi-techpark/github-actions/docker-build-and-push@v2
