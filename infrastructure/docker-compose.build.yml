@@ -1,19 +1,19 @@
 services:
-  journey:
-    image: ${DOCKER_IMAGE_JOURNEY}:${DOCKER_TAG}
-    build:
-      context: ../
-      dockerfile: infrastructure/docker/journey/Dockerfile
-      args:
-        - API_HOST=${API_HOST}
-        - API_PORT=${API_PORT}
-        - API_PATH=${API_PATH}
-        - GEOCODER_BASEURL=${GEOCODER_BASEURL}
-        - PARKING_BASEURL=${PARKING_BASEURL}
-        - DRT_BASEURL=${DRT_BASEURL}
-        - CHARGER_BASEURL=${CHARGER_BASEURL}
-        - CARSHARING_BASEURL=${CARSHARING_BASEURL}
-        - TRAFFIC_BASEURL=${TRAFFIC_BASEURL}
+  # journey:
+  #   image: ${DOCKER_IMAGE_JOURNEY}:${DOCKER_TAG}
+  #   build:
+  #     context: ../
+  #     dockerfile: infrastructure/docker/journey/Dockerfile
+  #     args:
+  #       - API_HOST=${API_HOST}
+  #       - API_PORT=${API_PORT}
+  #       - API_PATH=${API_PATH}
+  #       - GEOCODER_BASEURL=${GEOCODER_BASEURL}
+  #       - PARKING_BASEURL=${PARKING_BASEURL}
+  #       - DRT_BASEURL=${DRT_BASEURL}
+  #       - CHARGER_BASEURL=${CHARGER_BASEURL}
+  #       - CARSHARING_BASEURL=${CARSHARING_BASEURL}
+  #       - TRAFFIC_BASEURL=${TRAFFIC_BASEURL}
   otp:
     image: ${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
     build:
@@ -29,31 +29,31 @@ services:
     build:
       context: ../
       dockerfile: infrastructure/docker/gbfs/Dockerfile
-  geocoder:
-    image: ${DOCKER_IMAGE_GEOCODER}:${DOCKER_TAG}
-    build:
-      context: ../
-      dockerfile: infrastructure/docker/geocoder/Dockerfile
-  parking:
-    image: ${DOCKER_IMAGE_PARKING}:${DOCKER_TAG}
-    build:
-      context: ../
-      dockerfile: infrastructure/docker/parking/Dockerfile
+  # geocoder:
+  #   image: ${DOCKER_IMAGE_GEOCODER}:${DOCKER_TAG}
+  #   build:
+  #     context: ../
+  #     dockerfile: infrastructure/docker/geocoder/Dockerfile
+  # parking:
+  #   image: ${DOCKER_IMAGE_PARKING}:${DOCKER_TAG}
+  #   build:
+  #     context: ../
+  #     dockerfile: infrastructure/docker/parking/Dockerfile
   charger:
     image: ${DOCKER_IMAGE_ECHARGING}:${DOCKER_TAG}
     build:
       context: ../
       dockerfile: infrastructure/docker/charger/Dockerfile
-  drt:
-    image: ${DOCKER_IMAGE_DRT}:${DOCKER_TAG}
-    build:
-      context: ../
-      dockerfile: infrastructure/docker/drt/Dockerfile
-  traffic:
-    image: ${DOCKER_IMAGE_TRAFFIC}:${DOCKER_TAG}
-    build:
-      context: ../
-      dockerfile: infrastructure/docker/traffic/Dockerfile
+  # drt:
+  #   image: ${DOCKER_IMAGE_DRT}:${DOCKER_TAG}
+  #   build:
+  #     context: ../
+  #     dockerfile: infrastructure/docker/drt/Dockerfile
+  # traffic:
+  #   image: ${DOCKER_IMAGE_TRAFFIC}:${DOCKER_TAG}
+  #   build:
+  #     context: ../
+  #     dockerfile: infrastructure/docker/traffic/Dockerfile
   amarillo:
     image: ${DOCKER_IMAGE_AMARILLO}:${DOCKER_TAG}
     build:

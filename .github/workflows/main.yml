@@ -105,7 +105,6 @@ jobs:
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
 
-
           # disable in test
           # X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}
           # X_MATOMO_SITE_ID: ${{ env.MATOMO_SITE_ID }}
