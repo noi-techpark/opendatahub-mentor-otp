@@ -113,6 +113,9 @@ jobs:
       - name: use mobility.api.opendatahub.testingmachine.eu for testing
         run: sed -i 's/mobility.api.opendatahub.com/mobility.api.opendatahub.testingmachine.eu/' */config.yml
 
+      - name: use other services for testing
+        run: sed -i 's/opendatahub.com/opendatahub.testingmachine.eu/' build-config.json
+
       # elevation data does not change so we cache it forever
       - name: Cache elevation data
         uses: actions/cache@v4
