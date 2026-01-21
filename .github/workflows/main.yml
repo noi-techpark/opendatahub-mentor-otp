@@ -42,6 +42,7 @@ jobs:
       CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
       TRAFFIC_BASEURL: "https://traffic.otp.opendatahub.testingmachine.eu"
       AMARILLO_BASEURL: "https://amarillo.otp.opendatahub.testingmachine.eu"
+      TRANSMODEL_BASEURL: "https://transmodel.api.opendatahub.testingmachine.eu"
       DOCKER_TAG: ${{ github.sha }}-test
 
     steps:
@@ -97,6 +98,7 @@ jobs:
           X_CARSHARING_BASEURL: ${{ env.CARSHARING_BASEURL }}
           X_TRAFFIC_BASEURL: ${{ env.TRAFFIC_BASEURL }}
           X_AMARILLO_BASEURL: ${{ env.AMARILLO_BASEURL }}
+          X_TRANSMODEL_BASEURL: "https://transmodel.api.opendatahub.com"
 
           X_GBFS_VERSION: 1
           X_CARSHARING_HOST: "https://carsharing.otp.opendatahub.testingmachine.eu/"
@@ -109,12 +111,6 @@ jobs:
           # disable in test
           # X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}
           # X_MATOMO_SITE_ID: ${{ env.MATOMO_SITE_ID }}
-
-      - name: use mobility.api.opendatahub.testingmachine.eu for testing
-        run: sed -i 's/mobility.api.opendatahub.com/mobility.api.opendatahub.testingmachine.eu/' */config.yml
-
-      - name: use other services for testing
-        run: sed -i 's/opendatahub.com/opendatahub.testingmachine.eu/' build-config.json
 
       # elevation data does not change so we cache it forever
       - name: Cache elevation data
@@ -143,7 +139,8 @@ jobs:
       - name: Build graph
         # the script uses error handling with +e, so please don't run it with bash prepended in this line
         run: ./build-graph.sh
-
+        env:
+          TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
 
       - name: Store artifact for sta.netex.correct-ssids.xml
         uses: actions/upload-artifact@v4
@@ -277,10 +274,18 @@ jobs:
           path: |
             data/italy-nord-est.osm.pbf
           key: osm-${{ env.OSM_CACHE_VERSION }}
+          
+      - name: Use production configs
+        run: |
+          mv build-config.prod.json build-config.json
+          mv router-config.prod.json router-config.json
+          mv web-demo/lib/config.prod.yml web-demo/lib/config.yml
 
       - name: Build graph
         # the script uses error handling with +e, so please don't run it with bash prepended in this line
         run: ./build-graph.sh
+        env:
+          TRANSMODEL_HOST: "https://transmodel.api.opendatahub.com"
 
       - name: Store artifact for sta.netex.correct-ssids.xml
         uses: actions/upload-artifact@v4

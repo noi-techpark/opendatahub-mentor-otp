@@ -91,33 +91,33 @@
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://gbfs.otp.opendatahub.testingmachine.eu/bz/2.1/gbfs.json"
+      "url" : "https://gbfs.v2.otp.opendatahub.com/bz/2.1/gbfs.json"
     },
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://gbfs.otp.opendatahub.testingmachine.eu/me/2.1/gbfs.json"
+      "url" : "https://gbfs.v2.otp.opendatahub.com/me/2.1/gbfs.json"
     },
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://gbfs.otp.opendatahub.testingmachine.eu/papin/2.1/gbfs.json"
+      "url" : "https://gbfs.v2.otp.opendatahub.com/papin/2.1/gbfs.json"
     },
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://carsharing.otp.opendatahub.testingmachine.eu/alpsgo/gbfs.json"
+      "url" : "https://carsharing.v2.otp.opendatahub.com/alpsgo/gbfs.json"
     },
     {
       "type": "stop-time-updater",
-      "url": "https://amarillo.otp.opendatahub.testingmachine.eu/gtfs/amarillo.altoadige.gtfsrt.pbf",
+      "url": "https://amarillo.v2.otp.opendatahub.com/gtfs/amarillo.altoadige.gtfsrt.pbf",
       "feedId": "amarillo"
     },
     {
       "type": "vehicle-parking",
       "feedId": "parking",
       "sourceType": "siri-fm",
-      "url": "https://transmodel.api.opendatahub.testingmachine.eu/siri-lite/facility-monitoring/parking"
+      "url": "https://transmodel.api.opendatahub.com/siri-lite/facility-monitoring/parking"
     }
   ]
 }
