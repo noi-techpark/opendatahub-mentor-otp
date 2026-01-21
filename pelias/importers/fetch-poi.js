@@ -20,7 +20,7 @@ if (!fs.existsSync(DATA_DIR)){
 }
 
 // Query stops from OTP graphql endpoint
-GraphqlOtp.query('https://otp.opendatahub.testingmachine.eu/otp/gtfs/v1', GraphqlOtp.queries.getAllPoi)
+GraphqlOtp.query('https://v2.otp.opendatahub.com/otp/gtfs/v1', GraphqlOtp.queries.getAllPoi)
     .then((data) => {
         let stops = data.data.stops;
         let stations = data.data.stations;
