@@ -145,7 +145,7 @@ jobs:
       - name: Store artifact for sta.netex.correct-ssids.xml
         uses: actions/upload-artifact@v4
         with:
-          name: sta-netex-correct-ssids
+          name: sta-netex-correct-ssids-test
           path: data/sta.netex.correct-ssids.xml
           if-no-files-found: ignore
 
@@ -170,7 +170,7 @@ jobs:
   deploy-prod:
     runs-on: ubuntu-22.04
     concurrency: deploy-prod
-    if: github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod'
+    if: github.event_name == 'schedule' || (github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod')
     env:
       API_HOST: "https://v2.otp.opendatahub.com"
       API_PORT: "443"
@@ -191,6 +191,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          # If triggered by cron, make sure we still use the prod branch
+          ref: prod
 
       - name: Create .env file
         uses: noi-techpark/github-actions/env-file@v2
@@ -290,7 +292,7 @@ jobs:
       - name: Store artifact for sta.netex.correct-ssids.xml
         uses: actions/upload-artifact@v4
         with:
-          name: sta-netex-correct-ssids
+          name: sta-netex-correct-ssids-prod
           path: data/sta.netex.correct-ssids.xml
           if-no-files-found: ignore
 
