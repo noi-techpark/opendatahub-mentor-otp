@@ -112,6 +112,13 @@ module.exports = {
         test: /\.(svg|eot|woff|woff2|ttf)$/
       }
       addBeforeLoader(webpackConfig, loaderByName('file-loader'), webfontLoader)
+      
+      // Branding assets
+      const imageLoader = {
+        test: /\.(ico|svg|png|jpg|jpeg|gif)$/,
+        include: path.resolve(__dirname, 'branding'),
+        type: 'asset/resource'
+      }
 
       // Support typescript
       const { matches } = getLoaders(
@@ -179,7 +186,9 @@ module.exports = {
         new HtmlWebpackPlugin({
           filename: 'index.html',
           inject: 'body',
-          template: HTML_FILE
+          template: HTML_FILE,
+          // TODO: make configurable which branding
+          favicon: 'branding/opendatahub/favicon.ico'
         }),
         new MiniCssExtractPlugin(),
         new webpack.DefinePlugin({
