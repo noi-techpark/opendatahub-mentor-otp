@@ -55,3 +55,10 @@
   padding: 0px;
 }
   
+.icon-opendatahub {
+  content: url('../../branding/opendatahub/navbar.png');
+  display: block;
+  background-color: #fff;
+  height: 38px;
+  padding: 3px;
+}

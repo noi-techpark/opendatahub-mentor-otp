@@ -10,6 +10,12 @@ SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
 SPDX-License-Identifier = "CC0-1.0"
 
 [[annotations]]
+path = ["web-demo/branding/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
 path = "drt/utils/gtfs-realtime.proto"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
