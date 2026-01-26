@@ -42,6 +42,13 @@ import {
 // eslint-disable-next-line no-undef
 const otpConfig = require(YAML_CONFIG)
 
+const {brandByDomain} = otpConfig;
+
+if (brandByDomain && (location.hostname in brandByDomain)) {
+  otpConfig.branding = brandByDomain[ location.hostname ]['branding'];
+  otpConfig.title = brandByDomain[ location.hostname ]['title'];
+}
+
 // Update title bar right away if one is supplied in config.
 if (otpConfig.title) {
   document.title = otpConfig.title

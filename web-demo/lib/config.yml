@@ -5,6 +5,20 @@
 branding: opendatahub
 title: Open Data Hub / Open Trip Planner
 
+brandByDomain:
+  localhost:
+    branding: impact 
+    title: Localhost test
+  journey.opendatahub.com:
+    branding: opendatahub
+    title: Open Data Hub / Open Trip Planner
+  journey.v2.otp.opendatahub.com:
+    branding: opendatahub
+    title: Open Data Hub / Open Trip Planner
+  journey.impact.digital.noi.bz.it:
+    branding: impact 
+    title: Open Trip Planner
+
 reportIssue:
   mailto: info@noi.bz.it
 
