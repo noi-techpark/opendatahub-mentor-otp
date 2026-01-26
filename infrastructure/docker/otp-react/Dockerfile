@@ -15,5 +15,5 @@ RUN yarn build
 FROM nginx:1.27.2-alpine
 # be quiet
 ENV NGINX_ENTRYPOINT_QUIET_LOGS=1
-COPY --from=build /build/dist/* /usr/share/nginx/html
+COPY --from=build /build/dist/ /usr/share/nginx/html/
 
