@@ -2,10 +2,10 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-branding: Merano - Alto Adige/Suedtirol
-title: Merano - Alto Adige/Suedtirol
-brandNavbar: Merano
-brandNavbarLogo: null
+branding: Mentor
+title: Mentor
+brandNavbar: ''
+brandNavbarLogo: interreg
 
 #overwrite default values by location.hostname
 brandByDomain:
@@ -34,6 +34,18 @@ brandByDomain:
     brandNavbarLogo: bolzano
 
   journey.opendatahub.com:
+    branding: Mentor
+    title: Mentor
+    brandNavbar: ''
+    brandNavbarLogo: interreg
+
+  journey.v1.otp.opendatahub.com:
+    branding: Mentor
+    title: Mentor
+    brandNavbar: ''
+    brandNavbarLogo: interreg
+
+  journey.mentor.digital.noi.bz.it:
     branding: Mentor
     title: Mentor
     brandNavbar: ''
