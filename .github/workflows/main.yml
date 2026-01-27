@@ -13,7 +13,7 @@ env:
   API_PATH: /otp/routers/openmove
   API_PORT: 8080
   DOCKER_IMAGE_OTP: ghcr.io/${{ github.repository }}/odh-mentor-otp
-  DOCKER_IMAGE_OTP_REACT: ghcr.io/${{ github.repository }}/odh-mentor-otp-react
+  DOCKER_IMAGE_JOURNEY_V2: ghcr.io/${{ github.repository }}/odh-mentor-otp-react
   DOCKER_IMAGE_JOURNEY: ghcr.io/${{ github.repository }}/odh-mentor-otp-journey
   DOCKER_IMAGE_GBFS: ghcr.io/${{ github.repository }}/odh-mentor-otp-gbfs
   DOCKER_IMAGE_GEOCODER: ghcr.io/${{ github.repository }}/odh-mentor-otp-geocoder
@@ -35,12 +35,8 @@ jobs:
       API_HOST: "https://otp.opendatahub.testingmachine.eu"
       API_PORT: "443"
       API_PATH: "/otp/routers/openmove"
-      GEOCODER_BASEURL: "https://geocoder.otp.opendatahub.testingmachine.eu"
-      PARKING_BASEURL: "https://parking.otp.opendatahub.testingmachine.eu"
-      DRT_BASEURL: "https://drt.otp.opendatahub.testingmachine.eu"
       CHARGER_BASEURL: "https://charger.otp.opendatahub.testingmachine.eu"
       CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
-      TRAFFIC_BASEURL: "https://traffic.otp.opendatahub.testingmachine.eu"
       AMARILLO_BASEURL: "https://amarillo.otp.opendatahub.testingmachine.eu"
       TRANSMODEL_BASEURL: "https://transmodel.api.opendatahub.testingmachine.eu"
       DOCKER_TAG: ${{ github.sha }}-test
@@ -56,29 +52,19 @@ jobs:
         env:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           X_DOCKER_IMAGE_OTP: ${{ env.DOCKER_IMAGE_OTP }}
-          X_DOCKER_IMAGE_OTP_REACT: ${{ env.DOCKER_IMAGE_OTP_REACT }}
-          X_DOCKER_IMAGE_JOURNEY: ${{ env.DOCKER_IMAGE_JOURNEY }}
+          X_DOCKER_IMAGE_JOURNEY_V2: ${{ env.DOCKER_IMAGE_JOURNEY_V2 }}
           X_DOCKER_IMAGE_GBFS: ${{ env.DOCKER_IMAGE_GBFS }}
-          X_DOCKER_IMAGE_GEOCODER: ${{ env.DOCKER_IMAGE_GEOCODER }}
           X_DOCKER_IMAGE_CARSHARING: ${{ env.DOCKER_IMAGE_CARSHARING }}
-          X_DOCKER_IMAGE_PARKING: ${{ env.DOCKER_IMAGE_PARKING }}
           X_DOCKER_IMAGE_ECHARGING: ${{ env.DOCKER_IMAGE_ECHARGING }}
-          X_DOCKER_IMAGE_DRT: ${{ env.DOCKER_IMAGE_DRT }}
-          X_DOCKER_IMAGE_TRAFFIC: ${{ env.DOCKER_IMAGE_TRAFFIC }}          
           X_DOCKER_IMAGE_AMARILLO: ${{ env.DOCKER_IMAGE_AMARILLO }}          
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
 
           X_SERVER_PORT_OTP: 1080
-          X_SERVER_PORT_JOURNEY: 1081
-          X_SERVER_PORT_OTP_REACT: 1079
+          X_SERVER_PORT_JOURNEY_V2: 1079
           X_GBFS_HOST : "https://gbfs.otp.opendatahub.testingmachine.eu/"
           X_DOCKER_GBFS_PORT: 1082
-          X_DOCKER_GEOCODER_PORT: 1083
           X_DOCKER_CARSHARING_PORT: 1084
-          X_DOCKER_PARKING_PORT: 1085
-          X_DOCKER_DRT_PORT: 1086
           X_DOCKER_ECHARGING_PORT: 1087
-          X_DOCKER_TRAFFIC_PORT: 1088
           X_DOCKER_AMARILLO_PORT: 1092
           
           X_JAVA_MX: "14G"
@@ -91,12 +77,8 @@ jobs:
           X_HERE_APPCODE: ${{ secrets.HERE_APPCODE_TEST }}
           X_HERE_APIKEY:  ${{ secrets.HERE_APIKEY_TEST }}
 
-          X_GEOCODER_BASEURL: ${{ env.GEOCODER_BASEURL }}
-          X_PARKING_BASEURL: ${{ env.PARKING_BASEURL }}
-          X_DRT_BASEURL: ${{ env.DRT_BASEURL }}
           X_CHARGER_BASEURL: ${{ env.CHARGER_BASEURL }}
           X_CARSHARING_BASEURL: ${{ env.CARSHARING_BASEURL }}
-          X_TRAFFIC_BASEURL: ${{ env.TRAFFIC_BASEURL }}
           X_AMARILLO_BASEURL: ${{ env.AMARILLO_BASEURL }}
           X_TRANSMODEL_BASEURL: "https://transmodel.api.opendatahub.com"
 
@@ -175,12 +157,8 @@ jobs:
       API_HOST: "https://v2.otp.opendatahub.com"
       API_PORT: "443"
       API_PATH: "/otp/routers/openmove"
-      GEOCODER_BASEURL: "https://geocoder.v2.otp.opendatahub.com"
-      PARKING_BASEURL: "https://parking.v2.otp.opendatahub.com"
-      DRT_BASEURL: "https://drt.v2.otp.opendatahub.com"
       CHARGER_BASEURL: "https://charger.v2.otp.opendatahub.com"
       CARSHARING_BASEURL: "https://carsharing.v2.otp.opendatahub.com"
-      TRAFFIC_BASEURL: "https://traffic.v2.otp.opendatahub.com"
       AMARILLO_BASEURL: "https://amarillo.v2.otp.opendatahub.com"
       MATOMO_BASE_URL: "https://digital.matomo.cloud/"
       MATOMO_SITE_ID: 20
@@ -199,29 +177,20 @@ jobs:
         env:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           X_DOCKER_IMAGE_OTP: ${{ env.DOCKER_IMAGE_OTP }}
-          X_DOCKER_IMAGE_OTP_REACT: ${{ env.DOCKER_IMAGE_OTP_REACT }}
-          X_DOCKER_IMAGE_JOURNEY: ${{ env.DOCKER_IMAGE_JOURNEY }}
+          X_DOCKER_IMAGE_JOURNEY_V2: ${{ env.DOCKER_IMAGE_JOURNEY_V2 }}
           X_DOCKER_IMAGE_GBFS: ${{ env.DOCKER_IMAGE_GBFS }}
-          X_DOCKER_IMAGE_GEOCODER: ${{ env.DOCKER_IMAGE_GEOCODER }}
           X_DOCKER_IMAGE_CARSHARING: ${{ env.DOCKER_IMAGE_CARSHARING }}
-          X_DOCKER_IMAGE_PARKING: ${{ env.DOCKER_IMAGE_PARKING }}
           X_DOCKER_IMAGE_ECHARGING: ${{ env.DOCKER_IMAGE_ECHARGING }}
-          X_DOCKER_IMAGE_DRT: ${{ env.DOCKER_IMAGE_DRT }}
-          X_DOCKER_IMAGE_TRAFFIC: ${{ env.DOCKER_IMAGE_TRAFFIC }}          
           X_DOCKER_IMAGE_AMARILLO: ${{ env.DOCKER_IMAGE_AMARILLO }}          
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
           
           X_SERVER_PORT_OTP: 1060
-          X_SERVER_PORT_JOURNEY: 1061
-          X_SERVER_PORT_OTP_REACT: 1069
+          X_SERVER_PORT_JOURNEY_V2: 1069
           X_GBFS_HOST : "https://gbfs.v2.otp.opendatahub.com/"
           X_DOCKER_GBFS_PORT: 1062
-          X_DOCKER_GEOCODER_PORT: 1063
           X_DOCKER_CARSHARING_PORT: 1064
           X_DOCKER_PARKING_PORT: 1065
-          X_DOCKER_DRT_PORT: 1066
           X_DOCKER_ECHARGING_PORT: 1067
-          X_DOCKER_TRAFFIC_PORT: 1068
           X_DOCKER_AMARILLO_PORT: 1070
           
           X_JAVA_MX: "14G"
@@ -234,12 +203,8 @@ jobs:
           X_HERE_APPCODE: ${{ secrets.HERE_APPCODE_TEST }}
           X_HERE_APIKEY:  ${{ secrets.HERE_APIKEY_TEST }}
 
-          X_GEOCODER_BASEURL: ${{ env.GEOCODER_BASEURL }}
-          X_PARKING_BASEURL: ${{ env.PARKING_BASEURL }}
-          X_DRT_BASEURL: ${{ env.DRT_BASEURL }}
           X_CHARGER_BASEURL: ${{ env.CHARGER_BASEURL }}
           X_CARSHARING_BASEURL: ${{ env.CARSHARING_BASEURL }}
-          X_TRAFFIC_BASEURL: ${{ env.TRAFFIC_BASEURL }}
           X_AMARILLO_BASEURL: ${{ env.AMARILLO_BASEURL }}
 
           X_GBFS_VERSION: 1
@@ -281,7 +246,7 @@ jobs:
         run: |
           mv build-config.prod.json build-config.json
           mv router-config.prod.json router-config.json
-          mv web-demo/lib/config.prod.yml web-demo/lib/config.yml
+          mv journey-v2/lib/config.prod.yml journey-v2/lib/config.yml
 
       - name: Build graph
         # the script uses error handling with +e, so please don't run it with bash prepended in this line

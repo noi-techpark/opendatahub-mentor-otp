@@ -1,19 +1,11 @@
 services:
-  # journey:
-  #   image: ${DOCKER_IMAGE_JOURNEY}:${DOCKER_TAG}
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - ${SERVER_PORT_JOURNEY}:80
-
-  otp-react:
-    image: ${DOCKER_IMAGE_OTP_REACT}:${DOCKER_TAG}
+  journey-v2:
+    image: ${DOCKER_IMAGE_JOURNEY_V2}:${DOCKER_TAG}
     restart: unless-stopped
     env_file:
       - .env
     ports:
-      - ${SERVER_PORT_OTP_REACT}:80
+      - ${SERVER_PORT_JOURNEY_V2}:80
 
   otp:
     image: ${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
@@ -37,37 +29,11 @@ services:
     ports:
      - ${DOCKER_GBFS_PORT}:8089
 
-  # geocoder:
-  #   image: ${DOCKER_IMAGE_GEOCODER}:${DOCKER_TAG}
-  #   restart: unless-stopped
-  #   ports:
-  #     - ${DOCKER_GEOCODER_PORT}:8088
-  #   env_file:
-  #     - .env
-
-  # parking:
-  #   image: ${DOCKER_IMAGE_PARKING}:${DOCKER_TAG}
-  #   restart: unless-stopped
-  #   ports:
-  #     - ${DOCKER_PARKING_PORT}:8092
-
-  # drt:
-  #   image: ${DOCKER_IMAGE_DRT}:${DOCKER_TAG}
-  #   restart: unless-stopped
-  #   ports:
-  #     - ${DOCKER_DRT_PORT}:8095
-
   charger:
     image: ${DOCKER_IMAGE_ECHARGING}:${DOCKER_TAG}
     restart: unless-stopped
     ports:
       - ${DOCKER_ECHARGING_PORT}:8093
-
-  # traffic:
-  #   image: ${DOCKER_IMAGE_TRAFFIC}:${DOCKER_TAG}
-  #   restart: unless-stopped
-  #   ports:
-  #     - ${DOCKER_TRAFFIC_PORT}:8094
 
   amarillo:
     # image: ${DOCKER_IMAGE_AMARILLO}:${DOCKER_TAG}
