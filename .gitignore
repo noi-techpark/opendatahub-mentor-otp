@@ -1,14 +1,6 @@
 .env
 data
 **node_modules
-journey/src/config.yml
-journey/yarn-error.log
-journey/node_modules
-journey/dist
-journey/node_modules
-journey/.env
-journey/tmp
-geocoder/.env
 
 graph.obj
 
