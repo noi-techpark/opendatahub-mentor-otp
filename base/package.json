@@ -6,7 +6,7 @@
   "author": "Stefano Cudini stefano.cudini@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "@stefcud/configyml": "^0.0.5",
+    "@stefcud/configyml": "github:openmove/configYml#semver:^0.0.5",
     "dotenv": "^16.0.0",
     "express": "^4.17.1",
     "cors": "^2.8.5",

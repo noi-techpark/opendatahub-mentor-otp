@@ -8,7 +8,7 @@
   "author": "Stefano Cudini <stefano.cudini@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "@stefcud/configyml": "^0.0.3",
+    "@stefcud/configyml": "github:openmove/configYml#semver:^0.0.5",
     "dotenv": "^16.0.0",
     "jsftp": "^2.1.3",
     "jsftp-checksum": "^1.1.6"
