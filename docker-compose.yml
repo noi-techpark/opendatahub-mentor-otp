@@ -7,118 +7,44 @@
 # look contents of file _dot.env.example
 #
 services:
-  journey:
-    container_name: journey
+  journey-v2:
     ports:
       - "8081:80"
-    image: openmove_journey:latest
     build:
       context: ./
-      dockerfile: infrastructure/docker/journey/Dockerfile
-      args:
-        API_HOST: $API_HOST
-        API_PATH: $API_PATH
-        API_PORT: $API_PORT
-        CARSHARING_BASEURL: $CARSHARING_BASEURL
-        GEOCODER_BASEURL: $GEOCODER_BASEURL
-        ## debug of remote instance
-        #API_HOST: https://otp.opendatahub.testingmachine.eu
-        #API_PORT: 443
-        #API_PATH: /otp/routers/openmove
-        #CHARGER_BASEURL: https://charger.otp.opendatahub.testingmachine.eu
-        #CARSHARING_BASEURL: https://carsharing.otp.opendatahub.testingmachine.eu
-        ##
-        #GOOGLE_ANALYTICS_ID: $GOOGLE_ANALYTICS_ID
+      dockerfile: infrastructure/docker/journey-v2/Dockerfile
     depends_on:
      - otp
      - charger
      - carsharing-cron
 
   charger:
-    container_name: charger
     ports:
       - "8093:8093"
-    image: openmove_charger:latest
     build:
       context: ./
       dockerfile: infrastructure/docker/charger/Dockerfile
 
-  drt:
-      container_name: drt
-      ports:
-        - "8095:8095"
-      image: openmove_drt:latest
-      build:
-        context: ./
-        dockerfile: infrastructure/docker/drt/Dockerfile
-
   gbfs:
-      container_name: gbfs
       ports:
         - "8089:8089"
-      image: openmove_gbfs:latest
       build:
         context: ./
         dockerfile: infrastructure/docker/gbfs/Dockerfile
 
-  geocoder:
-    container_name: geocoder
-    ports:
-      - "8088:8088"
-    image: openmove_geocoder:latest
-    build:
-      context: ./
-      dockerfile: infrastructure/docker/geocoder/Dockerfile
-    #TODO ONLY FOR DEBUG
-    #volumes:
-    #  - ./config.yml:/home/config.yml
-    #  - ./index.js:/home/index.js
-    environment:
-      API_HOST: otp
-      API_PATH: /otp/routers/openmove
-      API_PORT: 8080
-      HERE_APPID: ''
-      HERE_APPCODE: ''
-      HERE_APIKEY: ''
-
-  parking:
-    container_name: parking
-    ports:
-      - "8092:8092"
-    image: openmove_parking:latest
-    build:
-      context: ./
-      dockerfile: infrastructure/docker/parking/Dockerfile
-
-  traffic:
-    container_name: traffic
-    ports:
-      - "8094:8094"
-    image: openmove_traffic:latest
-    build:
-      context: ./
-      dockerfile: infrastructure/docker/traffic/Dockerfile
-
   otp:
-    container_name: otp
     ports:
       - "8080:8080"
-    image: openmove_otp:latest
     build:
       context: ./
       dockerfile: infrastructure/docker/otp/Dockerfile
-    environment:
-      - JAVA_MX=4G
     depends_on:
-      #TODO - drt
       - amarillo
       - gbfs
-      - parking
       - charger
       - carsharing-cron
   
   amarillo:
-    container_name: amarillo
     build:
       context: ./
       dockerfile: infrastructure/docker/amarillo/Dockerfile
@@ -142,7 +68,7 @@ services:
     environment:
       - JAVA_OPTS=-Xmx4g
     volumes:
-      - /opt/odh-mentor-otp/:/data/
+      - graphhopper:/data/
   
   carsharing-cron:
     container_name: carsharing-cron
@@ -163,3 +89,4 @@ services:
 
 volumes:
   carsharing-gbfs:
+  graphhopper:
