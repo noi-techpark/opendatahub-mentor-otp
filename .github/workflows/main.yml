@@ -9,22 +9,12 @@ on:
 
 env:
   PROJECT_NAME: "odh-mentor-otp-v2"
-  API_HOST: http://localhost
-  API_PATH: /otp/routers/openmove
-  API_PORT: 8080
   DOCKER_IMAGE_OTP: ghcr.io/${{ github.repository }}/odh-mentor-otp
   DOCKER_IMAGE_JOURNEY_V2: ghcr.io/${{ github.repository }}/odh-mentor-otp-react
-  DOCKER_IMAGE_JOURNEY: ghcr.io/${{ github.repository }}/odh-mentor-otp-journey
   DOCKER_IMAGE_GBFS: ghcr.io/${{ github.repository }}/odh-mentor-otp-gbfs
-  DOCKER_IMAGE_GEOCODER: ghcr.io/${{ github.repository }}/odh-mentor-otp-geocoder
   DOCKER_IMAGE_CARSHARING: ghcr.io/${{ github.repository }}/odh-mentor-otp-carsharing
-  DOCKER_IMAGE_PARKING: ghcr.io/${{ github.repository }}/odh-mentor-otp-parking
   DOCKER_IMAGE_ECHARGING: ghcr.io/${{ github.repository }}/odh-mentor-otp-echarging
-  DOCKER_IMAGE_DRT: ghcr.io/${{ github.repository }}/odh-mentor-otp-drt
-  DOCKER_IMAGE_TRAFFIC: ghcr.io/${{ github.repository }}/odh-mentor-otp-traffic
   DOCKER_IMAGE_AMARILLO: ghcr.io/${{ github.repository }}/odh-mentor-otp-amarillo
-  MATOMO_BASE_URL: "https://digital.matomo.cloud/"
-  MATOMO_SITE_ID: 20
 
 jobs:
   deploy-test:
@@ -32,13 +22,6 @@ jobs:
     concurrency: deploy-test
     if: github.ref != 'refs/heads/prod'
     env:
-      API_HOST: "https://otp.opendatahub.testingmachine.eu"
-      API_PORT: "443"
-      API_PATH: "/otp/routers/openmove"
-      CHARGER_BASEURL: "https://charger.otp.opendatahub.testingmachine.eu"
-      CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
-      AMARILLO_BASEURL: "https://amarillo.otp.opendatahub.testingmachine.eu"
-      TRANSMODEL_BASEURL: "https://transmodel.api.opendatahub.testingmachine.eu"
       DOCKER_TAG: ${{ github.sha }}-test
 
     steps:
@@ -61,32 +44,12 @@ jobs:
 
           X_SERVER_PORT_OTP: 1080
           X_SERVER_PORT_JOURNEY_V2: 1079
-          X_GBFS_HOST : "https://gbfs.otp.opendatahub.testingmachine.eu/"
           X_DOCKER_GBFS_PORT: 1082
           X_DOCKER_CARSHARING_PORT: 1084
           X_DOCKER_ECHARGING_PORT: 1087
           X_DOCKER_AMARILLO_PORT: 1092
-          
-          X_JAVA_MX: "14G"
 
-          X_API_HOST: ${{ env.API_HOST }}
-          X_API_PORT: ${{ env.API_PORT }}
-          X_API_PATH: ${{ env.API_PATH }}
-
-          X_HERE_APPID: ${{ secrets.HERE_APPID_TEST }}
-          X_HERE_APPCODE: ${{ secrets.HERE_APPCODE_TEST }}
-          X_HERE_APIKEY:  ${{ secrets.HERE_APIKEY_TEST }}
-
-          X_CHARGER_BASEURL: ${{ env.CHARGER_BASEURL }}
-          X_CARSHARING_BASEURL: ${{ env.CARSHARING_BASEURL }}
-          X_AMARILLO_BASEURL: ${{ env.AMARILLO_BASEURL }}
-          X_TRANSMODEL_BASEURL: "https://transmodel.api.opendatahub.com"
-
-          X_GBFS_VERSION: 1
-          X_CARSHARING_HOST: "https://carsharing.otp.opendatahub.testingmachine.eu/"
-          X_PARKING_HOST: "https://parking.otp.opendatahub.testingmachine.eu/"
-          X_DRT_HOST: "https://drt.otp.opendatahub.testingmachine.eu/"
-          X_CHARGER_HOST: "https://charger.otp.opendatahub.testingmachine.eu/"
+          X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
 
@@ -154,14 +117,6 @@ jobs:
     concurrency: deploy-prod
     if: github.event_name == 'schedule' || (github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod')
     env:
-      API_HOST: "https://v2.otp.opendatahub.com"
-      API_PORT: "443"
-      API_PATH: "/otp/routers/openmove"
-      CHARGER_BASEURL: "https://charger.v2.otp.opendatahub.com"
-      CARSHARING_BASEURL: "https://carsharing.v2.otp.opendatahub.com"
-      AMARILLO_BASEURL: "https://amarillo.v2.otp.opendatahub.com"
-      MATOMO_BASE_URL: "https://digital.matomo.cloud/"
-      MATOMO_SITE_ID: 20
       DOCKER_TAG: ${{ github.sha }}-test
 
     steps:
@@ -186,37 +141,18 @@ jobs:
           
           X_SERVER_PORT_OTP: 1060
           X_SERVER_PORT_JOURNEY_V2: 1069
-          X_GBFS_HOST : "https://gbfs.v2.otp.opendatahub.com/"
           X_DOCKER_GBFS_PORT: 1062
           X_DOCKER_CARSHARING_PORT: 1064
           X_DOCKER_PARKING_PORT: 1065
           X_DOCKER_ECHARGING_PORT: 1067
           X_DOCKER_AMARILLO_PORT: 1070
           
-          X_JAVA_MX: "14G"
-
-          X_API_HOST: ${{ env.API_HOST }}
-          X_API_PORT: ${{ env.API_PORT }}
-          X_API_PATH: ${{ env.API_PATH }}
-
-          X_HERE_APPID: ${{ secrets.HERE_APPID_TEST }}
-          X_HERE_APPCODE: ${{ secrets.HERE_APPCODE_TEST }}
-          X_HERE_APIKEY:  ${{ secrets.HERE_APIKEY_TEST }}
-
-          X_CHARGER_BASEURL: ${{ env.CHARGER_BASEURL }}
-          X_CARSHARING_BASEURL: ${{ env.CARSHARING_BASEURL }}
-          X_AMARILLO_BASEURL: ${{ env.AMARILLO_BASEURL }}
-
-          X_GBFS_VERSION: 1
-          X_CARSHARING_HOST: "https://carsharing.v2.otp.opendatahub.com/"
-          X_PARKING_HOST: "https://parking.v2.otp.opendatahub.com/"
-          X_DRT_HOST: "https://drt.v2.otp.opendatahub.com/"
-          X_CHARGER_HOST: "https://charger.v2.otp.opendatahub.com/"
+          X_CARSHARING_BASEURL: "https://carsharing.v2.otp.opendatahub.com"
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
 
-          X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}
-          X_MATOMO_SITE_ID: ${{ env.MATOMO_SITE_ID }}
+          X_MATOMO_BASE_URL: "https://digital.matomo.cloud/"
+          X_MATOMO_SITE_ID: 20
 
       # elevation data does not change so we cache it forever
       - name: Cache elevation data

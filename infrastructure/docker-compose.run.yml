@@ -15,13 +15,9 @@ services:
     ports:
       - ${SERVER_PORT_OTP}:8080
     depends_on:
-    #  - geocoder
      - amarillo
-    #  - parking
      - charger
      - carsharing-cron
-    #  - traffic
-    #  - drt
   
   gbfs:
     image: ${DOCKER_IMAGE_GBFS}:${DOCKER_TAG}
