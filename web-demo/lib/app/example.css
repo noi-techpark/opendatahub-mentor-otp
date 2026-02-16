@@ -6,7 +6,7 @@
 
 .otp .navbar {
   border-radius: 0;
-  background-color: #444;
+  background-color: #ffffff;
   margin: 0px;
 }
 
@@ -19,7 +19,7 @@
 }
 
 .otp .navbar-title {
-  color: #fff;
+  color: #000;
   font-size: 24px;
   padding-top: 7px;
 }
@@ -68,4 +68,16 @@
   display: block;
   background-color: #fff;
   height: 40px;
+}
+
+#locale-selector-label {
+  color: #000
+}
+
+#view-switcher > a {
+  color:#000
+}
+
+.app-menu-icon .menu-line {
+  border-bottom-color: #000 !important
 }
