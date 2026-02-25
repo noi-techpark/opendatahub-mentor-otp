@@ -1,9 +1,0 @@
-#ONLY FOR DEBUG
-#copy this in /env file to customize params
-API_HOST=localhost
-API_PATH=/otp/routers/openmove
-API_PORT=8080
-#PORT=8086
-HERE_APPID=xxxxx
-HERE_APPCODE=xxxxx
-HERE_APIKEY=xxxxxxxx

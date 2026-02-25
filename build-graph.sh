@@ -25,7 +25,8 @@ TRANSIT_NETEX_GZ=${TRANSIT_NETEX_XML}.gz
 TRANSIT_NETEX_ZIP=${TRANSIT_NETEX_XML}.zip
 
 # parking
-PARKING_NETEX_URL=${TRANSMODEL_HOST}/netex/parking
+# Override the transmodel API host if needed
+PARKING_NETEX_URL=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}/netex/parking
 PARKING_NETEX_XML=data/shared-data.xml
 PARKING_NETEX_ZIP=data/parking-netex.xml.zip
 
