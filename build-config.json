@@ -25,11 +25,17 @@
       "type": "netex",
       "feedId": "parking",
       "ignoreParking": false
+    },
+    {
+      "source": "https://leonard.io/noi/switzerland-epip.xml.zip",
+      "type": "netex",
+      "feedId": "ch",
+      "groupFilePattern": "(.*)\\.xml"
     }
   ],
   "osm": [
     {
-      "source": "data/south-tyrol.osm.pbf",
+      "source": "data/switzerland-south-tyrol.osm.pbf",
       "timeZone": "Europe/Rome",
       "osmTagMapping": "default"
     }

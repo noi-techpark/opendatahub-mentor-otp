@@ -9,9 +9,9 @@ source .otp-version
 CURL="curl --location --fail --show-error -#"
 
 # OSM
-NORTH_EAST_URL=https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf
-NORTH_EAST_PBF=data/italy-nord-est.osm.pbf
-SOUTH_TYROL_PBF=data/south-tyrol.osm.pbf
+EUROPE_URL=https://download.geofabrik.de/europe-latest.osm.pbf
+EUROPE_PBF=data/europe.osm.pbf
+SWITZERLAND_SOUTH_TYROL_PBF=data/switzerland-south-tyrol.osm.pbf
 # elevation
 # this URL is way too overloaded, so we mirror it
 # ELEVATION_URL=https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_39_03.zip
@@ -44,17 +44,20 @@ fi
 
 mkdir -p data
 
-if [ ! -f "${NORTH_EAST_PBF}" ]; then
-  echo "Downloading OSM data for NE Italy from ${NORTH_EAST_URL}"
-  ${CURL} ${NORTH_EAST_URL} -o ${NORTH_EAST_PBF}
+if [ ! -f "${EUROPE_PBF}" ]; then
+  echo "Downloading OSM data for Europe from ${EUROPE_URL}"
+  ${CURL} ${EUROPE_URL} -o ${EUROPE_PBF}
 else
   echo "Checking for updates for existing OSM file"
-  pyosmium-up-to-date ${NORTH_EAST_PBF}
+  pyosmium-up-to-date ${EUROPE_PBF}
 fi
 
+
 # cut out South Tyrol from the large North East Italy extract
-echo "Extracting ${SOUTH_TYROL_PBF} from ${NORTH_EAST_PBF}"
-osmium extract ${NORTH_EAST_PBF} --polygon south-tyrol.geojson -o ${SOUTH_TYROL_PBF} --overwrite
+if [ ! -f "${SWITZERLAND_SOUTH_TYROL_PBF}" ] || [ "${EUROPE_PBF}" -nt "${SWITZERLAND_SOUTH_TYROL_PBF}" ]; then
+  echo "Extracting ${SWITZERLAND_SOUTH_TYROL_PBF} from ${EUROPE_PBF}"
+  osmium extract ${EUROPE_PBF} --polygon switzerland-south-tyrol.geojson -o ${SWITZERLAND_SOUTH_TYROL_PBF} --overwrite
+fi
 
 if [ ! -f "${ELEVATION_ZIP}" ]; then
   ${CURL} ${ELEVATION_URL} -o ${ELEVATION_ZIP}
@@ -89,5 +92,5 @@ zip --junk-paths ${PARKING_NETEX_ZIP} ${PARKING_NETEX_XML}
 docker run \
   -v .:/var/opentripplanner/:z \
   --rm \
-  -e JAVA_TOOL_OPTIONS="-Xmx6G" \
+  -e JAVA_TOOL_OPTIONS="-Xmx18G" \
   "${OTP_IMAGE}" --abortOnUnknownConfig --build --save
