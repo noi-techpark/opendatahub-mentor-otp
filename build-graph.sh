@@ -6,7 +6,9 @@
 
 source .otp-version
 
-CURL="curl --location --fail --show-error -#"
+CURL_PROGRESS="--no-progress-meter"
+[ -t 1 ] && CURL_PROGRESS="-#"
+CURL="curl --location --fail --show-error ${CURL_PROGRESS}"
 
 # OSM
 EUROPE_URL=https://download.geofabrik.de/europe-latest.osm.pbf
