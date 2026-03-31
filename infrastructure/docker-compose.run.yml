@@ -28,6 +28,7 @@ services:
       - ${SERVER_PORT_OTP_GRAPH_BUILD}:80
     volumes:
       - otp-graph:/graph
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TRANSMODEL_HOST=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}
       - OTP_GRAPH_VOLUME=otp-graph
