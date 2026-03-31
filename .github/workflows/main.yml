@@ -61,43 +61,6 @@ jobs:
           # X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}
           # X_MATOMO_SITE_ID: ${{ env.MATOMO_SITE_ID }}
 
-      # elevation data does not change so we cache it forever
-      - name: Cache elevation data
-        uses: actions/cache@v4
-        with:
-          path: |
-            data/srtm*
-          key: elevation
-
-      # OSM data changes every day, so we cache a monthly download and apply the daily updates to it
-      # ideally we also put the updated file back into the cache but Github CI doesn't allow you to
-      # do that without jumping through many hoops.
-      # Therefore, we take the version from the beginning of the month and apply more and more daily
-      # updates until the next month triggers a complete download.
-      - name: Set variable OSM_CACHE_VERSION
-        run: |
-          echo "OSM_CACHE_VERSION=$(date +%Y-%m)" >> $GITHUB_ENV
-
-      - name: Cache OSM extract
-        uses: actions/cache@v4
-        with:
-          path: |
-            data/italy-nord-est.osm.pbf
-          key: osm-${{ env.OSM_CACHE_VERSION }}
-
-      # - name: Build graph
-      #   # the script uses error handling with +e, so please don't run it with bash prepended in this line
-      #   run: ./build-graph.sh
-      #   env:
-      #     TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
-
-      - name: Store artifact for sta.netex.correct-ssids.xml
-        uses: actions/upload-artifact@v4
-        with:
-          name: sta-netex-correct-ssids-test
-          path: data/sta.netex.correct-ssids.xml
-          if-no-files-found: ignore
-
       - name: Build and push
         if: github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/main'
         uses: noi-techpark/github-actions/docker-build-and-push@v2
