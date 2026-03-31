@@ -43,6 +43,7 @@ jobs:
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
 
           X_SERVER_PORT_OTP: 1080
+          X_SERVER_PORT_OTP_GRAPH_BUILD: 1085
           X_SERVER_PORT_JOURNEY_V2: 1079
           X_DOCKER_GBFS_PORT: 1082
           X_DOCKER_CARSHARING_PORT: 1084
@@ -52,6 +53,7 @@ jobs:
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
+          X_TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
 
           # disable in test
           # X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}

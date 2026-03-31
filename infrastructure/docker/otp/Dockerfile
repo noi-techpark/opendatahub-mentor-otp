@@ -4,6 +4,11 @@ FROM opentripplanner/opentripplanner:2.8.0_2025-08-25T13-49
 WORKDIR /var/otp
 
 ADD router-config.json otp-config.json /var/otp/
-ADD graph.obj /var/otp/
 
-ENTRYPOINT java $JAVA_OPTS -cp @/app/jib-classpath-file @/app/jib-main-class-file /var/otp/ --load --serve
+RUN apt-get update && apt-get install -y --no-install-recommends inotify-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY infrastructure/docker/otp/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
