@@ -37,11 +37,6 @@ SAXON_JAR="saxon/saxon-he-12.9.jar"
 XSL_FILE="transform-scheduled-stop-point-ids.xsl"
 SSIDS_TRANSFORMED_XML="data/sta.netex.correct-ssids.xml"
 
-# when on github actions then install the required tools
-if [ -n "${CI+isset}" ]; then
-  sudo apt-get -qq install osmium-tool pyosmium wget zip
-fi
-
 mkdir -p data
 
 if [ ! -f "${EUROPE_PBF}" ]; then
@@ -89,8 +84,10 @@ zip --junk-paths ${PARKING_NETEX_ZIP} ${PARKING_NETEX_XML}
 
 
 # actually do graph build
+VOLUME_MOUNT="${OTP_GRAPH_VOLUME:-$(pwd)}"
 docker run \
-  -v .:/var/opentripplanner/:z \
+  -v "${VOLUME_MOUNT}:/var/opentripplanner/:z" \
   --rm \
   -e JAVA_TOOL_OPTIONS="-Xmx18G" \
   "${OTP_IMAGE}" --abortOnUnknownConfig --build --save
+

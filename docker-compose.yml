@@ -43,6 +43,21 @@ services:
       - gbfs
       - charger
       - carsharing-cron
+    volumes:
+      - otp-graph:/var/otp
+
+  otp-graph-build:
+    ports:
+      - "8099:80"
+    build:
+      context: ./
+      dockerfile: infrastructure/docker/otp-graph-build/Dockerfile
+    volumes:
+      - otp-graph:/graph
+    environment:
+      - TRANSMODEL_HOST=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}
+      - OTP_GRAPH_VOLUME=otp-graph
+    restart: unless-stopped
   
   amarillo:
     build:
@@ -90,3 +105,5 @@ services:
 volumes:
   carsharing-gbfs:
   graphhopper:
+  otp-graph:
+    name: otp-graph

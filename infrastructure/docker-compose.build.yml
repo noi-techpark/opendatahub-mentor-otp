@@ -6,6 +6,11 @@ services:
     build:
       context: ../
       dockerfile: infrastructure/docker/otp/Dockerfile
+  otp-graph-build:
+    image: ${DOCKER_IMAGE_OTP_GRAPH_BUILD}:${DOCKER_TAG}
+    build:
+      context: ../
+      dockerfile: infrastructure/docker/otp-graph-build/Dockerfile
   journey-v2:
     image: ${DOCKER_IMAGE_JOURNEY_V2}:${DOCKER_TAG}
     build:
