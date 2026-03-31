@@ -81,11 +81,11 @@ jobs:
             data/italy-nord-est.osm.pbf
           key: osm-${{ env.OSM_CACHE_VERSION }}
 
-      - name: Build graph
-        # the script uses error handling with +e, so please don't run it with bash prepended in this line
-        run: ./build-graph.sh
-        env:
-          TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
+      # - name: Build graph
+      #   # the script uses error handling with +e, so please don't run it with bash prepended in this line
+      #   run: ./build-graph.sh
+      #   env:
+      #     TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
 
       - name: Store artifact for sta.netex.correct-ssids.xml
         uses: actions/upload-artifact@v4
@@ -117,7 +117,7 @@ jobs:
     concurrency: deploy-prod
     if: github.event_name == 'schedule' || (github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod')
     env:
-      DOCKER_TAG: ${{ github.sha }}-test
+      DOCKER_TAG: ${{ github.sha }}-prod
 
     steps:
       - name: Checkout source code
