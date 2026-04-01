@@ -5,7 +5,7 @@ services:
       context: ../
       dockerfile: infrastructure/docker/otp/Dockerfile
       args:
-        BASE_IMAGE: ${DOCKER_OTP_BASE_IMAGE}
+        BASE_IMAGE: ${OTP_IMAGE}
   otp-graph-build:
     image: ${DOCKER_IMAGE_OTP_GRAPH_BUILD}:${DOCKER_TAG}
     build:
