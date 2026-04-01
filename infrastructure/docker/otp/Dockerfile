@@ -1,5 +1,5 @@
-# Simon, do you know how we could use the value from .otp-version here?
-FROM opentripplanner/opentripplanner:2.8.0_2025-08-25T13-49
+ARG BASE_IMAGE=opentripplanner/opentripplanner:2.8.0_2025-08-25T13-49
+FROM ${BASE_IMAGE}
 
 WORKDIR /var/otp
 

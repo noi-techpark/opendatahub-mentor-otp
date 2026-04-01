@@ -38,6 +38,8 @@ services:
     build:
       context: ./
       dockerfile: infrastructure/docker/otp/Dockerfile
+      args:
+        BASE_IMAGE: ${OTP_IMAGE}
     depends_on:
       - amarillo
       - gbfs
