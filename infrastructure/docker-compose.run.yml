@@ -32,6 +32,7 @@ services:
     environment:
       - TRANSMODEL_HOST=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}
       - OTP_GRAPH_VOLUME=otp-graph
+      - OTP_IMAGE=${OTP_IMAGE}
 
   
   gbfs:
