@@ -21,7 +21,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 # Copy build script and all static config files it depends on
 WORKDIR /build
 COPY build-graph.sh .
-COPY .otp-version .
 COPY switzerland-south-tyrol.geojson .
 COPY transform-scheduled-stop-point-ids.xsl .
 COPY build-config.json .
