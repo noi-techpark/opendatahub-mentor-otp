@@ -16,6 +16,7 @@ env:
   DOCKER_IMAGE_CARSHARING: ghcr.io/${{ github.repository }}/odh-mentor-otp-carsharing
   DOCKER_IMAGE_ECHARGING: ghcr.io/${{ github.repository }}/odh-mentor-otp-echarging
   DOCKER_IMAGE_AMARILLO: ghcr.io/${{ github.repository }}/odh-mentor-otp-amarillo
+  OTP_IMAGE: "lehrenfried/opentripplanner:swiss-epip"
 
 jobs:
   deploy-test:
@@ -36,6 +37,7 @@ jobs:
         env:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           X_DOCKER_IMAGE_OTP: ${{ env.DOCKER_IMAGE_OTP }}
+          X_DOCKER_OTP_BASE_IMAGE: ${{ env.OTP_IMAGE }}
           X_DOCKER_IMAGE_OTP_GRAPH_BUILD: ${{ env.DOCKER_IMAGE_OTP_GRAPH_BUILD }}
           X_DOCKER_IMAGE_JOURNEY_V2: ${{ env.DOCKER_IMAGE_JOURNEY_V2 }}
           X_DOCKER_IMAGE_GBFS: ${{ env.DOCKER_IMAGE_GBFS }}
@@ -51,9 +53,8 @@ jobs:
           X_DOCKER_CARSHARING_PORT: 1084
           X_DOCKER_ECHARGING_PORT: 1087
           X_DOCKER_AMARILLO_PORT: 1092
-          
-          # Otp server and graph build version
-          X_OTP_IMAGE: "lehrenfried/opentripplanner:swiss-epip"
+
+          X_OTP_IMAGE: ${{ env.OTP_IMAGE }}
 
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
 
