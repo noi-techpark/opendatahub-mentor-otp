@@ -51,6 +51,9 @@ jobs:
           X_DOCKER_CARSHARING_PORT: 1084
           X_DOCKER_ECHARGING_PORT: 1087
           X_DOCKER_AMARILLO_PORT: 1092
+          
+          # Otp server and graph build version
+          X_OTP_IMAGE: "lehrenfried/opentripplanner:swiss-epip"
 
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
 

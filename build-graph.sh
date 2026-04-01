@@ -4,7 +4,9 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-source .otp-version
+set -a && source .env && set +a
+
+echo building graph with OTP image $OTP_IMAGE
 
 CURL_PROGRESS="--no-progress-meter"
 [ -t 1 ] && CURL_PROGRESS="-#"
