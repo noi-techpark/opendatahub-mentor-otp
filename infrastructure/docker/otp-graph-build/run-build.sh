@@ -9,7 +9,7 @@ LOG="/graph/build.$(date +%Y%m%d_%H%M%S).log"
 
 # Copy static files needed by build-graph.sh into /graph so relative paths resolve
 # and so they are accessible when OTP mounts the volume in its own container
-for f in .otp-version switzerland-south-tyrol.geojson transform-scheduled-stop-point-ids.xsl \
+for f in switzerland-south-tyrol.geojson transform-scheduled-stop-point-ids.xsl \
          build-config.json otp-config.json router-config.json; do
   cp --remove-destination "/build/$f" "/graph/$f"
 done
