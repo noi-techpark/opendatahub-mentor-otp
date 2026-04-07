@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: 2026 NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Pelias deployment
+
+on:
+  push:
+    branches:
+      - main
+      - pelias
+    paths:
+      - 'pelias/**'
+      - 'infrastructure/docker-compose.pelias.run.yml'
+      - 'infrastructure/pelias-setup.sh'
+      - 'infrastructure/ansible/deploy-pelias.yml'
+      - '.github/workflows/pelias.yml'
+  workflow_dispatch:
+
+env:
+  PROJECT_NAME: "odh-mentor-otp-pelias"
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-22.04
+    concurrency: deploy-pelias-test
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Create .env file
+        uses: noi-techpark/github-actions/env-file@v2
+        env:
+          X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
+          X_DOCKER_USER: ""
+          X_PELIAS_API_PORT: 1097
+
+      - name: Generate release name
+        if: github.repository_owner == 'noi-techpark'
+        run: echo "RELEASE_NAME=$(date +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_ENV
+
+      - name: Setup SSH connection
+        if: github.repository_owner == 'noi-techpark'
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+
+      - name: Install Ansible requirements
+        if: github.repository_owner == 'noi-techpark'
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        working-directory: infrastructure/ansible
+        run: ansible-galaxy install -f -r requirements.yml
+
+      # - name: Deploy Pelias
+      #   if: github.repository_owner == 'noi-techpark'
+      #   env:
+      #     SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      #   working-directory: infrastructure/ansible
+      #   run: |
+      #     ansible-playbook deploy-pelias.yml \
+      #       --limit=test \
+      #       --extra-vars "project_name=${{ env.PROJECT_NAME }}" \
+      #       --extra-vars "release_name=$RELEASE_NAME"

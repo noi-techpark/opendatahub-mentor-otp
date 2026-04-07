@@ -1,0 +1,145 @@
+# SPDX-FileCopyrightText: 2026 NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Runtime compose file for Pelias geocoding stack.
+#
+# Data is stored in named Docker volumes.
+# Config files (pelias.json, elasticsearch.yml) are deployed by Ansible into
+# the same release directory as this compose file and bind-mounted via
+# relative paths.
+#
+# Environment variables (set in .env):
+#   DOCKER_USER      - UID:GID to run containers as (e.g. 1000:1000)
+#   PELIAS_API_PORT  - Host port for the Pelias API (default: 4000)
+
+services:
+  # ── Runtime services (restart: always) ──────────────────────────────────────
+
+  libpostal:
+    image: pelias/libpostal-service
+    container_name: pelias_libpostal
+    user: "${DOCKER_USER}"
+    restart: always
+    ports: [ "127.0.0.1:4400:4400" ]
+
+  api:
+    image: pelias/api:master
+    container_name: pelias_api
+    user: "${DOCKER_USER}"
+    restart: always
+    environment: [ "PORT=4000" ]
+    ports: [ "0.0.0.0:${PELIAS_API_PORT:-4000}:4000" ]
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+
+  placeholder:
+    image: pelias/placeholder:master
+    container_name: pelias_placeholder
+    user: "${DOCKER_USER}"
+    restart: always
+    environment: [ "PORT=4100" ]
+    ports: [ "127.0.0.1:4100:4100" ]
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+      - pelias-data:/data
+
+  interpolation:
+    image: pelias/interpolation:master
+    container_name: pelias_interpolation
+    user: "${DOCKER_USER}"
+    restart: always
+    environment: [ "PORT=4300" ]
+    ports: [ "127.0.0.1:4300:4300" ]
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+      - pelias-data:/data
+
+  pip:
+    image: pelias/pip-service:master
+    container_name: pelias_pip-service
+    user: "${DOCKER_USER}"
+    restart: always
+    environment: [ "PORT=4200" ]
+    ports: [ "127.0.0.1:4200:4200" ]
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+      - pelias-data:/data
+
+  elasticsearch:
+    image: pelias/elasticsearch:7.16.1
+    container_name: pelias_elasticsearch
+    user: "${DOCKER_USER}"
+    restart: always
+    ports: [ "127.0.0.1:9200:9200", "127.0.0.1:9300:9300" ]
+    volumes:
+      - "./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro"
+      - pelias-elasticsearch:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add: [ "IPC_LOCK" ]
+    security_opt:
+      - seccomp=unconfined
+
+  # ── One-shot importer services (no restart policy) ───────────────────────────
+  # These are invoked via `pelias import <name>` / `docker compose run --rm`.
+  # They are not started by `compose up`; they run to completion and exit.
+
+  schema:
+    image: pelias/schema:master
+    container_name: pelias_schema
+    user: "${DOCKER_USER}"
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+
+  whosonfirst:
+    image: pelias/whosonfirst:master
+    container_name: pelias_whosonfirst
+    user: "${DOCKER_USER}"
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+      - pelias-data:/data
+
+  openstreetmap:
+    image: pelias/openstreetmap:master
+    container_name: pelias_openstreetmap
+    user: "${DOCKER_USER}"
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+      - pelias-data:/data
+
+  openaddresses:
+    image: pelias/openaddresses:master
+    container_name: pelias_openaddresses
+    user: "${DOCKER_USER}"
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+      - pelias-data:/data
+
+  csv-importer:
+    image: pelias/csv-importer:master
+    container_name: pelias_csv_importer
+    user: "${DOCKER_USER}"
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+      - pelias-data:/data
+
+  polylines:
+    image: pelias/polylines:master
+    container_name: pelias_polylines
+    user: "${DOCKER_USER}"
+    volumes:
+      - "./pelias.json:/code/pelias.json"
+      - pelias-data:/data
+
+volumes:
+  # Shared data volume used by all importers and runtime services.
+  pelias-data:
+
+  # Elasticsearch data, kept separate to allow independent backup/restore.
+  pelias-elasticsearch:

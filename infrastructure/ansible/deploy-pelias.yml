@@ -1,0 +1,82 @@
+---
+# SPDX-FileCopyrightText: 2026 NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+- hosts: all
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    pelias_cli_dir: "/opt/pelias/cli"
+    # Path built by the ansible-docker-deployment role (v2.0):
+    # project_name and release_name are injected by the workflow as extra-vars.
+    release_dir: "/var/docker/{{ project_name }}/releases/{{ release_name }}"
+
+  tasks:
+    # ── Pelias CLI (large artifact — installed outside the project directory) ──
+    # The pelias command (https://github.com/pelias/docker) is a bash wrapper
+    # that orchestrates docker compose calls.
+
+    - name: Clone or update pelias/docker CLI
+      ansible.builtin.git:
+        repo: https://github.com/pelias/docker.git
+        dest: "{{ pelias_cli_dir }}"
+        version: master
+        update: true
+
+    - name: Make pelias CLI executable
+      ansible.builtin.file:
+        path: "{{ pelias_cli_dir }}/pelias"
+        mode: "0755"
+
+    # ── Deploy compose file, config and scripts via ansible-docker-deployment ──
+    # Config files (pelias.json, elasticsearch.yml) and importer scripts are
+    # deployed alongside the compose file into the same release directory.
+    # The compose file references them with relative paths (./pelias.json etc.).
+
+    - name: Execute Docker deployment
+      ansible.builtin.include_role:
+        name: ansible-docker-deployment
+      vars:
+        docker_deployment_project_name: '{{ project_name }}'
+        docker_deployment_release_name: '{{ release_name }}'
+        docker_deployment_release_files:
+          - local: ../docker-compose.pelias.run.yml
+            remote: docker-compose.yml
+          - local: ../../.env
+            remote: .env
+          - local: ../../pelias/pelias.json
+            remote: pelias.json
+          - local: ../../pelias/elasticsearch.yml
+            remote: elasticsearch.yml
+          - local: ../pelias-setup.sh
+            remote: pelias-setup.sh
+          - local: ../../pelias/importers/fetch-poi.js
+            remote: importers/fetch-poi.js
+          - local: ../../pelias/importers/graphql_otp.js
+            remote: importers/graphql_otp.js
+          - local: ../../pelias/importers/process-touristic-poi.js
+            remote: importers/process-touristic-poi.js
+          - local: ../../pelias/importers/download_and_prepare_stops.sh
+            remote: importers/download_and_prepare_stops.sh
+          - local: ../../pelias/importers/download_and_prepare_poi.sh
+            remote: importers/download_and_prepare_poi.sh
+          - local: ../../pelias/importers/delete_old_poi_and_stops.sh
+            remote: importers/delete_old_poi_and_stops.sh
+
+    # ── Post-deploy: run setup / data-update script ────────────────────────────
+
+    - name: Make setup script executable
+      ansible.builtin.file:
+        path: "{{ release_dir }}/pelias-setup.sh"
+        mode: "0755"
+
+    - name: Run pelias-setup.sh
+      ansible.builtin.shell:
+        cmd: ./pelias-setup.sh
+        chdir: "{{ release_dir }}"
+      environment:
+        PELIAS_CLI_DIR: "{{ pelias_cli_dir }}"
+        COMPOSE_PROJECT_NAME: "{{ project_name }}"
+      # The script can take a long time on the first run (downloads + imports).
+      async: 7200
+      poll: 30
