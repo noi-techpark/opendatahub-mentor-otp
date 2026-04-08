@@ -10,7 +10,6 @@
 # relative paths.
 #
 # Environment variables (set in .env):
-#   DOCKER_USER      - UID:GID to run containers as (e.g. 1000:1000)
 #   PELIAS_API_PORT  - Host port for the Pelias API (default: 4000)
 
 services:
