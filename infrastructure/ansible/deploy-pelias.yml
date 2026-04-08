@@ -29,9 +29,10 @@
         mode: "0755"
 
     # ── Deploy compose file, config and scripts via ansible-docker-deployment ──
-    # Config files (pelias.json, elasticsearch.yml) and importer scripts are
-    # deployed alongside the compose file into the same release directory.
+    # Config files (pelias.json, elasticsearch.yml) are deployed alongside the
+    # compose file into the same release directory.
     # The compose file references them with relative paths (./pelias.json etc.).
+    # Importer scripts are baked into the pelias-opendatahub-importer Docker image.
 
     - name: Execute Docker deployment
       ansible.builtin.include_role:
@@ -48,31 +49,19 @@
             remote: pelias.json
           - local: ../../pelias/elasticsearch.yml
             remote: elasticsearch.yml
-          - local: ../pelias-setup.sh
-            remote: pelias-setup.sh
-          - local: ../../pelias/importers/fetch-poi.js
-            remote: importers/fetch-poi.js
-          - local: ../../pelias/importers/graphql_otp.js
-            remote: importers/graphql_otp.js
-          - local: ../../pelias/importers/process-touristic-poi.js
-            remote: importers/process-touristic-poi.js
-          - local: ../../pelias/importers/download_and_prepare_stops.sh
-            remote: importers/download_and_prepare_stops.sh
-          - local: ../../pelias/importers/download_and_prepare_poi.sh
-            remote: importers/download_and_prepare_poi.sh
-          - local: ../../pelias/importers/delete_old_poi_and_stops.sh
-            remote: importers/delete_old_poi_and_stops.sh
+          - local: ../pelias-run.sh
+            remote: pelias-run.sh
 
     # ── Post-deploy: run setup / data-update script ────────────────────────────
 
     - name: Make setup script executable
       ansible.builtin.file:
-        path: "{{ release_dir }}/pelias-setup.sh"
+        path: "{{ release_dir }}/pelias-run.sh"
         mode: "0755"
 
-    - name: Run pelias-setup.sh
+    - name: Run pelias-run.sh
       ansible.builtin.shell:
-        cmd: ./pelias-setup.sh
+        cmd: ./pelias-run.sh
         chdir: "{{ release_dir }}"
       environment:
         PELIAS_CLI_DIR: "{{ pelias_cli_dir }}"

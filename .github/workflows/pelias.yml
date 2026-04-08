@@ -12,13 +12,17 @@ on:
     paths:
       - 'pelias/**'
       - 'infrastructure/docker-compose.pelias.run.yml'
-      - 'infrastructure/pelias-setup.sh'
+      - 'infrastructure/docker-compose.pelias.build.yml'
+      - 'infrastructure/docker/pelias-opendatahub-importer/**'
+      - 'infrastructure/pelias-run.sh'
       - 'infrastructure/ansible/deploy-pelias.yml'
       - '.github/workflows/pelias.yml'
   workflow_dispatch:
 
 env:
   PROJECT_NAME: "odh-mentor-otp-pelias"
+  DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ghcr.io/${{ github.repository }}/odh-mentor-otp-pelias-opendatahub-importer
+  DOCKER_TAG: ${{ github.sha }}
 
 jobs:
   deploy-test:
@@ -37,6 +41,16 @@ jobs:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           X_DOCKER_USER: ""
           X_PELIAS_API_PORT: 1097
+          X_DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ${{ env.DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER }}
+          X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
+
+      - name: Build and push
+        if: github.repository_owner == 'noi-techpark'
+        uses: noi-techpark/github-actions/docker-build-and-push@v2
+        with:
+          docker-username: ${{ github.actor }}
+          docker-password: ${{ secrets.GITHUB_TOKEN }}
+          docker-compose-file: infrastructure/docker-compose.pelias.build.yml
 
       - name: Generate release name
         if: github.repository_owner == 'noi-techpark'
@@ -57,13 +71,13 @@ jobs:
         working-directory: infrastructure/ansible
         run: ansible-galaxy install -f -r requirements.yml
 
-      # - name: Deploy Pelias
-      #   if: github.repository_owner == 'noi-techpark'
-      #   env:
-      #     SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      #   working-directory: infrastructure/ansible
-      #   run: |
-      #     ansible-playbook deploy-pelias.yml \
-      #       --limit=test \
-      #       --extra-vars "project_name=${{ env.PROJECT_NAME }}" \
-      #       --extra-vars "release_name=$RELEASE_NAME"
+      - name: Deploy Pelias
+        if: github.repository_owner == 'noi-techpark'
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        working-directory: infrastructure/ansible
+        run: |
+          ansible-playbook deploy-pelias.yml \
+            --limit=test \
+            --extra-vars "project_name=${{ env.PROJECT_NAME }}" \
+            --extra-vars "release_name=$RELEASE_NAME"

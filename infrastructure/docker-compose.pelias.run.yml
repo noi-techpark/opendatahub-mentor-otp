@@ -90,6 +90,15 @@ services:
   # These are invoked via `pelias import <name>` / `docker compose run --rm`.
   # They are not started by `compose up`; they run to completion and exit.
 
+  pelias-opendatahub-importer:
+    image: ${DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER}:${DOCKER_TAG}
+    container_name: pelias_opendatahub_importer
+    user: "${DOCKER_USER}"
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+    volumes:
+      - pelias-data:/pelias/data
+
   schema:
     image: pelias/schema:master
     container_name: pelias_schema

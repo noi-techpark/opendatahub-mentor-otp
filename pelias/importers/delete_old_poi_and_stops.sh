@@ -2,8 +2,10 @@
 #
 # SPDX-License-Identifier: MIT
 
+ELASTICSEARCH_HOST="${ELASTICSEARCH_HOST:-localhost}"
+
 function delete_old_stops {
-  curl -X POST "localhost:9200/pelias/_delete_by_query?pretty" -H 'Content-Type: application/json' -d'
+  curl -X POST "${ELASTICSEARCH_HOST}:9200/pelias/_delete_by_query?pretty" -H 'Content-Type: application/json' -d'
   {
     "query": {
       "match": {
@@ -14,7 +16,7 @@ function delete_old_stops {
   '
 }
 function delete_old_poi {
-  curl -X POST "localhost:9200/pelias/_delete_by_query?pretty" -H 'Content-Type: application/json' -d'
+  curl -X POST "${ELASTICSEARCH_HOST}:9200/pelias/_delete_by_query?pretty" -H 'Content-Type: application/json' -d'
   {
     "query": {
       "match": {
@@ -25,7 +27,7 @@ function delete_old_poi {
   '
 }
 function delete_old_accomodation {
-  curl -X POST "localhost:9200/pelias/_delete_by_query?pretty" -H 'Content-Type: application/json' -d'
+  curl -X POST "${ELASTICSEARCH_HOST}:9200/pelias/_delete_by_query?pretty" -H 'Content-Type: application/json' -d'
   {
     "query": {
       "match": {

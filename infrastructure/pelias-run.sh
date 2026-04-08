@@ -3,33 +3,18 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# pelias-setup.sh — Initialize or incrementally update a Pelias deployment.
 #
 # Must be run from the release directory (where docker-compose.yml lives).
-# Ansible handles this via the chdir parameter.
 #
-# On first run (no Elasticsearch index found):
-#   pull images → start ES → wait → create index →
-#   download all geodata → prepare all → download CSV data →
-#   import all → start runtime services
+# Refer to the ./pelias/README.md on how to run the setup. 
+# This script is just to automate that
 #
-# On subsequent runs (index exists):
-#   pull images → ensure ES running → refresh CSV data
-#   (stops + POI) → delete old entries → re-import CSV →
-#   restart runtime services
-#
-# Environment variables:
-#   PELIAS_CLI_DIR       Directory of the cloned pelias/docker CLI repo
-#                        (default: /opt/pelias/cli)
-#   COMPOSE_PROJECT_NAME Docker Compose project name (default: pelias)
-
 set -euo pipefail
 
+#   PELIAS_CLI_DIR       Directory of the cloned pelias/docker CLI repo
 PELIAS_CLI_DIR="${PELIAS_CLI_DIR:-/opt/pelias/cli}"
+#   COMPOSE_PROJECT_NAME Docker Compose project name (default: pelias)
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-pelias}"
-
-# Importers and config files live alongside this script in the release dir.
-IMPORTERS_DIR="./importers"
 
 export PATH="${PELIAS_CLI_DIR}:${PATH}"
 
@@ -81,23 +66,9 @@ if [ "${FIRST_RUN}" = "true" ]; then
 fi
 
 # ── Prepare CSV data (stops + POI) ────────────────────────────────────────────
-# The importer scripts reference __dirname/../data/csv-importer (Node.js) and
-# ./data/csv-importer/ (shell scripts).  We mount the importers at
-# /pelias/importers and the pelias-data volume at /pelias/data so that both
-# path patterns resolve to /pelias/data/csv-importer inside the container.
 
 log "Preparing CSV data (OTP stops and NOI Datahub POI)..."
-docker run --rm \
-    -v "${COMPOSE_PROJECT_NAME}_pelias-data:/pelias/data" \
-    -v "$(pwd)/${IMPORTERS_DIR#./}:/pelias/importers:ro" \
-    -w /pelias \
-    node:18-alpine \
-    sh -c "
-        apk add --no-cache curl jq &&
-        mkdir -p data/csv-importer &&
-        sh importers/download_and_prepare_stops.sh &&
-        sh importers/download_and_prepare_poi.sh
-    "
+docker compose run --rm pelias-opendatahub-importer
 
 # ── Import data ────────────────────────────────────────────────────────────────
 
@@ -106,7 +77,7 @@ if [ "${FIRST_RUN}" = "true" ]; then
     pelias import all
 else
     log "Removing stale stops and POI from Elasticsearch..."
-    sh "${IMPORTERS_DIR}/delete_old_poi_and_stops.sh"
+    docker compose run --rm pelias-opendatahub-importer sh importers/delete_old_poi_and_stops.sh
 
     log "Re-importing CSV data..."
     pelias import csv
