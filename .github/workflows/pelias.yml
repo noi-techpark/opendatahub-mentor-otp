@@ -50,7 +50,7 @@ jobs:
         with:
           docker-username: ${{ github.actor }}
           docker-password: ${{ secrets.GITHUB_TOKEN }}
-          docker-compose-file: infrastructure/docker-compose.pelias.build.yml
+          docker-compose-file: docker-compose.pelias.build.yml
 
       - name: Generate release name
         if: github.repository_owner == 'noi-techpark'
