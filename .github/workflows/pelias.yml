@@ -17,7 +17,6 @@ on:
       - 'infrastructure/pelias-run.sh'
       - 'infrastructure/ansible/deploy-pelias.yml'
       - '.github/workflows/pelias.yml'
-  workflow_dispatch:
 
 env:
   PROJECT_NAME: "odh-mentor-otp-pelias"
@@ -26,7 +25,7 @@ env:
 
 jobs:
   deploy-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     concurrency: deploy-pelias-test
 
     steps:
@@ -44,7 +43,6 @@ jobs:
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
 
       - name: Build and push
-        if: github.repository_owner == 'noi-techpark'
         uses: noi-techpark/github-actions/docker-build-and-push@v2
         with:
           docker-username: ${{ github.actor }}
@@ -52,11 +50,9 @@ jobs:
           docker-compose-file: docker-compose.pelias.build.yml
 
       - name: Generate release name
-        if: github.repository_owner == 'noi-techpark'
         run: echo "RELEASE_NAME=$(date +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_ENV
 
       - name: Setup SSH connection
-        if: github.repository_owner == 'noi-techpark'
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
@@ -64,14 +60,12 @@ jobs:
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
 
       - name: Install Ansible requirements
-        if: github.repository_owner == 'noi-techpark'
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         working-directory: infrastructure/ansible
         run: ansible-galaxy install -f -r requirements.yml
 
       - name: Deploy Pelias
-        if: github.repository_owner == 'noi-techpark'
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         working-directory: infrastructure/ansible
