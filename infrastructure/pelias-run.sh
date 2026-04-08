@@ -18,6 +18,13 @@ COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-pelias}"
 
 export PATH="${PELIAS_CLI_DIR}:${PATH}"
 
+# The pelias CLI requires DATA_DIR to be set, but our compose file uses named
+# Docker volumes and does not bind-mount a host directory.
+export DATA_DIR="${DATA_DIR:-/tmp}"
+
+# Run all pelias containers as root so importers can write to the data volume.
+export DOCKER_USER="${DOCKER_USER:-0:0}"
+
 log() { echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] $*"; }
 
 # ── Sanity checks ─────────────────────────────────────────────────────────────

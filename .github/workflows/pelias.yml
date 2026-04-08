@@ -39,7 +39,6 @@ jobs:
         uses: noi-techpark/github-actions/env-file@v2
         env:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
-          X_DOCKER_USER: ""
           X_PELIAS_API_PORT: 1097
           X_DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ${{ env.DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER }}
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
