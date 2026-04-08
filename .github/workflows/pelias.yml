@@ -1,0 +1,76 @@
+# SPDX-FileCopyrightText: 2026 NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: Pelias deployment
+
+on:
+  push:
+    branches:
+      - main
+      - pelias
+    paths:
+      - 'pelias/**'
+      - 'infrastructure/docker-compose.pelias.run.yml'
+      - 'infrastructure/docker-compose.pelias.build.yml'
+      - 'infrastructure/docker/pelias-opendatahub-importer/**'
+      - 'infrastructure/pelias-run.sh'
+      - 'infrastructure/ansible/deploy-pelias.yml'
+      - '.github/workflows/pelias.yml'
+
+env:
+  PROJECT_NAME: "odh-mentor-otp-pelias"
+  DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ghcr.io/${{ github.repository }}/odh-mentor-otp-pelias-opendatahub-importer
+  DOCKER_TAG: ${{ github.sha }}
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-24.04
+    concurrency: deploy-pelias-test
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Create .env file
+        uses: noi-techpark/github-actions/env-file@v2
+        env:
+          X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
+          X_PELIAS_API_PORT: 1097
+          X_DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ${{ env.DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER }}
+          X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
+
+      - name: Build and push
+        uses: noi-techpark/github-actions/docker-build-and-push@v2
+        with:
+          docker-username: ${{ github.actor }}
+          docker-password: ${{ secrets.GITHUB_TOKEN }}
+          docker-compose-file: docker-compose.pelias.build.yml
+
+      - name: Generate release name
+        run: echo "RELEASE_NAME=$(date +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_ENV
+
+      - name: Setup SSH connection
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+
+      - name: Install Ansible requirements
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        working-directory: infrastructure/ansible
+        run: ansible-galaxy install -f -r requirements.yml
+
+      - name: Deploy Pelias
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        working-directory: infrastructure/ansible
+        run: |
+          ansible-playbook deploy-pelias.yml \
+            --limit=test \
+            --extra-vars "project_name=${{ env.PROJECT_NAME }}" \
+            --extra-vars "release_name=$RELEASE_NAME"
