@@ -22,7 +22,7 @@ jobs:
   deploy-test:
     runs-on: ubuntu-22.04
     concurrency: deploy-test
-    if: github.ref != 'refs/heads/prod'
+    if: github.event_name != 'schedule' && github.ref != 'refs/heads/prod'
     env:
       DOCKER_TAG: ${{ github.sha }}-test
 
