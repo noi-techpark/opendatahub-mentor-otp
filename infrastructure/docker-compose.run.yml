@@ -10,6 +10,8 @@ services:
   otp:
     image: ${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
     restart: unless-stopped
+    environment:
+      JAVA_OPTS: ${OTP_JAVA_OPTS}
     env_file:
       - .env
     ports:

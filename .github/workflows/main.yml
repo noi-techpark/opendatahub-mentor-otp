@@ -59,6 +59,7 @@ jobs:
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
           X_TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
+          X_OTP_JAVA_OPTS: -XX:+UseZGC -XX:+ZUncommit -XX:ZUncommitDelay=60
 
           # disable in test
           # X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}
