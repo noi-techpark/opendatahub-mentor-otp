@@ -90,6 +90,9 @@ zip --junk-paths ${PARKING_NETEX_ZIP} ${PARKING_NETEX_XML}
 # actually do graph build
 VOLUME_MOUNT="${OTP_GRAPH_VOLUME:-$(pwd)}"
 docker run \
+  --name otp-graph-build \
+  --init \
+  --restart no \
   -v "${VOLUME_MOUNT}:/var/opentripplanner/:z" \
   --rm \
   -e JAVA_TOOL_OPTIONS="-Xmx18G" \
