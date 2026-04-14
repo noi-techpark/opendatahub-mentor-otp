@@ -7,7 +7,8 @@
 CURL="curl --location --fail --show-error -#"
 
 INPUT_FILE=switzerland.netex.zip
-OUTPUT_FILE=switzerland.epip.netex.zip
+OUTPUT_FILE=switzerland.epip.netex.xml
+OUTPUT_ZIP_FILE=switzerland.epip.netex.zip
 
 if [ ! -d "badger" ]; then
   git clone --branch binary_relation_serializer git@github.com:MMTIS/badger.git
@@ -26,6 +27,6 @@ echo "Starting to convert Swiss NeTEx data to EPIP"
 
 uv run python -m conv.netex_to_db switzerland.netex.zip switzerland.lmdb
 uv run python -m conv.epip_db_to_db switzerland.lmdb switzerland-epip.lmdb
-uv run python -m conv.epip_db_to_xml switzerland-epip.lmdb switzerland-epip.xml
+uv run python -m conv.epip_db_to_xml switzerland-epip.lmdb ${OUTPUT_FILE}
 
-zip ${OUTPUT_FILE} switzerland-epip.xml --junk-paths
+zip ${OUTPUT_ZIP_FILE} ${OUTPUT_FILE} --junk-paths
