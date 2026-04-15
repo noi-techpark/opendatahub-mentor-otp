@@ -8,16 +8,16 @@ CURL="curl --location --fail --show-error -#"
 
 INPUT_FILE=switzerland.netex.zip
 OUTPUT_FILE=switzerland.epip.netex.xml
-OUTPUT_ZIP_FILE=switzerland.epip.netex.zip
+OUTPUT_ZIP_FILE=${OUTPUT_ZIP_FILE:-switzerland.epip.netex.zip}
 
 if [ ! -d "badger" ]; then
-  git clone --branch binary_relation_serializer git@github.com:MMTIS/badger.git
+  git clone --branch binary_relation_serializer https://github.com/MMTIS/badger.git
 fi
 
 cd badger
 
 uv sync
-UV_VENV_CLEAR=1 sh scripts/setup.sh
+UV_VENV_CLEAR=1 bash scripts/setup.sh
 
 source .venv/bin/activate
 

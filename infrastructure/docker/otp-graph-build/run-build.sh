@@ -15,7 +15,9 @@ for f in switzerland-south-tyrol.geojson transform-scheduled-stop-point-ids.xsl 
 done
 
 cd /graph
-bash /build/build-graph.sh 2>&1 | tee "$LOG"
+set -o pipefail
+OUTPUT_ZIP_FILE=/graph/data/switzerland.epip.netex.zip bash /build/build-switzerland-netex.sh 2>&1 | tee "$LOG" || exit 1
+bash /build/build-graph.sh 2>&1 | tee "$LOG" || exit 1
 
 # Retain only the 10 most recent log files
 ls -t /graph/build.*.log | tail -n +11 | xargs -r rm -f

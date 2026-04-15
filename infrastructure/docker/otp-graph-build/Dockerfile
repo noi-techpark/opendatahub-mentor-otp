@@ -16,6 +16,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     osmium-tool \
     pyosmium \
     docker.io \
+    # for Switzerland Netex conversion:
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy build script and all static config files it depends on
@@ -28,6 +30,11 @@ COPY otp-config.json .
 COPY router-config.json .
 COPY infrastructure/docker/otp-graph-build/run-build.sh .
 RUN chmod +x build-graph.sh run-build.sh
+
+# Switzerland Netex build
+COPY build-switzerland-netex.sh .
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN ln -s /root/.local/bin/uv /usr/local/bin/uv
 
 # nginx: serve build artifacts from /graph for debugging (directory listing only)
 RUN echo 'server {\n\

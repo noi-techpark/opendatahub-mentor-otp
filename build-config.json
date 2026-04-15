@@ -27,7 +27,7 @@
       "ignoreParking": false
     },
     {
-      "source": "https://leonard.io/noi/switzerland-epip.xml.zip",
+      "source": "data/switzerland.epip.netex.zip",
       "type": "netex",
       "feedId": "ch",
       "groupFilePattern": "(.*)\\.xml"
