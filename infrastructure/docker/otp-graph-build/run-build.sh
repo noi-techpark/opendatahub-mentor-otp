@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: CC0-1.0
 
 set -e
-
-LOG="/graph/build.$(date +%Y%m%d_%H%M%S).log"
+DATE="$(date +%Y%m%d_%H%M%S)"
+LOG="/graph/build.graph.${DATE}.log"
+NETEX_LOG="/graph/build.netex.${DATE}.log"
 
 # Copy static files needed by build-graph.sh into /graph so relative paths resolve
 # and so they are accessible when OTP mounts the volume in its own container
@@ -16,7 +17,7 @@ done
 
 cd /graph
 set -o pipefail
-OUTPUT_ZIP_FILE=/graph/data/switzerland.epip.netex.zip bash /build/build-switzerland-netex.sh 2>&1 | tee "$LOG" || exit 1
+OUTPUT_ZIP_FILE=/graph/data/switzerland.epip.netex.zip bash /build/build-switzerland-netex.sh 2>&1 | tee "$NETEX_LOG" || exit 1
 bash /build/build-graph.sh 2>&1 | tee "$LOG" || exit 1
 
 # Retain only the 10 most recent log files
