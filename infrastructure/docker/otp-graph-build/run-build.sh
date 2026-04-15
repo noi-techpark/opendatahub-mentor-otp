@@ -17,8 +17,8 @@ done
 
 cd /graph
 set -o pipefail
-OUTPUT_ZIP_FILE=/graph/data/switzerland.epip.netex.zip bash /build/build-switzerland-netex.sh 2>&1 | tee "$NETEX_LOG" || exit 1
-bash /build/build-graph.sh 2>&1 | tee "$LOG" || exit 1
+OUTPUT_ZIP_FILE=/graph/data/switzerland.epip.netex.zip bash /build/build-switzerland-netex.sh 2>&1 | tee "$NETEX_LOG"
+bash /build/build-graph.sh 2>&1 | tee "$LOG"
 
 # Retain only the 10 most recent log files
 ls -t /graph/build.*.log | tail -n +11 | xargs -r rm -f
