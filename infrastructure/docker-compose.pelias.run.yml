@@ -87,6 +87,7 @@ services:
     image: ${DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER}:${DOCKER_TAG}
     container_name: pelias_opendatahub_importer
     environment:
+      - OTP_GRAPH_URL=${OTP_GRAPH_URL}
       - ELASTICSEARCH_HOST=elasticsearch
     volumes:
       - pelias-data:/pelias/data
