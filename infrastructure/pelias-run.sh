@@ -11,6 +11,8 @@
 #
 set -euo pipefail
 
+source "$(dirname "${BASH_SOURCE[0]}")/.env"
+
 #   PELIAS_CLI_DIR       Directory of the cloned pelias/docker CLI repo
 PELIAS_CLI_DIR="${PELIAS_CLI_DIR:-/opt/pelias/cli}"
 #   COMPOSE_PROJECT_NAME Docker Compose project name (default: pelias)
