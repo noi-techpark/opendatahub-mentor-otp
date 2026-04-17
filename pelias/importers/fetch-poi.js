@@ -21,6 +21,7 @@ if (!fs.existsSync(DATA_DIR)){
 
 // Query stops from OTP graphql endpoint
 const OTP_GRAPH_URL = process.env.OTP_GRAPH_URL || 'https://v2.otp.opendatahub.com/otp/gtfs/v1';
+console.log(`Using OTP instance: ${OTP_GRAPH_URL}`);
 GraphqlOtp.query(OTP_GRAPH_URL, GraphqlOtp.queries.getAllPoi)
     .then((data) => {
         let stops = data.data.stops;

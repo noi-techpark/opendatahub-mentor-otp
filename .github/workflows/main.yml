@@ -2,6 +2,14 @@ name: nightly CI/CD
 
 on:
   push:
+    paths-ignore:
+      - 'pelias/**'
+      - 'infrastructure/docker-compose.pelias.run.yml'
+      - 'infrastructure/docker-compose.pelias.build.yml'
+      - 'infrastructure/docker/pelias-opendatahub-importer/**'
+      - 'infrastructure/pelias-run.sh'
+      - 'infrastructure/ansible/deploy-pelias.yml'
+      - '.github/workflows/pelias.yml'
   workflow_dispatch:
   schedule:
     # every night at 3am
