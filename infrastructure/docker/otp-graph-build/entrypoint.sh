@@ -10,6 +10,12 @@ if [ ! -f /run/.build-initialized ]; then
   (/build/run-build.sh && touch /run/.build-initialized) &
 fi
 
+# propagate current env variables to cron job
+printenv > /etc/environment
+# Set up the cron job to rebuild every night
+echo "0 2 * * * root /build/run-build.sh" > /etc/cron.d/build-graph 
+chmod 0644 /etc/cron.d/build-graph
+
 # Start cron
 cron
 

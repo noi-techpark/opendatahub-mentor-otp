@@ -48,11 +48,6 @@ RUN echo 'server {\n\
     && rm -f /etc/nginx/sites-enabled/default \
     && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# Cron job: run build every day at 02:00
-RUN echo "0 2 * * * root /build/run-build.sh" \
-    > /etc/cron.d/build-graph \
-    && chmod 0644 /etc/cron.d/build-graph
-
 COPY infrastructure/docker/otp-graph-build/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
