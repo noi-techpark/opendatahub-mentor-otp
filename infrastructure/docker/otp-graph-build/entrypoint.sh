@@ -5,15 +5,16 @@
 
 set -e
 
-# On first start (no prior successful build on this image version), run immediately in background
-if [ ! -f /run/.build-initialized ]; then
-  (/build/run-build.sh && touch /run/.build-initialized) &
-fi
-
 # propagate current env variables to cron job
-printenv > /etc/environment
+printenv | sed 's/^\(.*\)=\(.*\)$/export \1="\2"/' > /etc/environment.sh
+
 # Set up the cron job to rebuild every night
-echo "0 2 * * * root /build/run-build.sh" > /etc/cron.d/build-graph 
+echo "0 2 * * * root . /etc/environment.sh && /build/run-build.sh" > /etc/cron.d/build-graph
+
+# If this container has not had a build yet, schedule one immediately on startup
+if [ ! -f /run/.build-initialized ]; then
+  echo "@reboot root . /etc/environment.sh && /build/run-build.sh && touch /run/.build-initialized" >> /etc/cron.d/build-graph
+fi
 chmod 0644 /etc/cron.d/build-graph
 
 # Start cron
