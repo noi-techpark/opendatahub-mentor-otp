@@ -21,8 +21,10 @@ UV_VENV_CLEAR=1 bash scripts/setup.sh
 
 source .venv/bin/activate
 
-${CURL} https://data.opentransportdata.swiss/dataset/timetablenetex_2026/permalink -o ${INPUT_FILE}
+echo "clean up previous build"
+rm -Rf ./switzerland*
 
+${CURL} https://data.opentransportdata.swiss/dataset/timetablenetex_2026/permalink -o ${INPUT_FILE}
 echo "Starting to convert Swiss NeTEx data to EPIP"
 
 uv run python -m conv.netex_to_db switzerland.netex.zip switzerland.lmdb
