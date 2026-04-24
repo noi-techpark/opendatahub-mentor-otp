@@ -17,7 +17,12 @@ done
 
 cd /graph
 set -o pipefail
-OUTPUT_ZIP_FILE=/graph/data/switzerland.epip.netex.zip bash /build/build-switzerland-netex.sh 2>&1 | tee "$NETEX_LOG"
+NETEX_ZIP=/graph/data/switzerland.epip.netex.zip
+if [ ! -f "$NETEX_ZIP" ] || [ "$(( $(date +%s) - $(stat -c %Y "$NETEX_ZIP") ))" -gt 86400 ]; then
+  OUTPUT_ZIP_FILE="$NETEX_ZIP" bash /build/build-switzerland-netex.sh 2>&1 | tee "$NETEX_LOG"
+else
+  echo "Skipping Switzerland NeTEx build: $NETEX_ZIP is less than 24h old" | tee "$NETEX_LOG"
+fi
 bash /build/build-graph.sh 2>&1 | tee "$LOG"
 
 # Retain only the 10 most recent log files
