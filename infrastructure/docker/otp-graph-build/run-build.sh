@@ -25,8 +25,9 @@ else
 fi
 bash /build/build-graph.sh 2>&1 | tee "$LOG"
 
-# Retain only the 10 most recent log files
-ls -t /graph/build.*.log | tail -n +11 | xargs -r rm -f
+# Retain only the 5 most recent log files
+ls -t /graph/build.graph.*.log | tail -n +6 | xargs -r rm -f
+ls -t /graph/build.netex.*.log | tail -n +6 | xargs -r rm -f
 
 # Atomically publish the new graph via rename so OTP's inotifywait sees a single moved_to
 # event only after the build is fully complete, never mid-write
