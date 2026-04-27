@@ -24,7 +24,7 @@ env:
   DOCKER_IMAGE_CARSHARING: ghcr.io/${{ github.repository }}/odh-mentor-otp-carsharing
   DOCKER_IMAGE_ECHARGING: ghcr.io/${{ github.repository }}/odh-mentor-otp-echarging
   DOCKER_IMAGE_AMARILLO: ghcr.io/${{ github.repository }}/odh-mentor-otp-amarillo
-  OTP_IMAGE: "lehrenfried/opentripplanner:swiss-epip"
+  OTP_IMAGE: "opentripplanner/opentripplanner:2.10.0_2026-04-27T13-58"
 
 jobs:
   deploy-test:
