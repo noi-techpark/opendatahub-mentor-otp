@@ -95,7 +95,7 @@ docker run \
   --restart no \
   -v "${VOLUME_MOUNT}:/var/opentripplanner/:z" \
   --rm \
-  -e JAVA_TOOL_OPTIONS="-Xmx40G -XX:+UseContainerSupport -XX:+UseCompactObjectHeaders" \
+  -e JAVA_TOOL_OPTIONS="-Xmx20G -XX:+UseContainerSupport -XX:+UseCompactObjectHeaders" \
   "${OTP_IMAGE}" --abortOnUnknownConfig --build --save
 
 
