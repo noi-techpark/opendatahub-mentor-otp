@@ -28,7 +28,7 @@ env:
 
 jobs:
   deploy-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     concurrency: deploy-test
     if: github.event_name != 'schedule' && github.ref != 'refs/heads/prod'
     env:
@@ -92,7 +92,7 @@ jobs:
           project-name: ${{ env.PROJECT_NAME }}
 
   deploy-prod:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     concurrency: deploy-prod
     if: github.event_name == 'schedule' || (github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod')
     env:
