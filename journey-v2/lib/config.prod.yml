@@ -222,7 +222,7 @@ geocoder:
   layers: 
   # This base URL is required as the libraries will default to using now-defunct
   # mapzen urls
-  baseUrl: https://pelias-noi.routerank.com/v1
+  baseUrl: https://geocoder.v2.otp.opendatahub.com/v1
   # This allows the location field dropdown headers to be colored based on Pelias layer
   #resultsColors:
   #  stops: "#007fae"
