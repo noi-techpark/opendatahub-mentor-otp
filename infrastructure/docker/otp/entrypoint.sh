@@ -10,13 +10,19 @@ while true; do
   while [ ! -f "$GRAPH" ]; do sleep 5; done
 
   echo "graph.obj found, starting OTP"
+  GRAPH_MTIME=$(stat -c '%Y' "$GRAPH" 2>/dev/null || echo 0)
+
   java $JAVA_OPTS -cp @/app/jib-classpath-file @/app/jib-main-class-file /var/otp/ --load --serve &
   OTP_PID=$!
 
-  # Block until graph.obj is atomically replaced (moved_to fires on rename, not during write)
+  # Watch for atomic rename (moved_to) and direct overwrite (close_write) to cover both write patterns.
+  # Verify mtime changed before breaking to avoid spurious close_write events.
   while true; do
-    EVENT=$(inotifywait -e moved_to --format '%f' /var/otp/ 2>/dev/null)
-    [ "$EVENT" = "graph.obj" ] && break
+    EVENT=$(inotifywait -e moved_to,close_write --format '%f' /var/otp/ 2>/dev/null)
+    if [ "$EVENT" = "graph.obj" ]; then
+      NEW_MTIME=$(stat -c '%Y' "$GRAPH" 2>/dev/null || echo 0)
+      [ "$NEW_MTIME" != "$GRAPH_MTIME" ] && break
+    fi
   done
 
   echo "graph.obj updated, restarting OTP"
