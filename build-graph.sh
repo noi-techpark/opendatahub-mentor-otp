@@ -27,6 +27,10 @@ TRANSIT_NETEX_URL="ftp://ftp.sta.bz.it/netex/2026/plan/EU_profil/daily/NX-PI_01_
 TRANSIT_NETEX_XML=data/sta-netex.xml
 TRANSIT_NETEX_GZ=${TRANSIT_NETEX_XML}.gz
 TRANSIT_NETEX_ZIP=${TRANSIT_NETEX_XML}.zip
+TRENITALIA_NETEX_URL=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/checkedResource
+TRENITALIA_NETEX_XML=data/trenitalia.netex.xml
+TRENITALIA_NETEX_GZ=${TRENITALIA_NETEX_XML}.gz
+TRENITALIA_NETEX_ZIP=data/trenitalia.netex.zip
 
 # parking
 # Override the transmodel API host if needed
@@ -86,6 +90,12 @@ ${CURL} ${PARKING_NETEX_URL} -o ${PARKING_NETEX_XML}
 
 zip --junk-paths ${PARKING_NETEX_ZIP} ${PARKING_NETEX_XML}
 
+rm -f ${TRENITALIA_NETEX_GZ} ${TRENITALIA_NETEX_XML}
+echo "Downloading Trenitalia NeTEx transit data from ${TRENITALIA_NETEX_URL}"
+${CURL} "${TRENITALIA_NETEX_URL}" -o ${TRENITALIA_NETEX_GZ}
+gunzip --stdout ${TRENITALIA_NETEX_GZ} > ${TRENITALIA_NETEX_XML}
+zip ${TRENITALIA_NETEX_ZIP} ${TRENITALIA_NETEX_XML}
+rm -f ${TRENITALIA_NETEX_GZ} ${TRENITALIA_NETEX_XML}
 
 # actually do graph build
 VOLUME_MOUNT="${OTP_GRAPH_VOLUME:-$(pwd)}"
