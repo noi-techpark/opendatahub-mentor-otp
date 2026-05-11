@@ -31,6 +31,12 @@
       "type": "netex",
       "feedId": "ch",
       "groupFilePattern": "(.*)\\.xml"
+    },
+    {
+      "source": "data/trenitalia.netex.zip",
+      "type": "netex",
+      "feedId": "trenitalia",
+      "groupFilePattern": "(.*)\\.xml"
     }
   ],
   "osm": [
