@@ -23,10 +23,11 @@ ELEVATION_URL=https://leonard.io/srtm/srtm_39_03.zip
 ELEVATION_ZIP=data/srtm_39_03.zip
 # transit data
 today=$(date +"%Y%m%d")
-TRANSIT_NETEX_URL="ftp://ftp.sta.bz.it/netex/2026/plan/EU_profil/daily/NX-PI_01_it_apb_LINE_apb__${today}.xml.zip"
-TRANSIT_NETEX_XML=data/sta-netex.xml
-TRANSIT_NETEX_GZ=${TRANSIT_NETEX_XML}.gz
-TRANSIT_NETEX_ZIP=${TRANSIT_NETEX_XML}.zip
+STA_NETEX_URL="ftp://ftp.sta.bz.it/netex/2026/plan/EU_profil/daily/NeTEx-Export_apb.zip"
+STA_NETEX_XML=data/sta-netex.xml
+STA_NETEX_GZ=${STA_NETEX_XML}.gz
+STA_NETEX_ZIP=${STA_NETEX_XML}.zip
+
 TRENITALIA_NETEX_URL=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/checkedResource
 TRENITALIA_NETEX_XML=data/trenitalia.netex.xml
 TRENITALIA_NETEX_GZ=${TRENITALIA_NETEX_XML}.gz
@@ -67,11 +68,11 @@ if [ ! -f "${ELEVATION_ZIP}" ]; then
   unzip -o ${ELEVATION_ZIP} -d data
 fi
 
-rm -f ${TRANSIT_NETEX_GZ} ${TRANSIT_NETEX_XML}
-echo "Downloading NeTEx transit data from ${TRANSIT_NETEX_URL}"
-${CURL} "${TRANSIT_NETEX_URL}" -o ${TRANSIT_NETEX_GZ}
-unzip ${TRANSIT_NETEX_GZ}
-mv NX-PI_01_it_apb_LINE_apb__*.xml ${TRANSIT_NETEX_XML}
+rm -f ${STA_NETEX_GZ} ${STA_NETEX_XML}
+echo "Downloading NeTEx transit data from ${STA_NETEX_URL}"
+${CURL} "${STA_NETEX_URL}" -o ${STA_NETEX_GZ}
+unzip ${STA_NETEX_GZ}
+mv NX-PI_01_it_apb_LINE_apb__*.xml ${STA_NETEX_XML}
 
 # Configuration
 if [ ! -f "${SAXON_JAR}" ]; then
@@ -81,8 +82,8 @@ fi
 # the scheduled stop point ids and the SIRI StopPointRefs do not match, so we have to transform
 # the NeTEx feed so that they do: https://github.com/noi-techpark/odh-mentor-otp/issues/215
 echo "Running Saxon transformation..."
-java -jar "$SAXON_JAR" -s:"${TRANSIT_NETEX_XML}" -xsl:"$XSL_FILE" -o:"$SSIDS_TRANSFORMED_XML"
-zip --junk-paths ${TRANSIT_NETEX_ZIP} ${SSIDS_TRANSFORMED_XML}
+java -jar "$SAXON_JAR" -s:"${STA_NETEX_XML}" -xsl:"$XSL_FILE" -o:"$SSIDS_TRANSFORMED_XML"
+zip --junk-paths ${STA_NETEX_ZIP} ${SSIDS_TRANSFORMED_XML}
 
 # download parking data and put it into a zip
 rm -f ${PARKING_NETEX_XML} ${PARKING_NETEX_ZIP}
