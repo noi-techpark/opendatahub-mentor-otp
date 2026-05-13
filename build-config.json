@@ -5,7 +5,7 @@
   "transitModelTimeZone": "Europe/Rome",
   "transitFeeds": [
     {
-      "source": "data/sta-netex.xml.zip",
+      "source": "data/sta.netex.zip",
       "type": "netex",
       "feedId": "sta",
       "groupFilePattern": "(.*)\\.xml"

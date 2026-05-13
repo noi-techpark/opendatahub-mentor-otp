@@ -21,12 +21,13 @@ SWITZERLAND_SOUTH_TYROL_PBF=data/switzerland-south-tyrol.osm.pbf
 # ELEVATION_URL=https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_39_03.zip
 ELEVATION_URL=https://leonard.io/srtm/srtm_39_03.zip
 ELEVATION_ZIP=data/srtm_39_03.zip
+
 # transit data
-today=$(date +"%Y%m%d")
 STA_NETEX_URL="ftp://ftp.sta.bz.it/netex/2026/plan/EU_profil/daily/NeTEx-Export_apb.zip"
-STA_NETEX_XML=data/sta-netex.xml
-STA_NETEX_GZ=${STA_NETEX_XML}.gz
-STA_NETEX_ZIP=${STA_NETEX_XML}.zip
+STA_NETEX_RAW_DIR=data/sta/raw
+STA_NETEX_TRANSFORMED_DIR=${STA_NETEX_RAW_DIR}/transformed
+STA_NETEX_RAW=${STA_NETEX_RAW_DIR}/sta.netex.xml.zip
+STA_NETEX_ZIP=data/sta.netex.zip
 
 TRENITALIA_NETEX_URL=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/checkedResource
 TRENITALIA_NETEX_XML=data/trenitalia.netex.xml
@@ -46,7 +47,8 @@ SAXON_JAR="saxon/saxon-he-12.9.jar"
 XSL_FILE="transform-scheduled-stop-point-ids.xsl"
 SSIDS_TRANSFORMED_XML="data/sta.netex.correct-ssids.xml"
 
-mkdir -p data
+rm -rf ${STA_NETEX_RAW_DIR} ${STA_NETEX_ZIP}
+mkdir -p ${STA_NETEX_RAW_DIR} ${STA_NETEX_TRANSFORMED_DIR}
 
 if [ ! -f "${EUROPE_PBF}" ]; then
   echo "Downloading OSM data for Europe from ${EUROPE_URL}"
@@ -68,11 +70,9 @@ if [ ! -f "${ELEVATION_ZIP}" ]; then
   unzip -o ${ELEVATION_ZIP} -d data
 fi
 
-rm -f ${STA_NETEX_GZ} ${STA_NETEX_XML}
 echo "Downloading NeTEx transit data from ${STA_NETEX_URL}"
-${CURL} "${STA_NETEX_URL}" -o ${STA_NETEX_GZ}
-unzip ${STA_NETEX_GZ}
-mv NX-PI_01_it_apb_LINE_apb__*.xml ${STA_NETEX_XML}
+${CURL} "${STA_NETEX_URL}" -o ${STA_NETEX_RAW}
+unzip ${STA_NETEX_RAW} -d ${STA_NETEX_RAW_DIR}
 
 # Configuration
 if [ ! -f "${SAXON_JAR}" ]; then
@@ -82,8 +82,13 @@ fi
 # the scheduled stop point ids and the SIRI StopPointRefs do not match, so we have to transform
 # the NeTEx feed so that they do: https://github.com/noi-techpark/odh-mentor-otp/issues/215
 echo "Running Saxon transformation..."
-java -jar "$SAXON_JAR" -s:"${STA_NETEX_XML}" -xsl:"$XSL_FILE" -o:"$SSIDS_TRANSFORMED_XML"
-zip --junk-paths ${STA_NETEX_ZIP} ${SSIDS_TRANSFORMED_XML}
+
+
+for xml_file in ${STA_NETEX_RAW_DIR}/*.xml; do
+  echo "Transforming ${xml_file}"
+  java -jar "$SAXON_JAR" -s:"${xml_file}" -xsl:"$XSL_FILE" -o:"${STA_NETEX_TRANSFORMED_DIR}/$(basename ${xml_file})"
+done
+zip --junk-paths ${STA_NETEX_ZIP} ${STA_NETEX_TRANSFORMED_DIR}/*.xml
 
 # download parking data and put it into a zip
 rm -f ${PARKING_NETEX_XML} ${PARKING_NETEX_ZIP}
