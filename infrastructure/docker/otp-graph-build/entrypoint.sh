@@ -9,11 +9,11 @@ set -e
 printenv | sed 's/^\(.*\)=\(.*\)$/export \1="\2"/' > /etc/environment.sh
 
 # Set up the cron job to rebuild every night
-echo "0 2 * * * root . /etc/environment.sh && /build/run-build.sh" > /etc/cron.d/build-graph
+echo "0 2 * * * root . /etc/environment.sh && /build/run-build.sh >> /proc/1/fd/1 2>&1" > /etc/cron.d/build-graph
 
 # If this container has not had a build yet, schedule one immediately on startup
 if [ ! -f /run/.build-initialized ]; then
-  echo "@reboot root . /etc/environment.sh && /build/run-build.sh && touch /run/.build-initialized" >> /etc/cron.d/build-graph
+  echo "@reboot root . /etc/environment.sh && /build/run-build.sh >> /proc/1/fd/1 2>&1 && touch /run/.build-initialized" >> /etc/cron.d/build-graph
 fi
 chmod 0644 /etc/cron.d/build-graph
 
