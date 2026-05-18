@@ -1,8 +1,10 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
 #
 # SPDX-License-Identifier: CC0-1.0
+
+set -euo pipefail
 
 CURL="curl --location --fail --show-error -#"
 

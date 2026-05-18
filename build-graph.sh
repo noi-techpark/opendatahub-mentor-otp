@@ -1,9 +1,10 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
 #
 # SPDX-License-Identifier: CC0-1.0
 
+set -euo pipefail
 set -a && source .env && set +a
 
 echo building graph with OTP image $OTP_IMAGE
