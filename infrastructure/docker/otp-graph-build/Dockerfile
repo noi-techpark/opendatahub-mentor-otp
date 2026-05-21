@@ -36,6 +36,9 @@ COPY build-switzerland-netex.sh .
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 RUN ln -s /root/.local/bin/uv /usr/local/bin/uv
 
+# STA Netex build
+COPY build-sta-netex.sh .
+
 # nginx: serve build artifacts from /graph for debugging (directory listing only)
 RUN echo 'server {\n\
     listen 80;\n\

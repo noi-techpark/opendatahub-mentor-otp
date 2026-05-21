@@ -6,7 +6,8 @@
 set -e
 DATE="$(date +%Y%m%d_%H%M%S)"
 LOG="/graph/build.graph.${DATE}.log"
-NETEX_LOG="/graph/build.netex.${DATE}.log"
+NETEX_LOG="/graph/build.netex.swiss.${DATE}.log"
+NETEX_STA_LOG="/graph/build.netex.sta.${DATE}.log"
 
 # Copy static files needed by build-graph.sh into /graph so relative paths resolve
 # and so they are accessible when OTP mounts the volume in its own container
@@ -17,7 +18,8 @@ done
 
 # Retain only the 10 most recent log files
 ls -t /graph/build.graph.*.log | tail -n +11 | xargs -r rm -f
-ls -t /graph/build.netex.*.log | tail -n +11 | xargs -r rm -f
+ls -t /graph/build.netex.swiss.*.log | tail -n +11 | xargs -r rm -f
+ls -t /graph/build.netex.sta.*.log | tail -n +11 | xargs -r rm -f
 
 cd /graph
 set -o pipefail
@@ -29,6 +31,9 @@ if [ ! -f "$NETEX_ZIP" ] || [ "$(( $(date +%s) - $(stat -c %Y "$NETEX_ZIP") ))" 
 else
   echo "Skipping Switzerland NeTEx build: $NETEX_ZIP is less than 24h old" | tee "$NETEX_LOG"
 fi
+
+# Build STA netex
+bash /build/build-sta-netex.sh 2>&1 | tee "$NETEX_STA_LOG"
 
 # Build OTP graph
 bash /build/build-graph.sh 2>&1 | tee "$LOG"
