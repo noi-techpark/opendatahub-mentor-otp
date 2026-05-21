@@ -13,7 +13,7 @@ OUTPUT_FILE=switzerland.epip.netex.xml
 OUTPUT_ZIP_FILE=${OUTPUT_ZIP_FILE:-switzerland.epip.netex.zip}
 
 if [ ! -d "badger" ]; then
-  git clone --branch binary_relation_serializer https://github.com/MMTIS/badger.git
+  git clone --branch mentz-line-versions https://github.com/leonardehrenfried/badger.git
 fi
 
 cd badger
