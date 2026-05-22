@@ -23,6 +23,8 @@ if [ ! -d "badger" ]; then
 fi
 
 cd badger
+# version that implements the corrected line resolution algorithm
+git checkout 7c8bc5909f851b695ab4f9285d1fd6f7edd9b297
 
 uv sync
 UV_VENV_CLEAR=1 bash scripts/setup.sh
