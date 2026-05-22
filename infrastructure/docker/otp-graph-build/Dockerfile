@@ -46,6 +46,7 @@ RUN echo 'server {\n\
     autoindex_exact_size off;\n\
     autoindex_localtime on;\n\
     location / { try_files $uri $uri/ =404; }\n\
+    location ~* \\.log$ { types { } default_type text/plain; }\n\
 }' > /etc/nginx/sites-available/default \
     && rm -f /etc/nginx/sites-enabled/default \
     && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
