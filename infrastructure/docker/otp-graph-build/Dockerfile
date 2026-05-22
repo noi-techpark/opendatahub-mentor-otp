@@ -24,7 +24,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 WORKDIR /build
 COPY build-graph.sh .
 COPY switzerland-south-tyrol.geojson .
-COPY transform-scheduled-stop-point-ids.xsl .
 COPY build-config.json .
 COPY otp-config.json .
 COPY router-config.json .
