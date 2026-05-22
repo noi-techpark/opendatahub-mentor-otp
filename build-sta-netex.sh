@@ -23,6 +23,7 @@ if [ ! -d "badger" ]; then
 fi
 
 cd badger
+git pull
 # version that implements the corrected line resolution algorithm
 git checkout 7c8bc5909f851b695ab4f9285d1fd6f7edd9b297
 
