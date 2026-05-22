@@ -23,11 +23,6 @@ SWITZERLAND_SOUTH_TYROL_PBF=data/switzerland-south-tyrol.osm.pbf
 ELEVATION_URL=https://leonard.io/srtm/srtm_39_03.zip
 ELEVATION_ZIP=data/srtm_39_03.zip
 # transit data
-today=$(date +"%Y%m%d")
-STA_NETEX_URL="ftp://ftp.sta.bz.it/netex/2026/plan/EU_profil/daily/NX-PI_01_it_apb_LINE_apb__${today}.xml.zip"
-STA_NETEX_XML=data/sta-netex.xml
-STA_NETEX_GZ=${STA_NETEX_XML}.gz
-STA_NETEX_ZIP=${STA_NETEX_XML}.zip
 
 TRENITALIA_NETEX_URL=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/checkedResource
 TRENITALIA_NETEX_XML=data/trenitalia.netex.xml
@@ -68,23 +63,6 @@ if [ ! -f "${ELEVATION_ZIP}" ]; then
   ${CURL} ${ELEVATION_URL} -o ${ELEVATION_ZIP}
   unzip -o ${ELEVATION_ZIP} -d data
 fi
-
-rm -f ${STA_NETEX_GZ} ${STA_NETEX_XML}
-echo "Downloading NeTEx transit data from ${STA_NETEX_URL}"
-${CURL} "${STA_NETEX_URL}" -o ${STA_NETEX_GZ}
-unzip ${STA_NETEX_GZ}
-mv NX-PI_01_it_apb_LINE_apb__*.xml ${STA_NETEX_XML}
-
-# Configuration
-if [ ! -f "${SAXON_JAR}" ]; then
-  $CURL $SAXON_URL -o $SAXON_ZIP
-  unzip $SAXON_ZIP -d saxon
-fi
-# the scheduled stop point ids and the SIRI StopPointRefs do not match, so we have to transform
-# the NeTEx feed so that they do: https://github.com/noi-techpark/odh-mentor-otp/issues/215
-echo "Running Saxon transformation..."
-java -jar "$SAXON_JAR" -s:"${STA_NETEX_XML}" -xsl:"$XSL_FILE" -o:"$SSIDS_TRANSFORMED_XML"
-zip --junk-paths ${STA_NETEX_ZIP} ${SSIDS_TRANSFORMED_XML}
 
 # download parking data and put it into a zip
 rm -f ${PARKING_NETEX_XML} ${PARKING_NETEX_ZIP}
