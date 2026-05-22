@@ -35,13 +35,6 @@ PARKING_NETEX_URL=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}/net
 PARKING_NETEX_XML=data/shared-data.xml
 PARKING_NETEX_ZIP=data/parking-netex.xml.zip
 
-# config for transforming the ids of scheduled stop points
-SAXON_URL="https://github.com/Saxonica/Saxon-HE/releases/download/SaxonHE12-9/SaxonHE12-9J.zip"
-SAXON_ZIP="saxon.zip"
-SAXON_JAR="saxon/saxon-he-12.9.jar"
-XSL_FILE="transform-scheduled-stop-point-ids.xsl"
-SSIDS_TRANSFORMED_XML="data/sta.netex.correct-ssids.xml"
-
 mkdir -p data
 
 if [ ! -f "${EUROPE_PBF}" ]; then
@@ -51,7 +44,6 @@ else
   echo "Checking for updates for existing OSM file"
   pyosmium-up-to-date ${EUROPE_PBF}
 fi
-
 
 # cut out South Tyrol from the large North East Italy extract
 if [ ! -f "${SWITZERLAND_SOUTH_TYROL_PBF}" ] || [ "${EUROPE_PBF}" -nt "${SWITZERLAND_SOUTH_TYROL_PBF}" ]; then

@@ -16,10 +16,15 @@ for f in switzerland-south-tyrol.geojson transform-scheduled-stop-point-ids.xsl 
   cp --remove-destination "/build/$f" "/graph/$f"
 done
 
-# Retain only the 10 most recent log files
-ls -t /graph/build.graph.*.log | tail -n +11 | xargs -r rm -f
-ls -t /graph/build.netex.swiss.*.log | tail -n +11 | xargs -r rm -f
-ls -t /graph/build.netex.sta.*.log | tail -n +11 | xargs -r rm -f
+# Retain only the 10 most recent log files for each pattern
+LOG_PATTERNS=(
+  "/graph/build.graph.*.log"
+  "/graph/build.netex.swiss.*.log"
+  "/graph/build.netex.sta.*.log"
+)
+for pattern in "${LOG_PATTERNS[@]}"; do
+  ls -t $pattern 2>/dev/null | tail -n +11 | xargs -r rm -f
+done
 
 cd /graph
 set -o pipefail
@@ -33,7 +38,7 @@ else
 fi
 
 # Build STA netex
-bash /build/build-sta-netex.sh 2>&1 | tee "$NETEX_STA_LOG"
+OUTPUT_ZIP_FILE="/graph/data/sta.epip.netex.zip" bash /build/build-sta-netex.sh 2>&1 | tee "$NETEX_STA_LOG"
 
 # Build OTP graph
 bash /build/build-graph.sh 2>&1 | tee "$LOG"
