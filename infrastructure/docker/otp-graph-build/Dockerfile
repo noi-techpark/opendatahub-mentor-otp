@@ -23,7 +23,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 # Copy build script and all static config files it depends on
 WORKDIR /build
 COPY build-graph.sh .
-COPY switzerland-south-tyrol.geojson .
+COPY switzerland-italy.geojson .
 COPY build-config.json .
 COPY otp-config.json .
 COPY router-config.json .
