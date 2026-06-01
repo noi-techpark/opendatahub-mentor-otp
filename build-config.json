@@ -41,7 +41,7 @@
   ],
   "osm": [
     {
-      "source": "data/switzerland-south-tyrol.osm.pbf",
+      "source": "data/switzerland-italy.osm.pbf",
       "timeZone": "Europe/Rome",
       "osmTagMapping": "default"
     }

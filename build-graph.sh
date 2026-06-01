@@ -16,7 +16,7 @@ CURL="curl --location --fail --show-error ${CURL_PROGRESS}"
 # OSM
 EUROPE_URL=https://download.geofabrik.de/europe-latest.osm.pbf
 EUROPE_PBF=data/europe.osm.pbf
-SWITZERLAND_SOUTH_TYROL_PBF=data/switzerland-south-tyrol.osm.pbf
+SWITZERLAND_SOUTH_TYROL_PBF=data/switzerland-italy.osm.pbf
 # elevation
 # this URL is way too overloaded, so we mirror it
 # ELEVATION_URL=https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_39_03.zip
@@ -48,7 +48,7 @@ fi
 # cut out South Tyrol from the large North East Italy extract
 if [ ! -f "${SWITZERLAND_SOUTH_TYROL_PBF}" ] || [ "${EUROPE_PBF}" -nt "${SWITZERLAND_SOUTH_TYROL_PBF}" ]; then
   echo "Extracting ${SWITZERLAND_SOUTH_TYROL_PBF} from ${EUROPE_PBF}"
-  osmium extract ${EUROPE_PBF} --polygon switzerland-south-tyrol.geojson -o ${SWITZERLAND_SOUTH_TYROL_PBF} --overwrite
+  osmium extract ${EUROPE_PBF} --polygon switzerland-italy.geojson -o ${SWITZERLAND_SOUTH_TYROL_PBF} --overwrite
 fi
 
 if [ ! -f "${ELEVATION_ZIP}" ]; then
