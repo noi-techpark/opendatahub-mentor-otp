@@ -2,6 +2,14 @@ name: nightly CI/CD
 
 on:
   push:
+    paths-ignore:
+      - 'pelias/**'
+      - 'infrastructure/docker-compose.pelias.run.yml'
+      - 'infrastructure/docker-compose.pelias.build.yml'
+      - 'infrastructure/docker/pelias-opendatahub-importer/**'
+      - 'infrastructure/pelias-run.sh'
+      - 'infrastructure/ansible/deploy-pelias.yml'
+      - '.github/workflows/pelias.yml'
   workflow_dispatch:
   schedule:
     # every night at 3am
@@ -10,17 +18,19 @@ on:
 env:
   PROJECT_NAME: "odh-mentor-otp-v2"
   DOCKER_IMAGE_OTP: ghcr.io/${{ github.repository }}/odh-mentor-otp
+  DOCKER_IMAGE_OTP_GRAPH_BUILD: ghcr.io/${{ github.repository }}/odh-mentor-otp-graph-build
   DOCKER_IMAGE_JOURNEY_V2: ghcr.io/${{ github.repository }}/odh-mentor-otp-react
   DOCKER_IMAGE_GBFS: ghcr.io/${{ github.repository }}/odh-mentor-otp-gbfs
   DOCKER_IMAGE_CARSHARING: ghcr.io/${{ github.repository }}/odh-mentor-otp-carsharing
   DOCKER_IMAGE_ECHARGING: ghcr.io/${{ github.repository }}/odh-mentor-otp-echarging
   DOCKER_IMAGE_AMARILLO: ghcr.io/${{ github.repository }}/odh-mentor-otp-amarillo
+  OTP_IMAGE: "opentripplanner/opentripplanner:2.10.0_2026-06-01T08-09"
 
 jobs:
   deploy-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     concurrency: deploy-test
-    if: github.ref != 'refs/heads/prod'
+    if: github.event_name != 'schedule' && github.ref != 'refs/heads/prod'
     env:
       DOCKER_TAG: ${{ github.sha }}-test
 
@@ -35,6 +45,7 @@ jobs:
         env:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           X_DOCKER_IMAGE_OTP: ${{ env.DOCKER_IMAGE_OTP }}
+          X_DOCKER_IMAGE_OTP_GRAPH_BUILD: ${{ env.DOCKER_IMAGE_OTP_GRAPH_BUILD }}
           X_DOCKER_IMAGE_JOURNEY_V2: ${{ env.DOCKER_IMAGE_JOURNEY_V2 }}
           X_DOCKER_IMAGE_GBFS: ${{ env.DOCKER_IMAGE_GBFS }}
           X_DOCKER_IMAGE_CARSHARING: ${{ env.DOCKER_IMAGE_CARSHARING }}
@@ -43,56 +54,24 @@ jobs:
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
 
           X_SERVER_PORT_OTP: 1080
+          X_SERVER_PORT_OTP_GRAPH_BUILD: 1085
           X_SERVER_PORT_JOURNEY_V2: 1079
           X_DOCKER_GBFS_PORT: 1082
           X_DOCKER_CARSHARING_PORT: 1084
           X_DOCKER_ECHARGING_PORT: 1087
           X_DOCKER_AMARILLO_PORT: 1092
 
+          X_OTP_IMAGE: ${{ env.OTP_IMAGE }}
+
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
+          X_TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
+          X_OTP_JAVA_OPTS: -XX:+UseZGC -XX:+ZUncommit -XX:ZUncommitDelay=60
 
           # disable in test
           # X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}
           # X_MATOMO_SITE_ID: ${{ env.MATOMO_SITE_ID }}
-
-      # elevation data does not change so we cache it forever
-      - name: Cache elevation data
-        uses: actions/cache@v4
-        with:
-          path: |
-            data/srtm*
-          key: elevation
-
-      # OSM data changes every day, so we cache a monthly download and apply the daily updates to it
-      # ideally we also put the updated file back into the cache but Github CI doesn't allow you to
-      # do that without jumping through many hoops.
-      # Therefore, we take the version from the beginning of the month and apply more and more daily
-      # updates until the next month triggers a complete download.
-      - name: Set variable OSM_CACHE_VERSION
-        run: |
-          echo "OSM_CACHE_VERSION=$(date +%Y-%m)" >> $GITHUB_ENV
-
-      - name: Cache OSM extract
-        uses: actions/cache@v4
-        with:
-          path: |
-            data/italy-nord-est.osm.pbf
-          key: osm-${{ env.OSM_CACHE_VERSION }}
-
-      - name: Build graph
-        # the script uses error handling with +e, so please don't run it with bash prepended in this line
-        run: ./build-graph.sh
-        env:
-          TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
-
-      - name: Store artifact for sta.netex.correct-ssids.xml
-        uses: actions/upload-artifact@v4
-        with:
-          name: sta-netex-correct-ssids-test
-          path: data/sta.netex.correct-ssids.xml
-          if-no-files-found: ignore
 
       - name: Build and push
         if: github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/main'
@@ -113,11 +92,11 @@ jobs:
           project-name: ${{ env.PROJECT_NAME }}
 
   deploy-prod:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     concurrency: deploy-prod
     if: github.event_name == 'schedule' || (github.repository_owner == 'noi-techpark' && github.ref == 'refs/heads/prod')
     env:
-      DOCKER_TAG: ${{ github.sha }}-test
+      DOCKER_TAG: ${{ github.sha }}-prod
 
     steps:
       - name: Checkout source code

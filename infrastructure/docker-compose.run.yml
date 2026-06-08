@@ -10,14 +10,32 @@ services:
   otp:
     image: ${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
     restart: unless-stopped
+    environment:
+      JAVA_OPTS: ${OTP_JAVA_OPTS}
     env_file:
       - .env
     ports:
       - ${SERVER_PORT_OTP}:8080
+    volumes:
+      - otp-graph:/var/otp
     depends_on:
      - amarillo
      - charger
      - carsharing-cron
+
+  otp-graph-build:
+    image: ${DOCKER_IMAGE_OTP_GRAPH_BUILD}:${DOCKER_TAG}
+    restart: unless-stopped
+    ports:
+      - ${SERVER_PORT_OTP_GRAPH_BUILD}:80
+    volumes:
+      - otp-graph:/graph
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TRANSMODEL_HOST=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}
+      - OTP_GRAPH_VOLUME=otp-graph
+      - OTP_IMAGE=${OTP_IMAGE}
+
   
   gbfs:
     image: ${DOCKER_IMAGE_GBFS}:${DOCKER_TAG}
@@ -89,3 +107,5 @@ volumes:
   carsharing-gbfs:
   amarillo:
   graphhopper:
+  otp-graph:
+    name: otp-graph

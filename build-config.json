@@ -5,7 +5,7 @@
   "transitModelTimeZone": "Europe/Rome",
   "transitFeeds": [
     {
-      "source": "data/sta-netex.xml.zip",
+      "source": "data/sta.epip.netex.zip",
       "type": "netex",
       "feedId": "sta",
       "groupFilePattern": "(.*)\\.xml"
@@ -25,11 +25,23 @@
       "type": "netex",
       "feedId": "parking",
       "ignoreParking": false
+    },
+    {
+      "source": "data/switzerland.epip.netex.zip",
+      "type": "netex",
+      "feedId": "ch",
+      "groupFilePattern": "(.*)\\.xml"
+    },
+    {
+      "source": "data/trenitalia.netex.zip",
+      "type": "netex",
+      "feedId": "trenitalia",
+      "groupFilePattern": "(.*)\\.xml"
     }
   ],
   "osm": [
     {
-      "source": "data/south-tyrol.osm.pbf",
+      "source": "data/switzerland-italy.osm.pbf",
       "timeZone": "Europe/Rome",
       "osmTagMapping": "default"
     }
