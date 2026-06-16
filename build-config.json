@@ -1,4 +1,5 @@
 {
+  "dataImportReport": true,
   "embedRouterConfig": true,
   "areaVisibility": true,
   "staticParkAndRide": false,
