@@ -3,6 +3,7 @@ data
 **node_modules
 
 graph.obj
+report
 
 *.xml
 *.zip
