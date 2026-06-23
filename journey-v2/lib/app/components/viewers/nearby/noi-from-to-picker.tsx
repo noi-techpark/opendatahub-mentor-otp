@@ -56,7 +56,6 @@ const NoiFromToPicker = ({
         onFromClick={useCallback(() => {
           handlePlanTripClick && handlePlanTripClick()
           clearLocation({ locationType: 'from' })
-          clearLocation({ locationType: 'to' })
           setIsPlanning(true)
           // Ensure we leave Nearby view and show the main planning panel.
           setMainPanelContent(null)
@@ -64,7 +63,6 @@ const NoiFromToPicker = ({
         }, [location, setLocation, clearLocation, setIsPlanning, setMainPanelContent])}
         onToClick={useCallback(() => {
           handlePlanTripClick && handlePlanTripClick()
-          clearLocation({ locationType: 'from' })
           clearLocation({ locationType: 'to' })
           setIsPlanning(true)
           // Ensure we leave Nearby view and show the main planning panel.
