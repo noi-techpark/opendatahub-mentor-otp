@@ -36,12 +36,13 @@
     },
     "openstreetmap": {
       "download": [
-        { "sourceURL": "https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf" }
+        { "sourceURL": "https://download.geofabrik.de/europe/italy-latest.osm.pbf" },
+        { "sourceURL": "https://download.geofabrik.de/europe/switzerland-latest.osm.pbf" }
       ],
       "leveldbpath": "/tmp",
       "datapath": "/data/openstreetmap",
       "import": [{
-        "filename": "nord-est-latest.osm.pbf"
+        "filename": "italy-switzerland.osm.pbf"
       }]
     },
     "csv": {
@@ -52,7 +53,7 @@
     },
     "openaddresses": {
       "datapath": "/data/openaddresses",
-      "files": ["it/32/south-tyrol-it.csv"]
+      "files": ["it/countrywide", "ch/countrywide"]
     },
     "polyline": {
       "datapath": "/data/polylines",
@@ -60,9 +61,9 @@
     },
     "whosonfirst": {
       "datapath": "/data/whosonfirst",
-      "countryCode": "IT",
+      "countryCode": ["IT", "CH"],
       "importPostalcodes": true,
-      "importPlace": [ "85685271" ]
+      "importPlace": [ "85633253", "85633051" ]
     }
   }
 }

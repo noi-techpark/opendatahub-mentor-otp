@@ -64,6 +64,10 @@ services:
     image: pelias/elasticsearch:7.16.1
     container_name: pelias_elasticsearch
     restart: always
+    # Work around a JDK 17 NPE detecting container support on cgroup v2 hosts
+    # (modern kernels).
+    environment:
+      - "JDK_JAVA_OPTIONS=-XX:-UseContainerSupport"
     ports: [ "127.0.0.1:9200:9200", "127.0.0.1:9300:9300" ]
     volumes:
       - "./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro"
@@ -91,6 +95,15 @@ services:
       - ELASTICSEARCH_HOST=elasticsearch
     volumes:
       - pelias-data:/pelias/data
+
+  # Merges the Italy + Switzerland OSM extracts into one pbf.
+  # Must run after `pelias download` and before `pelias prepare`/`pelias import`.
+  pelias-osm-merger:
+    image: ${DOCKER_IMAGE_PELIAS_OSM_MERGER}:${DOCKER_TAG}
+    container_name: pelias_osm_merger
+    volumes:
+      - pelias-data:/data
+      - pelias-polylines-osm:/data/openstreetmap-polylines
 
   schema:
     image: pelias/schema:master
@@ -132,10 +145,15 @@ services:
     volumes:
       - "./pelias.json:/code/pelias.json"
       - pelias-data:/data
+      - pelias-polylines-osm:/data/openstreetmap:ro
 
 volumes:
   # Shared data volume used by all importers and runtime services.
   pelias-data:
+
+  # Highway-only OSM extract for the polylines service (see merge_osm.sh);
+  # kept separate so it can be mounted over /data/openstreetmap there only.
+  pelias-polylines-osm:
 
   # Elasticsearch data, kept separate to allow independent backup/restore.
   pelias-elasticsearch:
