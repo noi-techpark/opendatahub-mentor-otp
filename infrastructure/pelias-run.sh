@@ -70,6 +70,10 @@ if [ "${FIRST_RUN}" = "true" ]; then
     log "Downloading all geodata (may take a long time)..."
     pelias download all
 
+    # Merge the Italy + Switzerland OSM extracts into one pbf
+    log "Merging Italy + Switzerland OSM extracts..."
+    docker compose run --rm pelias-osm-merger
+
     log "Preparing polylines, placeholder and interpolation databases..."
     pelias prepare all
 fi
@@ -83,7 +87,11 @@ docker compose run --rm pelias-opendatahub-importer
 
 if [ "${FIRST_RUN}" = "true" ]; then
     log "Importing all geodata into Elasticsearch..."
-    pelias import all
+    pelias import wof
+    pelias import oa
+    pelias import osm
+    pelias import polylines
+    pelias import csv
 else
     log "Removing stale stops and POI from Elasticsearch..."
     docker compose run --rm pelias-opendatahub-importer sh importers/delete_old_poi_and_stops.sh

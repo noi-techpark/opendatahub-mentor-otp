@@ -18,6 +18,7 @@ on:
 env:
   PROJECT_NAME: "odh-mentor-otp-pelias"
   DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ghcr.io/${{ github.repository }}/odh-mentor-otp-pelias-opendatahub-importer
+  DOCKER_IMAGE_PELIAS_OSM_MERGER: ghcr.io/${{ github.repository }}/odh-mentor-otp-pelias-osm-merger
   DOCKER_TAG: ${{ github.sha }}
 
 jobs:
@@ -38,6 +39,7 @@ jobs:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           X_PELIAS_API_PORT: 1097
           X_DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ${{ env.DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER }}
+          X_DOCKER_IMAGE_PELIAS_OSM_MERGER: ${{ env.DOCKER_IMAGE_PELIAS_OSM_MERGER }}
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
           X_OTP_GRAPH_URL: 'https://otp.opendatahub.testingmachine.eu/otp/gtfs/v1'
 
@@ -91,6 +93,7 @@ jobs:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           X_PELIAS_API_PORT: 1097
           X_DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ${{ env.DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER }}
+          X_DOCKER_IMAGE_PELIAS_OSM_MERGER: ${{ env.DOCKER_IMAGE_PELIAS_OSM_MERGER }}
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
           X_OTP_GRAPH_URL: 'https://v2.otp.opendatahub.com/otp/gtfs/v1'
 

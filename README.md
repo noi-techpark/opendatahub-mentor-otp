@@ -37,7 +37,7 @@ If you want to run the application using [Docker](https://www.docker.com/), the 
 Get a copy of the repository:
 
 ```bash
-git clone https://github.com/noi-techpark/odh-mentor-otp.git
+git clone --recurse-submodules https://github.com/noi-techpark/odh-mentor-otp.git
 ```
 
 Change directory:
