@@ -14,7 +14,7 @@ Please refer to the instructions at <https://github.com/pelias/docker> in order 
 
 The minimum configuration required in order to run this project are [installing prerequisites](https://github.com/pelias/docker#prerequisites), [install the pelias command](https://github.com/pelias/docker#installing-the-pelias-command) and [configure the environment](https://github.com/pelias/docker#configure-environment)
 
-You also need `curl`, `jq` and `node` to import OpenTripPlanner stops and NOI Datahub Activities and Accomodations POI.
+You also need `curl`, `jq` and `node` to import OpenTripPlanner stops, NOI Datahub Activities and Accomodations POI, and Swiss accommodation POI from the Open Data Hub `discoverswiss` source.
 
 Please ensure that's all working fine before continuing.
 

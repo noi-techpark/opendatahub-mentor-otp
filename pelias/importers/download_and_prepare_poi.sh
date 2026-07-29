@@ -9,11 +9,14 @@ curl "https://tourism.api.opendatahub.com/v1/Accommodation?pagesize=20000" > ./d
 curl "https://tourism.api.opendatahub.com/v1/STA/Accommodation?language=en&referer=SuedtirolMobilWeb&fields=Id%2CAccoDetail.en.Name%2CAccoDetail.en.City&pagesize=10000" > ./data/csv-importer/accomodation-poi-filtered-set.json
 
 node ./importers/process-touristic-poi.js
+node ./importers/fetch-discoverswiss-accomodation.js
 
 TOURISTIC_CSV=./data/csv-importer/touristic-poi.csv
 TOURISTIC_JSON_FILE=./data/csv-importer/touristic-poi.json
 ACCOMODATION_CSV=./data/csv-importer/accomodation-poi.csv
 ACCOMODATION_JSON_FILE=./data/csv-importer/accomodation-poi.json
+DISCOVERSWISS_ACCOMODATION_CSV=./data/csv-importer/discoverswiss-accomodation-poi.csv
+DISCOVERSWISS_ACCOMODATION_JSON_FILE=./data/csv-importer/discoverswiss-accomodation-poi.json
 
 # transform JSON data to CSV with jq
 echo "source,layer,id,lat,lon,name,name_de,name_en,name_fr,name_it,category_json,addendum_json_poi" > $TOURISTIC_CSV
@@ -35,3 +38,13 @@ cat $ACCOMODATION_JSON_FILE | jq --raw-output ".[] | [
     ([(.AccoType,.AccoCategory) | \"accomodation:\"+ (.Id | gsub(\" \"; \"_\"))] | tostring), \
     (.|tostring) \
     ] | @csv" >> $ACCOMODATION_CSV;
+
+echo "source,layer,id,lat,lon,name,name_de,name_en,name_fr,name_it,category_json,addendum_json_accomodation" > $DISCOVERSWISS_ACCOMODATION_CSV
+cat $DISCOVERSWISS_ACCOMODATION_JSON_FILE | jq --raw-output ".[] | [
+    \"discoverswiss-accomodation\",\"venue\",\
+    .Id,\
+    .Latitude,.Longitude,\
+    .AccoDetail.it.Name,.AccoDetail.de.Name,.AccoDetail.en.Name,.AccoDetail.fr.Name,.AccoDetail.it.Name,\
+    ([(.AccoType,.AccoCategory) | \"accomodation:\"+ (.Id | gsub(\" \"; \"_\"))] | tostring), \
+    (.|tostring) \
+    ] | @csv" >> $DISCOVERSWISS_ACCOMODATION_CSV;
