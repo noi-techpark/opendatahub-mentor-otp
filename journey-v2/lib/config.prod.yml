@@ -207,12 +207,13 @@ geocoder:
   maxNearbyStops: 6
   maxResults: 20
   boundary:
-    #IF boundary is empty get bounds from current map bounds
+    # IF boundary is empty get bounds from current map bounds
+    # Covers all of Italy + all of Switzerland
     rect:
-      minLon: 10.470121
-      maxLon: 12.255011
-      minLat: 46.188280
-      maxLat: 47.088780
+      minLon: 5.955911
+      maxLon: 18.784475
+      minLat: 35.288962
+      maxLat: 47.808465
   # Custom fetch options to pass to geocoder resource.
   # options:
   #   headers:
