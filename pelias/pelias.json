@@ -47,7 +47,7 @@
     },
     "csv": {
       "datapath": "/data/csv-importer",
-      "files": ["stops.csv", "accomodation-poi.csv", "touristic-poi.csv"],
+      "files": ["stops.csv", "accomodation-poi.csv", "touristic-poi.csv", "discoverswiss-accomodation-poi.csv"],
       "download": [
       ]
     },
