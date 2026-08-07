@@ -16,15 +16,8 @@ for f in switzerland-italy.geojson \
   cp --remove-destination "/build/$f" "/graph/$f"
 done
 
-# Retain only the 10 most recent log files for each pattern
-LOG_PATTERNS=(
-  "/graph/build.graph.*.log"
-  "/graph/build.netex.swiss.*.log"
-  "/graph/build.netex.sta.*.log"
-)
-for pattern in "${LOG_PATTERNS[@]}"; do
-  ls -t $pattern 2>/dev/null | tail -n +11 | xargs -r rm -f
-done
+# Retain only the last 14 days of logs
+find "$LOGDIR" -type f -mtime +14 -delete
 
 cd /graph
 set -o pipefail
