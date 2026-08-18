@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=opentripplanner/opentripplanner:2.8.0_2025-08-25T13-49
+ARG BASE_IMAGE=opentripplanner/opentripplanner:2.10.0_2026-08-17T09-22
 FROM ${BASE_IMAGE}
 
 WORKDIR /var/otp
