@@ -38,6 +38,24 @@
       "type": "netex",
       "feedId": "trenitalia",
       "groupFilePattern": "(.*)\\.xml"
+    },
+    {
+      "source": "data/verona.netex.zip",
+      "type": "netex",
+      "feedId": "verona",
+      "groupFilePattern": "(.*)\\.xml"
+    },
+    {
+      "source": "data/atvo.netex.zip",
+      "type": "netex",
+      "feedId": "atvo",
+      "groupFilePattern": "(.*)\\.xml"
+    },
+    {
+      "source": "data/busitalia.netex.zip",
+      "type": "netex",
+      "feedId": "busitalia",
+      "groupFilePattern": "(.*)\\.xml"
     }
   ],
   "osm": [
