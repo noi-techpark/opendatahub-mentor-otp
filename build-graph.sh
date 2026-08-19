@@ -22,12 +22,14 @@ SWITZERLAND_SOUTH_TYROL_PBF=data/switzerland-italy.osm.pbf
 # ELEVATION_URL=https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_39_03.zip
 ELEVATION_URL=https://leonard.io/srtm/srtm_39_03.zip
 ELEVATION_ZIP=data/srtm_39_03.zip
-# transit data
 
-TRENITALIA_NETEX_URL=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/checkedResource
-TRENITALIA_NETEX_XML=data/trenitalia.netex.xml
-TRENITALIA_NETEX_GZ=${TRENITALIA_NETEX_XML}.gz
-TRENITALIA_NETEX_ZIP=data/trenitalia.netex.zip
+# transit data
+declare -A NETEX_URLS=(
+  [trenitalia]=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/checkedResource
+  [verona]=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/660140/resource
+  [atvo]=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/180673/checkedResource
+  [busitalia]=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/180710/checkedResource
+)
 
 # parking
 # Override the transmodel API host if needed
@@ -62,12 +64,19 @@ ${CURL} ${PARKING_NETEX_URL} -o ${PARKING_NETEX_XML}
 
 zip --junk-paths ${PARKING_NETEX_ZIP} ${PARKING_NETEX_XML}
 
-rm -f ${TRENITALIA_NETEX_GZ} ${TRENITALIA_NETEX_XML}
-echo "Downloading Trenitalia NeTEx transit data from ${TRENITALIA_NETEX_URL}"
-${CURL} "${TRENITALIA_NETEX_URL}" -o ${TRENITALIA_NETEX_GZ}
-gunzip --stdout ${TRENITALIA_NETEX_GZ} > ${TRENITALIA_NETEX_XML}
-zip ${TRENITALIA_NETEX_ZIP} ${TRENITALIA_NETEX_XML}
-rm -f ${TRENITALIA_NETEX_GZ} ${TRENITALIA_NETEX_XML}
+for name in "${!NETEX_URLS[@]}"; do
+  url="${NETEX_URLS[$name]}"
+  xml="data/${name}.netex.xml"
+  gz="${xml}.gz"
+  zip_file="data/${name}.netex.zip"
+
+  rm -f "${gz}" "${xml}" "${zip_file}"
+  echo "Downloading ${name} NeTEx transit data from ${url}"
+  ${CURL} "${url}" -o "${gz}"
+  gunzip --stdout "${gz}" > "${xml}"
+  zip "${zip_file}" "${xml}"
+  rm -f "${gz}" "${xml}"
+done
 
 # actually do graph build
 VOLUME_MOUNT="${OTP_GRAPH_VOLUME:-$(pwd)}"
