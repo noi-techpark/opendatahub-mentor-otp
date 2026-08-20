@@ -11,7 +11,7 @@ echo building graph with OTP image $OTP_IMAGE
 
 CURL_PROGRESS="--no-progress-meter"
 [ -t 1 ] && CURL_PROGRESS="-#"
-CURL="curl --location --fail --show-error ${CURL_PROGRESS}"
+CURL="curl --location --fail --show-error --retry 5 --retry-delay 30 ${CURL_PROGRESS}"
 
 # OSM
 EUROPE_URL=https://download.geofabrik.de/europe-latest.osm.pbf
