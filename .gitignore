@@ -9,4 +9,5 @@ report
 *.zip
 saxon
 
-badger
+# build-graph.sh's default work directory outside the container
+work

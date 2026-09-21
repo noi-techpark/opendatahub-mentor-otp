@@ -6,12 +6,6 @@
   "transitModelTimeZone": "Europe/Rome",
   "transitFeeds": [
     {
-      "source": "data/sta.epip.netex.zip",
-      "type": "netex",
-      "feedId": "sta",
-      "groupFilePattern": "(.*)\\.xml"
-    },
-    {
       "source": "https://gtfs.api.opendatahub.testingmachine.eu/v1/dataset/skyalps-flight-data/raw",
       "type": "gtfs",
       "feedId": "skyalps"
@@ -22,52 +16,31 @@
       "feedId": "amarillo"
     },
     {
-      "source": "data/parking-netex.xml.zip",
+      "source": "parking-netex.xml.zip",
       "type": "netex",
       "feedId": "parking",
-      "ignoreParking": false
+      "ignoreParking": false,
+      "sharedFilePattern": "parking-netex\\.xml"
     },
     {
-      "source": "data/switzerland.epip.netex.zip",
+      "source": "netex-epip-merged.zip",
       "type": "netex",
-      "feedId": "ch",
-      "groupFilePattern": "(.*)\\.xml"
-    },
-    {
-      "source": "data/trenitalia.netex.zip",
-      "type": "netex",
-      "feedId": "trenitalia",
-      "groupFilePattern": "(.*)\\.xml"
-    },
-    {
-      "source": "data/verona.netex.zip",
-      "type": "netex",
-      "feedId": "verona",
-      "groupFilePattern": "(.*)\\.xml"
-    },
-    {
-      "source": "data/atvo.netex.zip",
-      "type": "netex",
-      "feedId": "atvo",
-      "groupFilePattern": "(.*)\\.xml"
-    },
-    {
-      "source": "data/busitalia.netex.zip",
-      "type": "netex",
-      "feedId": "busitalia",
-      "groupFilePattern": "(.*)\\.xml"
+      "feedId": "netex",
+      "sharedFilePattern": "shared-.*\\.xml",
+      "sharedGroupFilePattern": "(g\\d+)-shared\\.xml",
+      "groupFilePattern": "(g\\d+)-\\d+\\.xml"
     }
   ],
   "osm": [
     {
-      "source": "data/switzerland-italy.osm.pbf",
+      "source": "regional.osm.pbf",
       "timeZone": "Europe/Rome",
       "osmTagMapping": "default"
     }
   ],
-  "dem" : [
+  "dem": [
     {
-      "source" : "data/srtm_39_03.tif"
+      "source": "srtm_39_03.tif"
     }
   ]
 }

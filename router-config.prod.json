@@ -79,13 +79,13 @@
   "updaters": [
     {
       "type": "siri-et-lite",
-      "feedId": "sta",
+      "feedId": "netex",
       "url": "https://efa.sta.bz.it/siri-lite/estimated-timetable/xml",
       "fuzzyTripMatching": true
     },
     {
       "type": "siri-sx-lite",
-      "feedId": "sta",
+      "feedId": "netex",
       "url": "https://efa.sta.bz.it/siri-lite/situation-exchange/xml"
     },
     {

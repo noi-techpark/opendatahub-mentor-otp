@@ -52,7 +52,9 @@ cd odh-mentor-otp
 
 ```build-config.json``` OTP build config that includes which sources (GTFS, OSM) constitutes the graph
 
-```south-tyrol.geojson``` the geographic extend that is extracted and processed by OTP
+```pipeline/``` the feeds-to-graph build: sources, EPIP conversion and the OTP graph build
+
+```pipeline/geo/switzerland-italy.geojson``` the geographic extent that is extracted and processed by OTP
 
 ```journey/``` static javascript client side react/redux UI component to interact with OpenTripPlanner instance.
 
@@ -158,12 +160,21 @@ You can find the latest version of the image on its [repository page](https://gi
 
 ## Building a graph
 
-If you want to build graph on your local machine there are convenience scripts available that
-download the requisites and builds the graph.
-
 ```
 ./build-graph.sh
 ./run-otp.sh
+```
+
+`build-graph.sh` drives `pipeline/`, which takes the NeTEx and GTFS sources to one EPIP archive and
+then to `graph.obj`. `pipeline/Makefile` holds the feed list and `pipeline/README.md` documents the
+stages; the OTP configuration is the `build-config.json`, `router-config.json` and `otp-config.json`
+at the repository root, which the build copies into OTP's base directory.
+
+It needs a `data.mobilitaetsverbuende.at` login for the Austrian feeds, and room: about 210 GB
+across the work and graph directories. `pipeline/README.md` gives the per-stage heaps.
+
+```
+export MV_USERNAME=you@example.com MV_PASSWORD='...'
 ```
 
 ## Information
