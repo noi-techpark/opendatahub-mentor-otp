@@ -1,0 +1,361 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 2430" role="img" aria-label="NOI Pipeline">
+  <title>NOI Pipeline</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5f6368"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: "Liberation Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+           fill: #202124; }
+    .title    { font-size: 19px; font-weight: 700; text-anchor: middle; }
+    .grouplbl { font-size: 10px; font-weight: 700; fill: #80868b; letter-spacing: 1.2px; }
+    .lbl      { font-size: 12px; text-anchor: middle; }
+    .sub      { font-size: 10px; fill: #5f6368; text-anchor: middle; }
+    .step     { fill: #d6e6fb; stroke: #2f6fd0; stroke-width: 1.2; }
+    .artifact { fill: #e9eaec; stroke: #9aa0a6; stroke-width: 1.2; }
+    .group    { fill: #fbfbfc; stroke: #dadce0; stroke-width: 1; }
+    .fused    { fill: #eaf2fd; stroke: #2f6fd0; stroke-width: 1.4; stroke-dasharray: 6 4; }
+    .fusedlbl { font-size: 13px; font-weight: 700; text-anchor: middle; }
+    .fstep    { fill: #f4f9ff; stroke: #6c9de6; stroke-width: 1; stroke-dasharray: 4 3; }
+    .fsteptxt { font-size: 11px; }
+    .num      { font-size: 11px; fill: #5f6368; }
+    .edge     { fill: none; stroke: #5f6368; stroke-width: 1.2; marker-end: url(#a); }
+    a         { cursor: pointer; }
+    a text    { text-decoration: none; }
+    a:hover rect { stroke-width: 2.4; }
+  </style>
+  <rect width="1480" height="2430" fill="#ffffff"/>
+  <text class="title" x="740.0" y="34">NOI Pipeline</text>
+  <rect class="step" x="570" y="70" width="130" height="26" rx="4"/>
+  <text class="lbl" x="635" y="87">pipeline step</text>
+  <rect class="artifact" x="760" y="70" width="150" height="26" rx="4"/>
+  <text class="lbl" x="835" y="87">data artifact</text>
+  <rect class="group" x="12" y="106" width="466" height="76" rx="5"/>
+  <text class="grouplbl" x="27" y="123">AUSTRIA</text>
+  <rect class="group" x="488" y="106" width="740" height="76" rx="5"/>
+  <text class="grouplbl" x="503" y="123">ITALY</text>
+  <rect class="group" x="1238" y="106" width="230" height="76" rx="5"/>
+  <text class="grouplbl" x="1253" y="123">SWITZERLAND</text>
+  <rect class="artifact" x="22" y="128" width="446" height="46" rx="4"/>
+  <text class="lbl" x="245" y="147" font-weight="600">Mobilitätsverbünde Österreich (9 archives)</text>
+  <text class="sub" x="245" y="162">Kärnten · Linz AG · ÖBB · OÖVV · Stmk · SVV · VOR · VVT · VVV</text>
+  <rect class="artifact" x="498" y="128" width="222" height="46" rx="4"/>
+  <text class="lbl" x="609" y="147" font-weight="600">STA — Südtirol / Alto Adige</text>
+  <text class="sub" x="609" y="162">sta.netex.zip</text>
+  <rect class="artifact" x="750" y="128" width="220" height="46" rx="4"/>
+  <text class="lbl" x="860" y="147" font-weight="600">Trenitalia (OAP)</text>
+  <text class="sub" x="860" y="162">trenitalia-netex.xml.gz</text>
+  <rect class="artifact" x="984" y="128" width="234" height="46" rx="4"/>
+  <text class="lbl" x="1101" y="147" font-weight="600">Italian NAP — 14 RAP datasets</text>
+  <text class="sub" x="1101" y="162">221 per-operator feeds</text>
+  <rect class="artifact" x="1248" y="128" width="210" height="46" rx="4"/>
+  <text class="lbl" x="1353" y="147" font-weight="600">opentransportdata.swiss (SKI+)</text>
+  <text class="sub" x="1353" y="162">swiss-netex.zip</text>
+
+  <rect class="step" x="135" y="198" width="220" height="45" rx="4"/>
+  <text class="lbl" x="245" y="217">merge 9 Verbund zips into one</text>
+  <text class="sub" x="245" y="232">unzip + zip → austria-merged-netex.zip</text>
+
+  <a href="../scripts/conv/ObbToDb.java">
+    <rect class="step" x="135" y="266" width="220" height="58" rx="4"/>
+    <text class="lbl" x="245" y="285">conv/ObbToDb</text>
+    <text class="sub" x="245" y="300">Mentz loader · STOP_OFFER members first</text>
+    <text class="sub" x="245" y="313">quay-union dedup · site-ref rewrite</text>
+  </a>
+  <a href="../scripts/conv/NetexToDb.java">
+    <rect class="step" x="499" y="266" width="220" height="45" rx="4"/>
+    <text class="lbl" x="609" y="285">conv/NetexToDb</text>
+    <text class="sub" x="609" y="300">serial NeTEx load</text>
+  </a>
+  <a href="../scripts/conv/NetexToDb.java">
+    <rect class="step" x="750" y="266" width="220" height="45" rx="4"/>
+    <text class="lbl" x="860" y="285">conv/NetexToDb</text>
+    <text class="sub" x="860" y="300">serial NeTEx load</text>
+  </a>
+  <a href="../scripts/conv/NetexToDb.java">
+    <rect class="step" x="984" y="266" width="234" height="45" rx="4"/>
+    <text class="lbl" x="1101" y="285">conv/NetexToDb</text>
+    <text class="sub" x="1101" y="300">serial NeTEx load · per operator</text>
+  </a>
+  <a href="../scripts/conv/SwissToDb.java">
+    <rect class="step" x="1243" y="266" width="220" height="45" rx="4"/>
+    <text class="lbl" x="1353" y="285">conv/SwissToDb</text>
+    <text class="sub" x="1353" y="300">member filter · quay-union dedup</text>
+  </a>
+
+  <a href="../scripts/fix/DropForeignJourneys.java">
+    <rect class="step" x="135" y="344" width="220" height="45" rx="4"/>
+    <text class="lbl" x="245" y="363">fix/DropForeignJourneys</text>
+    <text class="sub" x="245" y="378">drops vbg's re-import of LIEmobil</text>
+  </a>
+  <a href="../scripts/fix/DropForeignJourneys.java">
+    <rect class="step" x="499" y="344" width="220" height="45" rx="4"/>
+    <text class="lbl" x="609" y="363">fix/DropForeignJourneys</text>
+    <text class="sub" x="609" y="378">drops STA's re-import of VVT Reschen</text>
+  </a>
+  <rect class="artifact" x="750" y="344" width="220" height="34" rx="4"/>
+  <text class="lbl" x="860" y="365">it-trenitalia-raw.lmdb</text>
+  <a href="../scripts/fix/NormalizeItIds.java">
+    <rect class="step" x="984" y="344" width="234" height="45" rx="4"/>
+    <text class="lbl" x="1101" y="363">fix/NormalizeItIds</text>
+    <text class="sub" x="1101" y="378">all 221 feeds → IT:&lt;NUTS-2&gt;: id space</text>
+  </a>
+  <a href="../scripts/fix/DropForeignJourneys.java">
+    <rect class="step" x="1243" y="344" width="220" height="45" rx="4"/>
+    <text class="lbl" x="1353" y="363">fix/DropForeignJourneys</text>
+    <text class="sub" x="1353" y="378">drops CH's re-import of VVV (81_VVV)</text>
+  </a>
+
+  <a href="../scripts/fix/ResolveMentzLineVersions.java">
+    <rect class="step" x="135" y="412" width="220" height="45" rx="4"/>
+    <text class="lbl" x="245" y="431">fix/ResolveMentzLineVersions</text>
+    <text class="sub" x="245" y="446">MENTZ per-version line dedup</text>
+  </a>
+  <a href="../scripts/fix/ResolveMentzLineVersions.java">
+    <rect class="step" x="499" y="412" width="220" height="45" rx="4"/>
+    <text class="lbl" x="609" y="431">fix/ResolveMentzLineVersions</text>
+    <text class="sub" x="609" y="446">MENTZ per-version line dedup</text>
+  </a>
+  <a href="../scripts/conv/TrenitaliaDbToDb.java">
+    <rect class="step" x="750" y="412" width="220" height="45" rx="4"/>
+    <text class="lbl" x="860" y="431">conv/TrenitaliaDbToDb</text>
+    <text class="sub" x="860" y="446">TrainNumber synthesis</text>
+  </a>
+  <a href="../scripts/conv/ItRapDbToDb.java">
+    <rect class="step" x="984" y="412" width="234" height="71" rx="4"/>
+    <text class="lbl" x="1101" y="431">conv/ItRapDbToDb</text>
+    <text class="sub" x="998" y="446" style="text-anchor:start">· StopPlace centroids ← child quays</text>
+    <text class="sub" x="998" y="459" style="text-anchor:start">· Line authorityRef backfill (← Operator)</text>
+    <text class="sub" x="998" y="472" style="text-anchor:start">· per operator (soleAuthority needs ≤ 1)</text>
+  </a>
+
+  <a href="../scripts/fix/RewriteStaSspIds.java">
+    <rect class="step" x="499" y="480" width="220" height="45" rx="4"/>
+    <text class="lbl" x="609" y="499">fix/RewriteStaSspIds</text>
+    <text class="sub" x="609" y="514">ScheduledStopPoint id → SIRI form</text>
+  </a>
+
+  <rect class="artifact" x="984" y="548" width="234" height="34" rx="4"/>
+  <text class="lbl" x="1101" y="569">it-rap-$REGION-$OPERATOR.lmdb</text>
+
+  <a href="../scripts/conv/ItMergeDbToDb.java">
+    <rect class="step" x="931" y="612" width="340" height="58" rx="4"/>
+    <text class="lbl" x="1101" y="631">conv/ItMergeDbToDb</text>
+    <text class="sub" x="1101" y="646">per region · union operators · qualify colliding ids</text>
+    <text class="sub" x="1101" y="659">--no-consolidate-stops · the stop merge runs once, nationally</text>
+  </a>
+
+  <rect class="artifact" x="499" y="700" width="220" height="34" rx="4"/>
+  <text class="lbl" x="609" y="721">it-sta.lmdb</text>
+  <rect class="artifact" x="750" y="700" width="220" height="34" rx="4"/>
+  <text class="lbl" x="860" y="721">it-trenitalia.lmdb</text>
+  <rect class="artifact" x="984" y="700" width="234" height="34" rx="4"/>
+  <text class="lbl" x="1101" y="721">it-rap-$REGION.lmdb (×14)</text>
+
+  <a href="../scripts/conv/ItMergeDbToDb.java">
+    <rect class="step" x="640" y="764" width="440" height="72" rx="4"/>
+    <text class="lbl" x="860" y="783">conv/ItMergeDbToDb</text>
+    <text class="sub" x="860" y="798">union 14 RAPs + Trenitalia + STA · --synthesize-stops</text>
+    <text class="sub" x="860" y="811">StopPlace + Quay + PSA per unassigned SSP — ids settle only after qualification</text>
+    <text class="sub" x="860" y="824">consolidate co-located same-name StopPlaces (≤ ~15 m)</text>
+  </a>
+
+  <a href="../scripts/fix/FixItcTrailingLink.java">
+    <rect class="step" x="740" y="852" width="240" height="45" rx="4"/>
+    <text class="lbl" x="860" y="871">fix/FixItcTrailingLink</text>
+    <text class="sub" x="860" y="886">GTT's extra link at the terminus</text>
+  </a>
+  <a href="../scripts/fix/SanitizeStopAssignments.java">
+    <rect class="step" x="125" y="852" width="240" height="45" rx="4"/>
+    <text class="lbl" x="245" y="871">fix/SanitizeStopAssignments</text>
+    <text class="sub" x="245" y="886">strip placeholder quays · PSAs → station</text>
+  </a>
+
+  <a href="../scripts/fix/StitchSplitJourneys.java">
+    <rect class="step" x="125" y="927" width="240" height="45" rx="4"/>
+    <text class="lbl" x="245" y="946">fix/StitchSplitJourneys</text>
+    <text class="sub" x="245" y="961">rejoin ÖBB halves split across two Lines</text>
+  </a>
+  <a href="../scripts/fix/SanitizeStopAssignments.java">
+    <rect class="step" x="740" y="927" width="240" height="45" rx="4"/>
+    <text class="lbl" x="860" y="946">fix/SanitizeStopAssignments</text>
+    <text class="sub" x="860" y="961">strip placeholder quays · PSAs → station</text>
+  </a>
+
+  <rect class="artifact" x="155" y="1002" width="180" height="34" rx="4"/>
+  <text class="lbl" x="245" y="1023">at.lmdb</text>
+  <rect class="artifact" x="770" y="1002" width="180" height="34" rx="4"/>
+  <text class="lbl" x="860" y="1023">it.lmdb</text>
+  <rect class="artifact" x="1263" y="1002" width="180" height="34" rx="4"/>
+  <text class="lbl" x="1353" y="1023">ch.lmdb</text>
+
+  <rect class="fused" x="418" y="1072" width="884" height="500" rx="6"/>
+  <text class="fusedlbl" x="860" y="1098">EPIP conversion — consolidate once over every feed, convert per country</text>
+
+  <a href="../scripts/conv/FeedsToConsolidatedDbToDb.java">
+    <rect class="fstep" x="448" y="1116" width="824" height="80" rx="4"/>
+    <text class="num" x="464" y="1136">1</text>
+    <text class="fsteptxt" x="482" y="1136" font-weight="600">conv/FeedsToConsolidatedDbToDb — merge at · ch · it and consolidate their stations, --split at,ch,it</text>
+    <text class="fsteptxt" x="482" y="1151">cross-border scan — rail StopPlace consolidation (~440 m; strict rail mode, same-namespace + 2×-diameter guards), strict bus quay merge</text>
+    <text class="fsteptxt" x="482" y="1166">(2+2 poles · 100 m mutual-nearest · public-code agreement) — it cannot be sharded, a border station's</text>
+    <text class="fsteptxt" x="482" y="1181">copies come from different countries; clone + overlay per feed with a cumulative key offset, then resolve()</text>
+  </a>
+
+  <rect class="artifact" x="448" y="1216" width="250" height="30" rx="4"/>
+  <text class="lbl" x="573" y="1236">at-cons.lmdb</text>
+  <rect class="artifact" x="735" y="1216" width="250" height="30" rx="4"/>
+  <text class="lbl" x="860" y="1236">ch-cons.lmdb</text>
+  <rect class="artifact" x="1022" y="1216" width="250" height="30" rx="4"/>
+  <text class="lbl" x="1147" y="1236">it-cons.lmdb</text>
+
+  <a href="../scripts/conv/EpipDbToDb.java">
+    <rect class="fstep" x="448" y="1276" width="824" height="146" rx="4"/>
+    <text class="num" x="464" y="1296">2</text>
+    <text class="fsteptxt" x="482" y="1296" font-weight="600">conv/EpipDbToDb ×3 — one per consolidated country, concurrent under make -j (three write txns, not one)</text>
+    <text class="fsteptxt" x="482" y="1314">A1 / A2 — de-embed ServiceCalendar children · PassengerStopAssignment StopPlaceRef backfill</text>
+    <text class="fsteptxt" x="482" y="1329">B — six generators in order: sanitize · calendar · interchange · lines · locations · journeys</text>
+    <text class="fsteptxt" x="482" y="1344">C — repair interchange points, then one streaming ensemble pass: WGS84 reprojection ·</text>
+    <text class="fsteptxt" x="482" y="1359">      ServiceJourneyPattern direction inference · operator / vehicleType / quay-name backfills</text>
+    <text class="fsteptxt" x="482" y="1374">C2 — strip orphan LevelRefs (a LevelRef whose Level its own Site does not define)</text>
+    <text class="fsteptxt" x="482" y="1389">D — day-offset rewrite: 24:20:00 → 00:20:00 + &lt;DepartureDayOffset&gt;1&lt;/&gt;, enabled here via</text>
+    <text class="fsteptxt" x="482" y="1404">      -Dtoolkit.epip.dayOffsetRewrite=on          E — resolve() + resolveEmbeddings()</text>
+  </a>
+
+  <rect class="artifact" x="448" y="1442" width="250" height="30" rx="4"/>
+  <text class="lbl" x="573" y="1462">at-epip.lmdb</text>
+  <rect class="artifact" x="735" y="1442" width="250" height="30" rx="4"/>
+  <text class="lbl" x="860" y="1462">ch-epip.lmdb</text>
+  <rect class="artifact" x="1022" y="1442" width="250" height="30" rx="4"/>
+  <text class="lbl" x="1147" y="1462">it-epip.lmdb</text>
+
+  <a href="../scripts/conv/MergeDbToDb.java">
+    <rect class="fstep" x="448" y="1502" width="824" height="50" rx="4"/>
+    <text class="num" x="464" y="1523">3</text>
+    <text class="fsteptxt" x="482" y="1523">conv/MergeDbToDb — the three converted shards back into one store: raw keep-first clone (first source</text>
+    <text class="fsteptxt" x="482" y="1538">wins on a duplicate id), referrers of dropped rows re-inserted, then resolve() + resolveEmbeddings()</text>
+  </a>
+
+  <rect class="artifact" x="770" y="1612" width="180" height="34" rx="4"/>
+  <text class="lbl" x="860" y="1633">epip.lmdb</text>
+
+  <a href="../scripts/conv/XbDbToDb.java">
+    <rect class="step" x="530" y="1676" width="660" height="90" rx="4"/>
+    <text class="lbl" x="860" y="1694">conv/XbDbToDb — cross-border coupling</text>
+    <text class="sub" x="860" y="1710">runs AFTER the EPIP conversion — gated on one journey shape (passing times, no &lt;Calls&gt;) and on the day-offset rewrite</text>
+    <text class="sub" x="860" y="1723">read calendars + stations · scan journeys · alias split stations (rail 1,500 m, road ~1 km) · stitch continuations · group · tile</text>
+    <text class="sub" x="860" y="1736">cut legs at the border · one stay-seated ServiceJourneyInterchange per junction · one Quay per handover · validate point refs</text>
+    <text class="sub" x="860" y="1749">drop redundant publications + the TrainNumbers they orphan · a dropped journey takes its JourneyMeetings · re-run EPIP phase C</text>
+  </a>
+
+  <rect class="artifact" x="770" y="1782" width="180" height="34" rx="4"/>
+  <text class="lbl" x="860" y="1803">epip-xb.lmdb</text>
+
+  <a href="../scripts/conv/EpipDbToXml.java">
+    <rect class="step" x="600" y="1846" width="520" height="58" rx="4"/>
+    <text class="lbl" x="860" y="1865">conv/EpipDbToXml</text>
+    <text class="sub" x="860" y="1880">split EPIP export — 8 shards: shared-01…06 frames · g&lt;n&gt;-shared per shard · g&lt;n&gt;-&lt;k&gt; journey groups</text>
+    <text class="sub" x="860" y="1893">each group self-contained — its patterns' ServiceLinks and its journeys' interchanges ride with it</text>
+  </a>
+
+  <rect class="artifact" x="735" y="1921" width="250" height="34" rx="4"/>
+  <text class="lbl" x="860" y="1942">netex-epip-merged.zip</text>
+
+  <rect class="artifact" x="260" y="1997" width="220" height="45" rx="4"/>
+  <text class="lbl" x="370" y="2016" font-weight="600">Geofabrik OSM</text>
+  <text class="sub" x="370" y="2031">europe.osm.pbf</text>
+  <rect class="artifact" x="510" y="1997" width="200" height="45" rx="4"/>
+  <text class="lbl" x="610" y="2016" font-weight="600">SRTM</text>
+  <text class="sub" x="610" y="2031">srtm_39_03 DEM (elevation)</text>
+  <rect class="artifact" x="1000" y="1997" width="200" height="45" rx="4"/>
+  <text class="lbl" x="1100" y="2016" font-weight="600">NOI parking</text>
+  <text class="sub" x="1100" y="2031">parking-netex.xml</text>
+  <rect class="artifact" x="1220" y="1997" width="220" height="45" rx="4"/>
+  <text class="lbl" x="1330" y="2016" font-weight="600">GTFS (build-config)</text>
+  <text class="sub" x="1330" y="2031">skyalps · amarillo</text>
+
+  <rect class="step" x="260" y="2077" width="220" height="45" rx="4"/>
+  <text class="lbl" x="370" y="2096">osmium extract</text>
+  <text class="sub" x="370" y="2111">CH + IT + AT polygon cut</text>
+  <rect class="step" x="1000" y="2077" width="200" height="45" rx="4"/>
+  <text class="lbl" x="1100" y="2096">zip --junk-paths</text>
+  <text class="sub" x="1100" y="2111">the member name is load-bearing</text>
+  <rect class="artifact" x="260" y="2157" width="220" height="34" rx="4"/>
+  <text class="lbl" x="370" y="2178">regional.osm.pbf</text>
+  <rect class="artifact" x="1000" y="2157" width="200" height="34" rx="4"/>
+  <text class="lbl" x="1100" y="2178">parking-netex.xml.zip</text>
+  <rect class="step" x="260" y="2221" width="220" height="45" rx="4"/>
+  <text class="lbl" x="370" y="2240">OTP --buildStreet</text>
+  <text class="sub" x="370" y="2255">streets + elevation</text>
+  <rect class="step" x="715" y="2221" width="290" height="45" rx="4"/>
+  <text class="lbl" x="860" y="2240">OTP --loadStreet --save</text>
+  <text class="sub" x="860" y="2255">NeTEx transit layering onto the street graph</text>
+  <rect class="artifact" x="770" y="2301" width="180" height="34" rx="4"/>
+  <text class="lbl" x="860" y="2322">graph.obj</text>
+  <rect class="step" x="720" y="2365" width="280" height="34" rx="4"/>
+  <text class="lbl" x="860" y="2386">OTP --load --serve :8080</text>
+
+  <path class="edge" d="M 245 174 L 245 198"/>
+  <path class="edge" d="M 245 243 L 245 266"/>
+  <path class="edge" d="M 245 324 L 245 344"/>
+  <path class="edge" d="M 245 389 L 245 412"/>
+  <path class="edge" d="M 245 457 L 245 852"/>
+  <path class="edge" d="M 245 897 L 245 927"/>
+  <path class="edge" d="M 245 972 L 245 1002"/>
+  <path class="edge" d="M 609 174 L 609 266"/>
+  <path class="edge" d="M 609 311 L 609 344"/>
+  <path class="edge" d="M 609 389 L 609 412"/>
+  <path class="edge" d="M 609 457 L 609 480"/>
+  <path class="edge" d="M 609 525 L 609 700"/>
+  <path class="edge" d="M 860 174 L 860 266"/>
+  <path class="edge" d="M 860 311 L 860 344"/>
+  <path class="edge" d="M 860 378 L 860 412"/>
+  <path class="edge" d="M 860 457 L 860 700"/>
+  <path class="edge" d="M 1101 174 L 1101 266"/>
+  <path class="edge" d="M 1101 311 L 1101 344"/>
+  <path class="edge" d="M 1101 389 L 1101 412"/>
+  <path class="edge" d="M 1101 483 L 1101 548"/>
+  <path class="edge" d="M 1101 582 L 1101 612"/>
+  <path class="edge" d="M 1101 670 L 1101 700"/>
+  <path class="edge" d="M 1353 174 L 1353 266"/>
+  <path class="edge" d="M 1353 311 L 1353 344"/>
+  <path class="edge" d="M 1353 389 L 1353 1002"/>
+  <path class="edge" d="M 609 734 L 609 750 L 760 750 L 760 764"/>
+  <path class="edge" d="M 1101 734 L 1101 750 L 960 750 L 960 764"/>
+  <path class="edge" d="M 860 734 L 860 764"/>
+  <path class="edge" d="M 860 836 L 860 852"/>
+  <path class="edge" d="M 860 897 L 860 927"/>
+  <path class="edge" d="M 860 972 L 860 1002"/>
+  <path class="edge" d="M 245 1036 L 245 1050 L 528 1050 L 528 1072"/>
+  <path class="edge" d="M 1353 1036 L 1353 1050 L 1192 1050 L 1192 1072"/>
+  <path class="edge" d="M 860 1036 L 860 1072"/>
+  <path class="edge" d="M 573 1196 L 573 1216"/>
+  <path class="edge" d="M 860 1196 L 860 1216"/>
+  <path class="edge" d="M 1147 1196 L 1147 1216"/>
+  <path class="edge" d="M 573 1246 L 573 1276"/>
+  <path class="edge" d="M 860 1246 L 860 1276"/>
+  <path class="edge" d="M 1147 1246 L 1147 1276"/>
+  <path class="edge" d="M 573 1422 L 573 1442"/>
+  <path class="edge" d="M 860 1422 L 860 1442"/>
+  <path class="edge" d="M 1147 1422 L 1147 1442"/>
+  <path class="edge" d="M 573 1472 L 573 1502"/>
+  <path class="edge" d="M 860 1472 L 860 1502"/>
+  <path class="edge" d="M 1147 1472 L 1147 1502"/>
+  <path class="edge" d="M 860 1572 L 860 1612"/>
+  <path class="edge" d="M 860 1646 L 860 1676"/>
+  <path class="edge" d="M 860 1766 L 860 1782"/>
+  <path class="edge" d="M 860 1816 L 860 1846"/>
+  <path class="edge" d="M 860 1904 L 860 1921"/>
+  <path class="edge" d="M 370 2043 L 370 2077"/>
+  <path class="edge" d="M 370 2123 L 370 2157"/>
+  <path class="edge" d="M 370 2191 L 370 2221"/>
+  <path class="edge" d="M 610 2043 L 610 2233 L 480 2233"/>
+  <path class="edge" d="M 480 2253 L 715 2253"/>
+  <path class="edge" d="M 860 1955 L 860 2221"/>
+  <path class="edge" d="M 1100 2043 L 1100 2077"/>
+  <path class="edge" d="M 1100 2123 L 1100 2157"/>
+  <path class="edge" d="M 1100 2191 L 1100 2255 L 1005 2255"/>
+  <path class="edge" d="M 1330 2043 L 1330 2233 L 1005 2233"/>
+  <path class="edge" d="M 860 2266 L 860 2301"/>
+  <path class="edge" d="M 860 2335 L 860 2365"/>
+</svg>
