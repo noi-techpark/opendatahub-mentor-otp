@@ -1,0 +1,14 @@
+/*.jar
+
+*.lmdb/
+
+/data/
+/input/
+/state/
+/graph/report/
+/graph/srtm*
+/graph/readme.txt
+/graph/*.osm.pbf
+/graph/*gtfs*.zip
+/graph/*netex*.zip
+/graph/*.obj

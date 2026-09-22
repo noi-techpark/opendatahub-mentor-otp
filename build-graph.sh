@@ -4,89 +4,137 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+# Drives pipeline/ from the source feeds to a graph.obj. Runs in the otp-graph-build container,
+# where cron reaches it through run-build.sh, and on a developer's machine from the repository root.
+#
+# Everything worth keeping between runs lives under $WORK -- the source feeds, the LMDB stores, the
+# download validators and OTP's base directory. run-build.sh publishes the finished graph out of it.
+#
+# The Austrian feeds need MV_USERNAME and MV_PASSWORD in the environment; the pipeline reads them
+# itself and never stores them.
+
 set -euo pipefail
-set -a && source .env && set +a
 
-echo building graph with OTP image $OTP_IMAGE
+HERE="$(cd "$(dirname "$0")" && pwd)"
 
-CURL_PROGRESS="--no-progress-meter"
-[ -t 1 ] && CURL_PROGRESS="-#"
-CURL="curl --location --fail --show-error --retry 5 --retry-delay 30 ${CURL_PROGRESS}"
+# The container takes its environment from compose. A developer takes it from .env, which stays
+# outside the image.
+#
+# Read line by line. Compose's .env holds unquoted values, so sourcing
+# `OTP_JAVA_OPTS=-XX:+UseZGC -XX:+ZUncommit ...` runs -XX:+ZUncommit as a command. The parsing here
+# is Compose's own: one split on the first =, and a matched pair of surrounding quotes removed.
+if [ -f "$HERE/.env" ]; then
+  while IFS='=' read -r key value || [ -n "$key" ]; do
+    case "$key" in '' | '#'*) continue ;; esac
+    value=${value%$'\r'}
+    case "$value" in
+    '"'*'"' | "'"*"'") value=${value:1:-1} ;;
+    esac
+    export "$key=$value"
+  done < "$HERE/.env"
+fi
 
-# OSM
-EUROPE_URL=https://download.geofabrik.de/europe-latest.osm.pbf
-EUROPE_PBF=data/europe.osm.pbf
-SWITZERLAND_SOUTH_TYROL_PBF=data/switzerland-italy.osm.pbf
-# elevation
-# this URL is way too overloaded, so we mirror it
-# ELEVATION_URL=https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/srtm_39_03.zip
-ELEVATION_URL=https://leonard.io/srtm/srtm_39_03.zip
-ELEVATION_ZIP=data/srtm_39_03.zip
+# Defaults are the repository layout. In the image the work directory is a volume and the scripts
+# sit apart from the pipeline, so the environment carries these values.
+PIPELINE_DIR="${PIPELINE_DIR:-$HERE/pipeline}"
+OTP_DOCKER="${OTP_DOCKER:-$HERE/infrastructure/docker/otp-graph-build/otp-docker.sh}"
+WORK="${WORK:-$HERE/work}"
+TOOLKIT_JAR="$WORK/netex-toolkit-shaded.jar"
 
-# transit data
-declare -A NETEX_URLS=(
-  [trenitalia]=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/1080596/checkedResource
-  [verona]=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/660140/resource
-  [atvo]=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/180673/checkedResource
-  [busitalia]=https://www.cciss.it/nap/mmtis/public/api/v1/download/blob/Asset/180710/checkedResource
-)
+: "${OTP_IMAGE:?must name the OTP image that both builds and serves the graph}"
 
-# parking
-# Override the transmodel API host if needed
-PARKING_NETEX_URL=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}/netex/parking
-PARKING_NETEX_XML=data/shared-data.xml
-PARKING_NETEX_ZIP=data/parking-netex.xml.zip
+mkdir -p "$WORK"
 
-mkdir -p data
+# The OTP version, as make sees it. The pipeline takes its OTP as an ordinary prerequisite of
+# streetGraph.obj, so OTP_JAR pointed at this file gives a changed image the effect a changed jar
+# has: the street graph is rebuilt. Written only when the reference changes, because the mtime is
+# what triggers that rebuild.
+STAMP="$WORK/otp-image.stamp"
+if [ "$(cat "$STAMP" 2>/dev/null)" != "$OTP_IMAGE" ]; then
+  printf '%s\n' "$OTP_IMAGE" > "$STAMP"
+fi
 
-if [ ! -f "${EUROPE_PBF}" ]; then
-  echo "Downloading OSM data for Europe from ${EUROPE_URL}"
-  ${CURL} ${EUROPE_URL} -o ${EUROPE_PBF}
+# ROOT stays the checkout: the pipeline derives its scripts/ and geo/ from it. The state directories
+# are the ones that have to outlive the container, and only they move to the work volume.
+#
+# otp_run is the pipeline's one OTP command line; overriding it sends the OTP phases to
+# otp-docker.sh.
+run_make() {
+  make -C "$PIPELINE_DIR" -j"${JOBS:-${MAKE_JOBS:-6}}" \
+    INPUT_DIR="$WORK/input" \
+    DATA_DIR="$WORK/data" \
+    STATE_DIR="$WORK/state" \
+    OTP_DIR="$WORK/graph" \
+    TOOLKIT_JAR="$TOOLKIT_JAR" \
+    OTP_JAR="$STAMP" \
+    OTP_DOCKER="$OTP_DOCKER" \
+    "otp_run=\$(OTP_DOCKER) \$(1) \"\$(2)\" \"\$(3)\"" \
+    "$@"
+}
+
+# The toolkit jar, when the volume holds a different version from the one asked for. The pipeline
+# fetches it only when the file is missing, so on a volume that already holds one a TOOLKIT_VERSION
+# bump never arrives; download-toolkit is the pipeline's replace-what-is-there target. The wanted
+# version is read back out of the Makefile, so setting nothing leaves the pipeline's own default in
+# force. TOOLKIT_VERSION reaches the Makefile from the environment, which its ?= yields to.
+#
+# TOOLKIT_VERSION is unset when nothing was asked for. Compose passes TOOLKIT_VERSION= for a
+# variable it has no value for, and make treats a defined-but-empty environment variable as a value:
+# ?= yields to it and the release URL loses its tag.
+[ -n "${TOOLKIT_VERSION:-}" ] || unset TOOLKIT_VERSION
+TOOLKIT_WANT=$(make -C "$PIPELINE_DIR" --no-print-directory print-TOOLKIT_VERSION)
+TOOLKIT_STAMP="$WORK/toolkit-version.stamp"
+if [ -f "$TOOLKIT_JAR" ] && [ "$(cat "$TOOLKIT_STAMP" 2>/dev/null)" != "$TOOLKIT_WANT" ]; then
+  echo "Toolkit $TOOLKIT_WANT wanted, $(cat "$TOOLKIT_STAMP" 2>/dev/null || echo 'an unrecorded version') on the volume -- replacing"
+  run_make download-toolkit
+fi
+printf '%s\n' "$TOOLKIT_WANT" > "$TOOLKIT_STAMP"
+
+# Named goals stand for themselves: make runs the stages asked for, and the refresh and the OSM
+# update below are skipped. This is how a caller reaches one phase -- `build-graph.sh street`.
+if [ $# -gt 0 ]; then
+  run_make "$@"
+  exit 0
+fi
+
+# Keep the Europe extract current from the OSM replication diffs. The region extract is re-cut
+# afterwards. A cold volume has no PBF to update, and make fetches one during the build below.
+#
+# pyosmium-up-to-date exits 1 when it stopped at its own size limit with diffs still outstanding,
+# and 2 or more on error, so 1 is the signal to go round again.
+#
+# OSM_UPDATE=0, no, off or false skips this step.
+EUROPE_PBF="$WORK/input/europe.osm.pbf"
+case "${OSM_UPDATE:-}" in
+0 | no | off | false) OSM_UPDATE_WANTED=no ;;
+*) OSM_UPDATE_WANTED=yes ;;
+esac
+
+if [ ! -f "$EUROPE_PBF" ]; then
+  : # nothing to update; make fetches the extract during the build below
+elif [ "$OSM_UPDATE_WANTED" = no ]; then
+  echo "Leaving $(basename "$EUROPE_PBF") alone (OSM_UPDATE=${OSM_UPDATE})"
 else
-  echo "Checking for updates for existing OSM file"
-  pyosmium-up-to-date ${EUROPE_PBF}
+  echo "Updating $(basename "$EUROPE_PBF") from the OSM replication diffs"
+  until pyosmium-up-to-date "$EUROPE_PBF"; do
+    status=$?
+    [ "$status" -eq 1 ] || exit "$status"
+  done
+  run_make osm-extract
 fi
 
-# cut out South Tyrol from the large North East Italy extract
-if [ ! -f "${SWITZERLAND_SOUTH_TYROL_PBF}" ] || [ "${EUROPE_PBF}" -nt "${SWITZERLAND_SOUTH_TYROL_PBF}" ]; then
-  echo "Extracting ${SWITZERLAND_SOUTH_TYROL_PBF} from ${EUROPE_PBF}"
-  osmium extract ${EUROPE_PBF} --polygon switzerland-italy.geojson -o ${SWITZERLAND_SOUTH_TYROL_PBF} --overwrite
-fi
+# The refresh asks every publisher whether its feed moved and keeps the file, and its timestamp,
+# wherever the bytes come back unchanged. A plain `make all` never re-downloads anything, so this is
+# the only thing that brings new data in.
+#
+# Austria goes first and alone. Every Verbund target performs its own password grant against the
+# same DBP account, and Keycloak's quick-login check rejects logins for one user that arrive closer
+# together than a second, as a 401 invalid_grant that reads exactly like a wrong password. In
+# parallel the Austrian targets lose that race.
+#
+# The rest are named one by one here. This list has to stay in step with the pipeline's
+# download-feeds target, which also covers Austria.
+JOBS=1 run_make download-austria
+run_make download-swiss download-trenitalia download-sta download-rap download-parking
 
-if [ ! -f "${ELEVATION_ZIP}" ]; then
-  ${CURL} ${ELEVATION_URL} -o ${ELEVATION_ZIP}
-  unzip -o ${ELEVATION_ZIP} -d data
-fi
-
-# download parking data and put it into a zip
-rm -f ${PARKING_NETEX_XML} ${PARKING_NETEX_ZIP}
-${CURL} ${PARKING_NETEX_URL} -o ${PARKING_NETEX_XML}
-
-zip --junk-paths ${PARKING_NETEX_ZIP} ${PARKING_NETEX_XML}
-
-for name in "${!NETEX_URLS[@]}"; do
-  url="${NETEX_URLS[$name]}"
-  xml="data/${name}.netex.xml"
-  gz="${xml}.gz"
-  zip_file="data/${name}.netex.zip"
-
-  rm -f "${gz}" "${xml}" "${zip_file}"
-  echo "Downloading ${name} NeTEx transit data from ${url}"
-  ${CURL} "${url}" -o "${gz}"
-  gunzip --stdout "${gz}" > "${xml}"
-  zip "${zip_file}" "${xml}"
-  rm -f "${gz}" "${xml}"
-done
-
-# actually do graph build
-VOLUME_MOUNT="${OTP_GRAPH_VOLUME:-$(pwd)}"
-docker run \
-  --name otp-graph-build \
-  --init \
-  --restart no \
-  -v "${VOLUME_MOUNT}:/var/opentripplanner/:z" \
-  --rm \
-  -e JAVA_TOOL_OPTIONS="-Xmx50G -XX:+UseContainerSupport -XX:+UseCompactObjectHeaders" \
-  "${OTP_IMAGE}" --abortOnUnknownConfig --build --save
-
-
+run_make all

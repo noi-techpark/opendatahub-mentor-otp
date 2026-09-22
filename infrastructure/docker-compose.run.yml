@@ -19,9 +19,9 @@ services:
     volumes:
       - otp-graph:/var/otp
     depends_on:
-     - amarillo
-     - charger
-     - carsharing-cron
+      - amarillo
+      - charger
+      - carsharing-cron
 
   otp-graph-build:
     image: ${DOCKER_IMAGE_OTP_GRAPH_BUILD}:${DOCKER_TAG}
@@ -29,19 +29,24 @@ services:
     ports:
       - ${SERVER_PORT_OTP_GRAPH_BUILD}:80
     volumes:
+      - otp-work:/build
       - otp-graph:/graph
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TRANSMODEL_HOST=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}
-      - OTP_GRAPH_VOLUME=otp-graph
+      - OTP_WORK_VOLUME=otp-work
       - OTP_IMAGE=${OTP_IMAGE}
+      - TOOLKIT_VERSION=${TOOLKIT_VERSION:-}
+      - MV_USERNAME=${MV_USERNAME:-}
+      - MV_PASSWORD=${MV_PASSWORD:-}
+      - MAKE_JOBS=${MAKE_JOBS:-6}
+      - OSM_UPDATE=${OSM_UPDATE:-}
 
-  
   gbfs:
     image: ${DOCKER_IMAGE_GBFS}:${DOCKER_TAG}
     restart: unless-stopped
     ports:
-     - ${DOCKER_GBFS_PORT}:8089
+      - ${DOCKER_GBFS_PORT}:8089
 
   charger:
     image: ${DOCKER_IMAGE_ECHARGING}:${DOCKER_TAG}
@@ -64,7 +69,7 @@ services:
         condition: service_healthy
 
   graphhopper:
-    image: israelhikingmap/graphhopper:8.0
+    image: docker.io/israelhikingmap/graphhopper:8.0
     # If OSM file is older than 30 days, download a new version before starting
     # command: --host 0.0.0.0 -o /data/default-gh/ --url https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf
     entrypoint: |
@@ -91,15 +96,15 @@ services:
     image: ${DOCKER_IMAGE_CARSHARING}:${DOCKER_TAG}
     restart: unless-stopped
     volumes:
-       - carsharing-gbfs:/app/out
+      - carsharing-gbfs:/app/out
     env_file:
       - .env
 
   carsharing-nginx:
-    image: nginx:1.25.4-alpine
+    image: docker.io/library/nginx:1.25.4-alpine
     restart: unless-stopped
     volumes:
-       - carsharing-gbfs:/usr/share/nginx/html
+      - carsharing-gbfs:/usr/share/nginx/html
     ports:
       - "${DOCKER_CARSHARING_PORT}:80"
 
@@ -107,5 +112,9 @@ volumes:
   carsharing-gbfs:
   amarillo:
   graphhopper:
+  # Pinned: otp-docker.sh passes this name to the host's daemon, which resolves it there.
+  otp-work:
+    name: otp-work
   otp-graph:
     name: otp-graph
+

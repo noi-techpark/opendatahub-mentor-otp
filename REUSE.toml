@@ -32,3 +32,9 @@ path = ["journey-v2/.gitignore", "journey-v2/.babelrc"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "(c) 2017 Conveyal"
 SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["pipeline/.gitignore", "pipeline/Makefile", "pipeline/README.md", "pipeline/docs/**", "pipeline/scripts/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"

@@ -55,11 +55,18 @@ services:
       context: ./
       dockerfile: infrastructure/docker/otp-graph-build/Dockerfile
     volumes:
+      - otp-work:/build
       - otp-graph:/graph
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TRANSMODEL_HOST=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}
-      - OTP_GRAPH_VOLUME=otp-graph
+      - OTP_WORK_VOLUME=otp-work
+      - OTP_IMAGE=${OTP_IMAGE}
+      - TOOLKIT_VERSION=${TOOLKIT_VERSION:-}
+      - MV_USERNAME=${MV_USERNAME:-}
+      - MV_PASSWORD=${MV_PASSWORD:-}
+      - MAKE_JOBS=${MAKE_JOBS:-}
+      - OSM_UPDATE=${OSM_UPDATE:-}
     restart: unless-stopped
   
   amarillo:
@@ -81,7 +88,7 @@ services:
 
   graphhopper:
     container_name: graphhopper 
-    image: israelhikingmap/graphhopper:8.0
+    image: docker.io/israelhikingmap/graphhopper:8.0
     command: --host 0.0.0.0 --url https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf
     environment:
       - JAVA_OPTS=-Xmx4g
@@ -101,12 +108,15 @@ services:
     container_name: carsharing-ngnix
     ports:
       - "8091:80"
-    image: nginx:1.25.4-alpine
+    image: docker.io/library/nginx:1.25.4-alpine
     volumes:
        - carsharing-gbfs:/usr/share/nginx/html
 
 volumes:
   carsharing-gbfs:
   graphhopper:
+  # Pinned: otp-docker.sh passes this name to the host's daemon, which resolves it there.
+  otp-work:
+    name: otp-work
   otp-graph:
     name: otp-graph
