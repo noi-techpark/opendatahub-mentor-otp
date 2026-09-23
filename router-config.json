@@ -9,6 +9,10 @@
       "maxWindow": "3h"
     }
   },
+  "ojpApi" : {
+    "hideFeedId" : true,
+    "hardcodedInputFeedId" : "netex"
+  },
   "vectorTiles": {
     "layers": [
       {
