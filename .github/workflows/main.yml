@@ -66,7 +66,7 @@ jobs:
           X_MV_USERNAME: ${{ secrets.MV_USERNAME }}
           X_MV_PASSWORD: ${{ secrets.MV_PASSWORD }}
           X_TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
-          X_OTP_JAVA_OPTS: -XX:+UseZGC -XX:+ZUncommit -XX:ZUncommitDelay=60 -Xmx30G
+          X_OTP_JAVA_OPTS: -Xmx50G -XX:+UseCompactObjectHeaders
 
           # disable in test
           # X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}

@@ -6,7 +6,7 @@
     "maxNumberOfTransfers": 6,
     "dynamicSearchWindow": {
       "minWindow": "1h",
-      "maxWindow": "4h"
+      "maxWindow": "3h"
     }
   },
   "vectorTiles": {
