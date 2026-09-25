@@ -66,9 +66,9 @@ public final class VerifyCrossborder {
 
     /// One consolidated StopPlace, as far as this report needs it.
     ///
-    /// Both names are kept because either can be the useless one: the Trenitalia RAP feeds put the
-    /// UIC code in `Name` and the station in `ShortName` (`830008217` / `ROMA TIBURTINA`), while
-    /// the Verbund feeds publish neither. An export built after `CodeNames` ran carries the station
+    /// Both names are kept because either can be the useless one: the GTFS-converted RAP feeds put
+    /// the stop's code in `Name` and its name in `ShortName` (`0002` / `Piazza degli Irpini`), while
+    /// the Verbund feeds publish neither. An export built after `CodeNames` ran carries the name
     /// in `Name`, so the `ShortName` arm is what reads an older artefact.
     public record Stop(String id, String name, String shortName, Double lat, Double lon) {
         public String label() {

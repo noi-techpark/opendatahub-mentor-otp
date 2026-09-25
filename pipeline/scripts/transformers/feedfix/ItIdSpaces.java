@@ -16,9 +16,11 @@ package transformers.feedfix;
 //   epd:it:                 ValidBetween, the same shape in lower case -- and with no NUTS token at
 //                           all, so this one cannot simply drop the `epd:` and be done.
 //   IT:IT14:Operator:       One per Lazio feed, carrying that feed's OperatorRefs. The same feeds'
-//                           other ids say ITI4.
+//                           other ids say ITI4. Lazio is down to one allowlisted feed, OP1, which
+//                           carries it.
 //   IT::Operator:           Two feeds, and the two are in different regions (bolzano ITH1,
-//                           veneto/DOLOMITIBUS ITH3).
+//                           veneto/DOLOMITIBUS ITH3). Both are out of the allowlist, so this rule
+//                           lies dormant too.
 //   it:apb:Operator:        bolzano -- alongside that feed's `IT::Operator:` ids, under different
 //                           local parts. Bolzano-only, so the rule lies dormant whenever that feed
 //                           is out of the allowlist.

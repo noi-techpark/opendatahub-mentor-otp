@@ -1,15 +1,16 @@
 package transformers.feedfix;
 
 // The NAP's GTFS->NeTEx converter publishes a stop's code as its Name and the stop's name as its
-// ShortName, on the StopPlace and on every Quay it embeds. Milano Centrale, as the Puglia
-// Trenitalia asset publishes it:
+// ShortName, on the StopPlace and on every Quay it embeds. Piazza degli Irpini, as campania/AIR
+// publishes it:
 //
-//   <StopPlace id="IT:ITF4:StopPlace:830001700_ReteTrenitalia_GTFS">
-//     <Name>830001700</Name><ShortName>MILANO CENTRALE</ShortName>
-//     <PrivateCode>830001700</PrivateCode><PublicCode>830001700</PublicCode>
+//   <StopPlace id="IT:ITF3:StopPlace:0002_RETE_TPL_CONNETTORE_AIR">
+//     <Name>0002</Name><ShortName>Piazza degli Irpini</ShortName>
+//     <PrivateCode>0002</PrivateCode><PublicCode>0002</PublicCode>
 //
 // A `_<dataset>` id suffix is that converter's signature. Feeds from other converters publish the
-// same stations named, so a station reaches the merge as both shapes at once.
+// same stations named, so a station reaches the merge as both shapes at once. campania/AIR is the
+// largest of the feeds carrying the shape.
 //
 // The repair moves the name onto Name and leaves every code where it is, ShortName included.
 //

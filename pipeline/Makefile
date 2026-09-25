@@ -155,7 +155,7 @@ at_id     = $(word 2,$(subst :, ,$(filter $(1):%,$(AT_FEEDS))))
 
 # The portals reject non-browser user agents, hence the -A. --retry-all-errors makes --retry cover
 # a body that died mid-transfer (plain --retry only retries connection setup), and the speed floor
-# aborts a stalled transfer instead of hanging a 221-feed run on one wedged socket.
+# aborts a stalled transfer instead of hanging a whole feed run on one wedged socket.
 # The -A value is unquoted: $(CURL) is exported to fetch.sh as one string and split there on
 # whitespace, so a quoted value would arrive with its quotes attached.
 CURL := curl -fsSL --retry 3 --retry-all-errors --speed-limit 1024 --speed-time 60 -A Mozilla/5.0
@@ -206,7 +206,7 @@ EPIP_DB := $(DATA_DIR)/epip.lmdb
 #
 # Feed order is scheduling. Make queues a goal's prerequisite tree in declaration order and hands
 # out job slots from a FIFO: what is runnable during the first descent is queued then, and anything
-# that becomes runnable later goes behind the whole queue. IT's 221 RAP loads fill that queue, so
+# that becomes runnable later goes behind the whole queue. IT's RAP loads fill that queue, so
 # every stage not runnable at t=0 waits ~22 minutes for it to drain -- and the ones that wait are
 # what then gates cons-split, rather than it-national. Three things hold it, and all three are
 # needed -- the order here, plus:
@@ -266,11 +266,29 @@ FEED_DBS := $(AT_DB) $(CH_DB) $(IT_DB)
 # covers the current window rather than a finished season. Sources with no live asset at any level
 # are gone, and with them Liguria, Molise and Trento.
 #
-# There is no conversion screen: the exclusions are calendar and content only, and none of them is
-# hiding a feed that would crash the chain.
+# And it is screened on the publisher, because the NAP carries Trenitalia twice. $(TRENITALIA_ASSET)
+# is Trenitalia's own publication -- 16,480 journeys over 1,916 RFI stations, every product class --
+# and seven regions republished a slice of it: campania IT-ITF3-TRENITALIA:428186, emilia-romagna
+# IT-ITH5-TRENITALIA-RER:399807, lazio IT-ITI4-0083:586304, lombardia IT-ITC4-TRENITALIA_126:310527,
+# puglia IT-ITF4-Trenitalia:307494, sardegna IT-ITG2-TRENITALIA:396943 and veneto
+# IT-ITH3-TRENITALIA:181861. Matching journeys on their sequence of RFI station code and clock time,
+# 5,558 of those feeds' 6,760 signatures were already in the national feed -- same stations, same
+# minute, same order -- and nothing in the chain folds them together, because the codespaces differ
+# and $(IT_DB)'s merge qualifies colliding ids rather than dropping duplicate service. Emilia-Romagna
+# matched at 100%, campania 99.5%, veneto 97.6%, lazio 86.5%, sardegna 67.6%; lombardia's is the
+# December 2025 edition of the same long-distance service, nine months stale, on its own stop
+# numbering; puglia's carries no journeys at all. The national feed is authoritative; do not re-add
+# one of the seven without re-measuring the overlap against it.
 #
-# Both screens are point-in-time. An operator that ends a timetable and republishes late reads as
-# expired for a few days, so re-run the check before concluding a source is dead.
+# IT-ITC4-TRENORD_336 stays. Trenord is a different company, not a republication -- 14,711 journeys,
+# none of its 9,562 signatures in the national feed, and 418 of its 528 stop names with no
+# counterpart there. It is the only publisher of Lombardy regional rail.
+#
+# There is no conversion screen: the exclusions are calendar, content and publisher only, and none of
+# them is hiding a feed that would crash the chain.
+#
+# All three screens are point-in-time. An operator that ends a timetable and republishes late reads
+# as expired for a few days, so re-run the check before concluding a source is dead.
 # docs/datasources.md carries the per-region table, the legend for each exclusion code, and the
 # method.
 RAP_REGIONS := abruzzo aosta calabria campania emilia-romagna friuli lazio lombardia marche \
@@ -282,12 +300,11 @@ RAP_calabria := $(addprefix AZ-0,03:1513215 06:1513232 08:1513178 09:1513161 10:
   12:1513121 16:1513090 18:1513084 20:1513107 23:1513249 27:1512973)
 RAP_campania := $(addprefix IT-ITF3-,AIR:277388 ALILAURO:1075683 ANM_GOM_FER:647983 \
   ATC_CE:415981 COSAT:248989 EAV_FERRO:449468 EAV_GOMMA:159845 SITA_SUD:248944 \
-  SITA_SUD_Sita_bus:1787866 TRENITALIA:428186)
+  SITA_SUD_Sita_bus:1787866)
 RAP_emilia-romagna := $(addprefix IT-ITH5-,MARCONIEXPRESS-BO:484092 SETA-MOREPC:487283 \
-  START-FC:484145 START-RA:483846 START-RN:483891 TEP-PR:534612 TPER-BO:483936 TPER-FE:483981 \
-  TRENITALIA-RER:399807)
+  START-FC:484145 START-RA:483846 START-RN:483891 TEP-PR:534612 TPER-BO:483936 TPER-FE:483981)
 RAP_friuli := IT-ITH4-MICOTRA:204098
-RAP_lazio := $(addprefix IT-ITI4-,0083:586304 OP1:663301)
+RAP_lazio := IT-ITI4-OP1:663301
 RAP_lombardia := $(addprefix IT-ITC4-,AMSC_310:131116 APAM_202:132232 ARRIVA-ITA_892:131383 \
   ATM_47:191301 AUTOGUIDOVIE_201:686247 BGTRASP-EST_211:131790 BGTRASP-OV_212:131568 \
   BGTRASP-SUD_213:131531 BONOMI_54:131910 BRESCIATRASP_204:132312 CAL_240:131679 \
@@ -296,7 +313,7 @@ RAP_lombardia := $(addprefix IT-ITC4-,AMSC_310:131116 APAM_202:132232 ARRIVA-ITA
   MOVIBUS_274:132195 NET_151:131272 PEREGO_100:132121 RAINOLDI_103:131198 SABBA_147:132158 \
   SAI_273:310444 SAV_264:131420 STAR-MOB_206:132349 STECAV_198:131984 STIE_116:132021 \
   STPS_117:132386 TEB_288:663958 TRASPBS-NORD_216:131605 TRASPBS-SUD_217:132058 \
-  TRENITALIA_126:310527 TRENORD_336:131494 VARESINE_119:1251813)
+  TRENORD_336:131494 VARESINE_119:1251813)
 RAP_marche := $(addprefix IT-ITI3-,ADRIABUS:5929 ATMA:5966 START:6040 TRASFER:1784852)
 RAP_piemonte := $(addprefix IT-ITC1-,CCA-AMG:627 CCA-AT:672 CCA-CN:389 CCA-EXTRATO:1162 \
   CCA-GTT:463 CCA-NO:218801 CCA-VCO:500 VOLI-TO:1184392)
@@ -305,7 +322,7 @@ RAP_puglia := $(addprefix IT-ITF4-,AMET:444957 AMTAB:302956 ATAF:296216 \
   COTRAP_FDG:395576 COTRAP_SEAT:389204 COTRAP_SITASUD_GRUPPO_FOGGIA:467361 \
   COTRAP_SITASUD_LINEE_URBANE:467406 COTRAP_SITASUD_SEDE_REGIONALE_PUGLIA:467451 \
   COTRAP_STP-BARI:339329 COTRAP_STP-BRINDISI:339606 COTRAP_STP-Otranto:389249 FAL:353283 \
-  FDG:352066 FNB:477332 Miccolis:421276 SGM:381986 Trenitalia:307494)
+  FDG:352066 FNB:477332 Miccolis:421276 SGM:381986)
 RAP_sardegna := $(addprefix IT-ITG2-,ARST:396926 ASARA:553803 ASPO:396960 ATP_NUORO:802136 \
   ATZENI:553032 AUTOLINEE_BAIRE:553951 AUTOSERVIZI_VACCA:553473 BAIRE_MARIO:554409 \
   BALESTRUCCI:554022 CARAMELLI:553840 CAREDDU:553638 COBUS:553675 CTM:396909 DEDONI:553766 \
@@ -314,7 +331,7 @@ RAP_sardegna := $(addprefix IT-ITG2-,ARST:396926 ASARA:553803 ASPO:396960 ATP_NU
   GOLFO:553601 LOGUDORO:553527 MASALA:553180 MELIS:554335 MEREU:553419 MURGIA:552958 \
   NORDORIENTALE:552995 NUOVA_SUN_TRAVEL:565071 PANI:554096 PISANU:553106 PUSCEDDU:553914 \
   SANNA:553291 SARDABUS:553143 SAUT:553712 SENIS:554207 SERRA:554372 SEUNIS:553490 SINA:553328 \
-  SOGEAAL:1517910 SUN_LINES:553456 TRENITALIA:396943 TREXENTA:553985 TURMO_LINES:553749 \
+  SOGEAAL:1517910 SUN_LINES:553456 TREXENTA:553985 TURMO_LINES:553749 \
   TURMO_TRAVEL:553365 TUVONI:553382 VACCA_VIAGGI:553968 ZENTILE:554133)
 RAP_toscana := $(addprefix IT-ITI1-,1:1632988 123:156681 124:156718 125:156755 127:156792 \
   144:156829 2:1633147 20:156866 20524:156903 21:156940 22:156977 222:157091 23:157165 24:157218 \
@@ -323,8 +340,7 @@ RAP_toscana := $(addprefix IT-ITI1-,1:1632988 123:156681 124:156718 125:156755 1
   44:158057 45:158094 46:158131 47:158168 48:204328 49:158245 50:158282 51:158319 60:158356 \
   63:158465 64:158502 65:158539 66:158576 67:158613 68:158650 69:158687 70:158724 71:158761 \
   72:158798 73:158835 74:158873 76:158947 77:158984 78:159021 90:159058 98:159095)
-RAP_veneto := $(addprefix IT-ITH3-,ACTVs.p.a:205025 ATV:204401 ATVO:205142 BUSITALIA:204890 \
-  TRENITALIA:181861)
+RAP_veneto := $(addprefix IT-ITH3-,ACTVs.p.a:205025 ATV:204401 ATVO:205142 BUSITALIA:204890)
 
 RAP_FEEDS := $(foreach r,$(RAP_REGIONS),$(foreach f,$(RAP_$(r)),$(r):$(f)))
 
@@ -360,8 +376,10 @@ region_opdbs = $(foreach f,$(filter $(1):%,$(RAP_FEEDS)),$(call rap_opdb,$(f)))
 region_tags  = $(subst $(space),$(comma),$(strip $(foreach f,$(filter $(1):%,$(RAP_FEEDS)),$(call rap_op,$(f)))))
 
 # Marker whose name encodes the feed set: changing FEEDSET removes the old marker and creates a new
-# one, dirtying the epip db (make tracks mtimes, not variable values).
-FEEDSET        := it-ch-atm-sta-221
+# one, dirtying the epip db (make tracks mtimes, not variable values). The RAP count is derived, so
+# adding or removing a feed renames the marker on its own; swapping one for another does not, and
+# still needs the epip db removed by hand.
+FEEDSET        := it-ch-atm-sta-$(words $(RAP_FEEDS))
 FEEDSET_MARKER := $(STATE_DIR)/.feedset.$(FEEDSET)
 
 # ---- NeTEx export knobs ----------------------------------------------------------------------
@@ -504,7 +522,7 @@ help: ## Show this help
 	@echo "  scripts   = $(SCRIPTS)"
 	@echo "  otp       = $(OTP_JAR)  (base dir $(OTP_DIR))"
 	@echo "              <- put there by hand, or named by OTP_JAR=<path>"
-	@echo "  FEEDSET   = $(FEEDSET)   (221 RAP feeds + Trenitalia + STA + CH + 9x AT)"
+	@echo "  FEEDSET   = $(FEEDSET)   ($(words $(RAP_FEEDS)) RAP feeds + Trenitalia + STA + CH + $(words $(AT_FEEDS))x AT)"
 	@echo "  EPIP_SHARDS = $(EPIP_SHARDS)   EPIP_JOURNEYS_PER_FILE = $(EPIP_JOURNEYS_PER_FILE)"
 	@echo "  envelope  = $(EPIP_ENVELOPE_FLAGS)"
 	@echo "              set EPIP_PUBLICATION_TIMESTAMP and EPIP_FRAME_VERSION for a reproducible zip"
@@ -712,7 +730,7 @@ download-austria-%: | $(INPUT_DIR) $(STATE_DIR)
 # the largest is Marche, whose five feeds prefix every id and every ref with an undeclared `epd:`
 # token -- 270,166 stored objects.
 #
-# It runs on all 221 feeds: its probe is an id-index scan with no decode, so a conforming feed costs
+# It runs on every RAP feed: its probe is an id-index scan with no decode, so a conforming feed costs
 # one cloneFrom.
 define rap_op_rules
 $$(INPUT_DIR)/it-rap-$(1)-$(2)-$(3).xml.gz: | $$(INPUT_DIR) $$(STATE_DIR)

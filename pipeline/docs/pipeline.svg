@@ -47,8 +47,8 @@
   <text class="lbl" x="860" y="147" font-weight="600">Trenitalia (OAP)</text>
   <text class="sub" x="860" y="162">trenitalia-netex.xml.gz</text>
   <rect class="artifact" x="984" y="128" width="234" height="46" rx="4"/>
-  <text class="lbl" x="1101" y="147" font-weight="600">Italian NAP — 14 RAP datasets</text>
-  <text class="sub" x="1101" y="162">221 per-operator feeds</text>
+  <text class="lbl" x="1101" y="147" font-weight="600">Italian NAP — RAP datasets</text>
+  <text class="sub" x="1101" y="162">per-operator feeds</text>
   <rect class="artifact" x="1248" y="128" width="210" height="46" rx="4"/>
   <text class="lbl" x="1353" y="147" font-weight="600">opentransportdata.swiss (SKI+)</text>
   <text class="sub" x="1353" y="162">swiss-netex.zip</text>
@@ -99,7 +99,7 @@
   <a href="../scripts/fix/NormalizeItIds.java">
     <rect class="step" x="984" y="344" width="234" height="45" rx="4"/>
     <text class="lbl" x="1101" y="363">fix/NormalizeItIds</text>
-    <text class="sub" x="1101" y="378">all 221 feeds → IT:&lt;NUTS-2&gt;: id space</text>
+    <text class="sub" x="1101" y="378">every RAP feed → IT:&lt;NUTS-2&gt;: id space</text>
   </a>
   <a href="../scripts/fix/DropForeignJourneys.java">
     <rect class="step" x="1243" y="344" width="220" height="45" rx="4"/>
@@ -151,12 +151,12 @@
   <rect class="artifact" x="750" y="700" width="220" height="34" rx="4"/>
   <text class="lbl" x="860" y="721">it-trenitalia.lmdb</text>
   <rect class="artifact" x="984" y="700" width="234" height="34" rx="4"/>
-  <text class="lbl" x="1101" y="721">it-rap-$REGION.lmdb (×14)</text>
+  <text class="lbl" x="1101" y="721">it-rap-$REGION.lmdb (one per region)</text>
 
   <a href="../scripts/conv/ItMergeDbToDb.java">
     <rect class="step" x="640" y="764" width="440" height="72" rx="4"/>
     <text class="lbl" x="860" y="783">conv/ItMergeDbToDb</text>
-    <text class="sub" x="860" y="798">union 14 RAPs + Trenitalia + STA · --synthesize-stops</text>
+    <text class="sub" x="860" y="798">union of the RAPs + Trenitalia + STA · --synthesize-stops</text>
     <text class="sub" x="860" y="811">StopPlace + Quay + PSA per unassigned SSP — ids settle only after qualification</text>
     <text class="sub" x="860" y="824">consolidate co-located same-name StopPlaces (≤ ~15 m)</text>
   </a>

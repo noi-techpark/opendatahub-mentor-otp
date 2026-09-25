@@ -102,7 +102,7 @@ public class TestVerifyCrossborder {
                 "a domestic Swiss interchange carries no corridor prefix");
     }
 
-    /// The Trenitalia RAP feeds put the UIC code in `Name` and the station in `ShortName`, so a
+    /// The GTFS-converted RAP feeds put the stop's code in `Name` and its name in `ShortName`, so a
     /// report that reads `Name` alone labels Roma Tiburtina "830008217".
     public static void testStopLabelPrefersAUsableName() {
         Check.equals("ROMA TIBURTINA",
