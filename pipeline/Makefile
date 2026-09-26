@@ -275,7 +275,17 @@ FEED_DBS := $(AT_DB) $(CH_DB) $(IT_DB) $(FLIX_DB)
 # It is also screened on the calendar, and the asset per source is picked for recency first, content
 # second. A rescue often carries fewer journeys than the file it replaces, because a live asset
 # covers the current window rather than a finished season. Sources with no live asset at any level
-# are gone, and with them Liguria, Molise and Trento.
+# are gone, and with them Liguria and Trento.
+#
+# Screen on how many of a feed's own operating periods cover the day. The upload date moves with
+# the file: veneto IT-ITH3-DOLOMITIBUS:1650019 was re-uploaded 2026-09-24 carrying a timetable
+# that ran 2025-10-01 to 2025-11-30. The same count catches a source publishing ahead -- campania
+# IT-ITF3-BUSITALIA_CAMPANIA:246752 is valid for October 2026 alone, `exp` until 2026-10-01.
+#
+# A source registers at up to four NeTEx levels and the level carrying the live timetable moves.
+# friuli IT-ITH4-TPLFVG published at level 1 through 2026-08-31 and then republished at level 2 under
+# a new asset, 1819046, leaving the level-1 asset stale; the allowlist follows the timetable, not the
+# level.
 #
 # And it is screened on the publisher, because the NAP carries Trenitalia twice. $(TRENITALIA_ASSET)
 # is Trenitalia's own publication -- 16,480 journeys over 1,916 RFI stations, every product class --
@@ -303,9 +313,9 @@ FEED_DBS := $(AT_DB) $(CH_DB) $(IT_DB) $(FLIX_DB)
 # docs/datasources.md carries the per-region table, the legend for each exclusion code, and the
 # method.
 RAP_REGIONS := abruzzo aosta calabria campania emilia-romagna friuli lazio lombardia marche \
-  piemonte puglia sardegna toscana veneto
+  molise piemonte puglia sardegna toscana veneto
 
-RAP_abruzzo := IT-ITF1-13:427715
+RAP_abruzzo := $(addprefix IT-ITF1-,13:427715 TUA-MAAS:427678)
 RAP_aosta := IT-ITC2-VAL:1425976
 RAP_calabria := $(addprefix AZ-0,03:1513215 06:1513232 08:1513178 09:1513161 10:1513144 \
   12:1513121 16:1513090 18:1513084 20:1513107 23:1513249 27:1512973)
@@ -314,10 +324,10 @@ RAP_campania := $(addprefix IT-ITF3-,AIR:277388 ALILAURO:1075683 ANM_GOM_FER:647
   SITA_SUD_Sita_bus:1787866)
 RAP_emilia-romagna := $(addprefix IT-ITH5-,MARCONIEXPRESS-BO:484092 SETA-MOREPC:487283 \
   START-FC:484145 START-RA:483846 START-RN:483891 TEP-PR:534612 TPER-BO:483936 TPER-FE:483981)
-RAP_friuli := IT-ITH4-MICOTRA:204098
+RAP_friuli := $(addprefix IT-ITH4-,MICOTRA:204098 TPLFVG:1819046)
 RAP_lazio := IT-ITI4-OP1:663301
 RAP_lombardia := $(addprefix IT-ITC4-,AMSC_310:131116 APAM_202:132232 ARRIVA-ITA_892:131383 \
-  ATM_47:191301 AUTOGUIDOVIE_201:686247 BGTRASP-EST_211:131790 BGTRASP-OV_212:131568 \
+  ATB_45:131309 ATM_47:191301 AUTOGUIDOVIE_201:686247 BGTRASP-EST_211:131790 BGTRASP-OV_212:131568 \
   BGTRASP-SUD_213:131531 BONOMI_54:131910 BRESCIATRASP_204:132312 CAL_240:131679 \
   COMO-FUNBUS_191:131346 CTB_139:132275 FNMA_268:131161 FOGLIANI_503:502800 FORTI_140:131753 \
   GELMI_87:131873 GIANOLINI_134:131947 LAVALLE_91:131457 LECCOTRASP_196:131716 \
@@ -326,23 +336,25 @@ RAP_lombardia := $(addprefix IT-ITC4-,AMSC_310:131116 APAM_202:132232 ARRIVA-ITA
   STPS_117:132386 TEB_288:663958 TRASPBS-NORD_216:131605 TRASPBS-SUD_217:132058 \
   TRENORD_336:131494 VARESINE_119:1251813)
 RAP_marche := $(addprefix IT-ITI3-,ADRIABUS:5929 ATMA:5966 START:6040 TRASFER:1784852)
+RAP_molise := IT-ITF2-REGIONEMOLISE:1461066
 RAP_piemonte := $(addprefix IT-ITC1-,CCA-AMG:627 CCA-AT:672 CCA-CN:389 CCA-EXTRATO:1162 \
   CCA-GTT:463 CCA-NO:218801 CCA-VCO:500 VOLI-TO:1184392)
-RAP_puglia := $(addprefix IT-ITF4-,AMET:444957 AMTAB:302956 ATAF:296216 \
+RAP_puglia := $(addprefix IT-ITF4-,ADSP:295983 AMET:444957 AMTAB:302956 ATAF:296216 \
   COTRAP_AUTOSERVIZI_CHIFFI:388478 COTRAP_BORMAN:328679 COTRAP_CENTRA:328700 COTRAP_CTP:331360 \
   COTRAP_FDG:395576 COTRAP_SEAT:389204 COTRAP_SITASUD_GRUPPO_FOGGIA:467361 \
   COTRAP_SITASUD_LINEE_URBANE:467406 COTRAP_SITASUD_SEDE_REGIONALE_PUGLIA:467451 \
   COTRAP_STP-BARI:339329 COTRAP_STP-BRINDISI:339606 COTRAP_STP-Otranto:389249 FAL:353283 \
-  FDG:352066 FNB:477332 Miccolis:421276 SGM:381986)
+  FDG:352066 FNB:477332 FNB_AUTOLINEE:477167 Miccolis:421276 SGM:381986)
 RAP_sardegna := $(addprefix IT-ITG2-,ARST:396926 ASARA:553803 ASPO:396960 ATP_NUORO:802136 \
-  ATZENI:553032 AUTOLINEE_BAIRE:553951 AUTOSERVIZI_VACCA:553473 BAIRE_MARIO:554409 \
+  ATP_SASSARI:566856 ATZENI:553032 AUTOLINEE_BAIRE:553951 AUTOSERVIZI_VACCA:553473 \
+  BAIRE_MARIO:554409 \
   BALESTRUCCI:554022 CARAMELLI:553840 CAREDDU:553638 COBUS:553675 CTM:396909 DEDONI:553766 \
   DELCOMAR:551535 DEPLANO_FLLI:560667 DEPLANU:554244 DIGITUR:553069 ENSAMAR:772181 \
   EUROSAR:552921 FAB:554170 FARA:553217 FATA:554298 FOLLESA:553254 FRAU:554059 GIAGHEDDU:553564 \
   GOLFO:553601 LOGUDORO:553527 MASALA:553180 MELIS:554335 MEREU:553419 MURGIA:552958 \
   NORDORIENTALE:552995 NUOVA_SUN_TRAVEL:565071 PANI:554096 PISANU:553106 PUSCEDDU:553914 \
   SANNA:553291 SARDABUS:553143 SAUT:553712 SENIS:554207 SERRA:554372 SEUNIS:553490 SINA:553328 \
-  SOGEAAL:1517910 SUN_LINES:553456 TREXENTA:553985 TURMO_LINES:553749 \
+  SOGEAAL:1517910 SPINA:1847784 SUN_LINES:553456 TREXENTA:553985 TURMO_LINES:553749 \
   TURMO_TRAVEL:553365 TUVONI:553382 VACCA_VIAGGI:553968 ZENTILE:554133)
 RAP_toscana := $(addprefix IT-ITI1-,1:1632988 123:156681 124:156718 125:156755 127:156792 \
   144:156829 2:1633147 20:156866 20524:156903 21:156940 22:156977 222:157091 23:157165 24:157218 \
@@ -879,15 +891,13 @@ $(CH_DB): $(CH_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 	rm -rf $@.raw.tmp && mv $@.tmp $@
 	$(call stage_done,swiss)
 
-# One publication_delivery.xml in a zip, one codespace (FTG), no ServiceLinks, and a coordinate on
-# every one of its 2,285 Quays -- so the generic loader with no member filter, and, as in the Swiss
-# chain above, no sanitize-stop-assignments. No republication drop either: FlixBus is the only
-# publisher of its own service, and the coaches its stops carry appear in no other feed here.
+# The shortest chain here, and it is the feed that makes it so: one publication_delivery.xml in a
+# zip, one codespace (FTG), no ServiceLinks, and a coordinate on every one of its 2,285 Quays. So
+# the generic loader with no member filter, and -- as in the Swiss chain above -- no
+# sanitize-stop-assignments.
 #
-# The unwrap is this feed's one repair. It writes a name as <Name><Text>x</Text></Name>, a child the
-# NeTEx type does not declare, on 9,253 of its 9,254 name elements. It runs directly after the load
-# and ahead of the EPIP stage, which mints an Authority per Operator and takes a copy of the name
-# with it -- see the note on the driver.
+# No republication drop either. FlixBus is the only publisher of its own service; the coaches its
+# 2,285 stops carry appear in no other feed here.
 $(FLIX_DB): $(FLIX_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 	$(call stage,flixbus,loading $(notdir $<) -> $(notdir $@) (+ name unwrap))
 	rm -rf $@ $@.tmp $@.raw.tmp
