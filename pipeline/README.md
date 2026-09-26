@@ -4,8 +4,8 @@ NeTEx feeds → one EPIP zip → an OTP `graph.obj`. The `Makefile` is the whole
 `make help` lists every target and prints the resolved paths.
 
 Feed set: the Italian RAP operator feeds, Trenitalia and STA/South Tyrol; Switzerland; the Austrian
-Verbund exports. `make help` prints the resolved `FEEDSET` with its counts, and
-[`docs/datasources.md`](docs/datasources.md) carries the per-region inventory.
+Verbund exports; FlixBus long-distance coach. `make help` prints the resolved `FEEDSET` with its
+counts, and [`docs/datasources.md`](docs/datasources.md) carries the per-region inventory.
 
 ## Requires
 

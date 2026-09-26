@@ -98,6 +98,7 @@ JDRV_drop-foreign-journeys       = fix/DropForeignJourneys.java
 JDRV_sanitize-stop-assignments   = fix/SanitizeStopAssignments.java
 JDRV_fix-itc-trailing-link       = fix/FixItcTrailingLink.java
 JDRV_stitch-split-journeys       = fix/StitchSplitJourneys.java
+JDRV_flatten-wrapped-names       = fix/FlattenWrappedNames.java
 
 # -D knobs. Each one below differs from the jar's default and leaves the output byte-identical.
 # Keyed by driver, each being read by exactly one code path. Restore the jar's defaults with
@@ -137,6 +138,10 @@ drv = $(JAVA) -Xmx$(XMX_$(2)) $(JVM) $(JOPTS_$(1)) -cp "$(JAVA_CP)" $(SCRIPTS)/$
 # Swiss CKAN is per timetable year; /permalink redirects to the most recent export. The Austrian
 # portal (DBP) is OAuth-protected: swap the login for a bearer token, then pull the file.
 SWISS_PERMALINK  ?= https://data.opentransportdata.swiss/dataset/timetablenetex_2026/permalink
+# The same portal publishes FlixBus, on the same /permalink mechanism. The dataset also carries
+# BlaBlaCar Bus and the permalink is dataset-wide, so the served Content-Disposition filename --
+# epip_netex_flixbus_<date>.zip -- is what says which publisher arrived; the URL does not.
+FERNBUS_PERMALINK ?= https://data.opentransportdata.swiss/en/dataset/netex-fernbus/permalink
 # Trenitalia is a cciss asset like the RAP feeds, and takes the same URL shape and the same
 # catalogue lookup for its version.
 TRENITALIA_ASSET ?= 1080596
@@ -177,10 +182,11 @@ FETCH := $(SCRIPTS)/fetch.sh
 FEEDVER := $(SCRIPTS)/feed-version.sh
 export CURL STATE_DIR MV_YEAR
 
-IT_SRC  := $(INPUT_DIR)/trenitalia-netex.xml.gz
-CH_SRC  := $(INPUT_DIR)/swiss-netex.zip
-STA_SRC := $(INPUT_DIR)/sta.netex.zip
-AT_ZIPS := $(foreach n,$(AT_NAMES),$(INPUT_DIR)/austria-$(n)-netex.zip)
+IT_SRC   := $(INPUT_DIR)/trenitalia-netex.xml.gz
+CH_SRC   := $(INPUT_DIR)/swiss-netex.zip
+STA_SRC  := $(INPUT_DIR)/sta.netex.zip
+FLIX_SRC := $(INPUT_DIR)/flixbus-netex.zip
+AT_ZIPS  := $(foreach n,$(AT_NAMES),$(INPUT_DIR)/austria-$(n)-netex.zip)
 
 # it.lmdb is the national Italian db: the RAP region dbs + Trenitalia + STA, consolidated.
 IT_DB   := $(DATA_DIR)/it.lmdb
@@ -188,13 +194,18 @@ IT_RAW  := $(DATA_DIR)/it-trenitalia-raw.lmdb
 IT2_DB  := $(DATA_DIR)/it-trenitalia.lmdb
 CH_DB   := $(DATA_DIR)/ch.lmdb
 STA_DB  := $(DATA_DIR)/it-sta.lmdb
+# flix.lmdb is a publisher, not a country: FlixBus reaches 33 of them from one export.
+FLIX_DB := $(DATA_DIR)/flix.lmdb
 EPIP_DB := $(DATA_DIR)/epip.lmdb
 
-# ---- per-country EPIP shards ------------------------------------------------------------------
+# ---- per-feed EPIP shards ---------------------------------------------------------------------
 # Every EPIP phase is one LMDB write transaction and a write txn is bound to the thread that opened
 # it, so one store gets one writer however many cores are idle -- that is why EPIP_JOURNEY_WORKERS
 # saturates at 2 (toolkit.harness.GenParallel: only the JAXB decode and marshal can leave the txn
-# thread). Three stores get three writers.
+# thread). Four stores get four writers.
+#
+# A shard is a feed's slot. Three of the four are countries; flix is a publisher, its one export
+# reaching 33 of them.
 #
 # The station consolidation cannot be sharded. It makes two publishers' copies of one physical
 # station into one object by clustering them geographically, and a border station's copies come from
@@ -202,7 +213,7 @@ EPIP_DB := $(DATA_DIR)/epip.lmdb
 # and writes the shards, which is what cons-*.lmdb are.
 #
 # The names and their order track $(FEED_DBS) -- the split driver pairs source i with target i, so
-# these two lists move together or a country's rows land in another country's store.
+# these two lists move together or a feed's rows land in another feed's store.
 #
 # Feed order is scheduling. Make queues a goal's prerequisite tree in declaration order and hands
 # out job slots from a FIFO: what is runnable during the first descent is queued then, and anything
@@ -222,13 +233,13 @@ EPIP_DB := $(DATA_DIR)/epip.lmdb
 # numbering of the shard merge, and through it the export's pattern-to-shard assignment -- same
 # journeys, different g*.xml grouping.
 #
-# Disk: the consolidated shards (~32 GB in total, the merged corpus split three ways) and the
+# Disk: the consolidated shards (~32 GB in total, the merged corpus split four ways) and the
 # converted shards (~46 GB) both exist while epip.lmdb is being written, so the peak is roughly
 # +78 GB over `make netex`'s usual ~96 GB. Neither set is deleted afterwards; `make clean` takes
 # them, the *.lmdb glob covers both.
-COUNTRIES    := at ch it
-CONS_DBS       := $(foreach c,$(COUNTRIES),$(DATA_DIR)/$(c)-cons.lmdb)
-EPIP_DBS       := $(foreach c,$(COUNTRIES),$(DATA_DIR)/$(c)-epip.lmdb)
+FEEDS          := at ch it flix
+CONS_DBS       := $(foreach f,$(FEEDS),$(DATA_DIR)/$(f)-cons.lmdb)
+EPIP_DBS       := $(foreach f,$(FEEDS),$(DATA_DIR)/$(f)-epip.lmdb)
 # The coupled store the export reads. It is a second full-size store (~46 GB beside epip.lmdb's
 # ~46 GB): the coupling removes objects -- publications a kept leg already carries, and the
 # TrainNumbers they orphan -- and a v2 store has no delete, only cloneFrom(skipFullKeys).
@@ -237,7 +248,7 @@ XB_DB   := $(DATA_DIR)/epip-xb.lmdb
 # StopPlaces published by several Verbünde get their quays unioned instead of first-wins-merged.
 AT_DB   := $(DATA_DIR)/at.lmdb
 AT_MERGED_ZIP := $(DATA_DIR)/austria-merged-netex.zip
-FEED_DBS := $(AT_DB) $(CH_DB) $(IT_DB)
+FEED_DBS := $(AT_DB) $(CH_DB) $(IT_DB) $(FLIX_DB)
 
 # ---- Italian RAP feeds (cciss NAP), per region: <operator>:<cciss-assetId> --------------------
 # Per operator: fetch -> load -> it_rap; per region: one consolidating merge. Operator names reach
@@ -379,7 +390,7 @@ region_tags  = $(subst $(space),$(comma),$(strip $(foreach f,$(filter $(1):%,$(R
 # one, dirtying the epip db (make tracks mtimes, not variable values). The RAP count is derived, so
 # adding or removing a feed renames the marker on its own; swapping one for another does not, and
 # still needs the epip db removed by hand.
-FEEDSET        := it-ch-atm-sta-$(words $(RAP_FEEDS))
+FEEDSET        := it-ch-atm-sta-flix-$(words $(RAP_FEEDS))
 FEEDSET_MARKER := $(STATE_DIR)/.feedset.$(FEEDSET)
 
 # ---- NeTEx export knobs ----------------------------------------------------------------------
@@ -503,6 +514,7 @@ endef
 .PHONY: all netex feeds xb graph street serve data help test compile-gate \
 	download-all download-toolkit \
 	download-feeds download-swiss download-trenitalia download-austria download-sta download-rap \
+	download-flixbus \
 	rap-versions $(RAP_REFETCH) \
 	download-osm osm-extract download-parking verify-inputs repair-inputs \
 	clean clean-netex clean-feeds clean-osm clean-all
@@ -522,7 +534,7 @@ help: ## Show this help
 	@echo "  scripts   = $(SCRIPTS)"
 	@echo "  otp       = $(OTP_JAR)  (base dir $(OTP_DIR))"
 	@echo "              <- put there by hand, or named by OTP_JAR=<path>"
-	@echo "  FEEDSET   = $(FEEDSET)   ($(words $(RAP_FEEDS)) RAP feeds + Trenitalia + STA + CH + $(words $(AT_FEEDS))x AT)"
+	@echo "  FEEDSET   = $(FEEDSET)   ($(words $(RAP_FEEDS)) RAP feeds + Trenitalia + STA + CH + $(words $(AT_FEEDS))x AT + FlixBus)"
 	@echo "  EPIP_SHARDS = $(EPIP_SHARDS)   EPIP_JOURNEYS_PER_FILE = $(EPIP_JOURNEYS_PER_FILE)"
 	@echo "  envelope  = $(EPIP_ENVELOPE_FLAGS)"
 	@echo "              set EPIP_PUBLICATION_TIMESTAMP and EPIP_FRAME_VERSION for a reproducible zip"
@@ -571,7 +583,7 @@ endef
 # file rule fetches the tile when it is missing, and nothing re-fetches a static SRTM tile.
 download-all: download-toolkit download-feeds download-parking download-osm ## Re-fetch every external artefact: the toolkit jar and every source
 
-download-feeds: download-swiss download-trenitalia download-austria download-sta download-rap ## Re-fetch the source feeds, keeping any whose bytes are unchanged
+download-feeds: download-swiss download-trenitalia download-austria download-sta download-rap download-flixbus ## Re-fetch the source feeds, keeping any whose bytes are unchanged
 
 # The toolkit itself, on the same terms as a feed: no prerequisites, so it fires only when the jar
 # is missing and a newer release never lands mid-run. Every rule that launches a driver carries it
@@ -606,6 +618,9 @@ $(IT_SRC): | $(INPUT_DIR) $(STATE_DIR)
 $(STA_SRC): | $(INPUT_DIR) $(STATE_DIR)
 	$(call fetch_src,sta-dl,fetching today's STA NeTEx export,$(STA_URL),$@)
 
+$(FLIX_SRC): | $(INPUT_DIR) $(STATE_DIR)
+	$(call fetch_src,flixbus-dl,fetching FlixBus NeTEx export,$(FERNBUS_PERMALINK),$@)
+
 # The rm and the $(MAKE) must be separate recipe lines. GNU make runs any line containing $(MAKE)
 # even under -n, so that a dry run propagates into the sub-make, and it judges that per line, not
 # per command. Written as one `rm -f X && $(MAKE) X`, the whole line qualifies and `make -n
@@ -626,6 +641,9 @@ download-trenitalia: | $(INPUT_DIR) $(STATE_DIR) ## Re-fetch the most recent Tre
 
 download-sta: | $(INPUT_DIR) $(STATE_DIR) ## Re-fetch today's STA NeTEx export (date-stamped URL)
 	$(call fetch_src,sta-dl,re-fetching today's STA NeTEx export,$(STA_URL),$(STA_SRC))
+
+download-flixbus: | $(INPUT_DIR) $(STATE_DIR) ## Re-fetch the most recent FlixBus NeTEx export
+	$(call fetch_src,flixbus-dl,re-fetching FlixBus NeTEx export,$(FERNBUS_PERMALINK),$(FLIX_SRC))
 
 download-austria: $(foreach n,$(AT_NAMES),download-austria-$(n)) ## Re-fetch the Austrian feeds (needs MV_USERNAME/MV_PASSWORD)
 
@@ -769,7 +787,7 @@ $(foreach r,$(RAP_REGIONS),$(eval $(call rap_region_rules,$(r))))
 # ===== NeTEx pipeline =========================================================================
 
 netex: $(NETEX_ZIP) ## Build only the merged NeTEx zip
-feeds: $(FEED_DBS) ## Load + transform all feeds (9x AT, CH, IT national [RAPs+Trenitalia+STA])
+feeds: $(FEED_DBS) ## Load + transform all feeds (9x AT, CH, IT national [RAPs+Trenitalia+STA], FlixBus)
 
 $(FEEDSET_MARKER): | $(STATE_DIR)
 	rm -f $(STATE_DIR)/.feedset.*
@@ -826,7 +844,7 @@ $(STA_DB): $(STA_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 #
 # The 9-Verbund merge is the first step of this recipe rather than a rule of its own, so that
 # at.lmdb is runnable at t=0 and takes a slot in the first descent -- see the feed-order note above
-# $(COUNTRIES). The merged zip is therefore not a checkpoint: a failed `at` re-merges.
+# $(FEEDS). The merged zip is therefore not a checkpoint: a failed `at` re-merges.
 # Member names embed their Verbund (NX-PI_01_at_<vb>_...) so the 9 archives merge without
 # collisions; the loader sorts members by name, making duplicate-id precedence alphabetical.
 $(AT_DB): $(AT_ZIPS) | $(DATA_DIR) $(TOOLKIT_JAR)
@@ -861,6 +879,23 @@ $(CH_DB): $(CH_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 	rm -rf $@.raw.tmp && mv $@.tmp $@
 	$(call stage_done,swiss)
 
+# One publication_delivery.xml in a zip, one codespace (FTG), no ServiceLinks, and a coordinate on
+# every one of its 2,285 Quays -- so the generic loader with no member filter, and, as in the Swiss
+# chain above, no sanitize-stop-assignments. No republication drop either: FlixBus is the only
+# publisher of its own service, and the coaches its stops carry appear in no other feed here.
+#
+# The unwrap is this feed's one repair. It writes a name as <Name><Text>x</Text></Name>, a child the
+# NeTEx type does not declare, on 9,253 of its 9,254 name elements. It runs directly after the load
+# and ahead of the EPIP stage, which mints an Authority per Operator and takes a copy of the name
+# with it -- see the note on the driver.
+$(FLIX_DB): $(FLIX_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
+	$(call stage,flixbus,loading $(notdir $<) -> $(notdir $@) (+ name unwrap))
+	rm -rf $@ $@.tmp $@.raw.tmp
+	$(call drv,netex-to-db,FEED) $< $@.raw.tmp
+	$(call drv,flatten-wrapped-names,FEED) $@.raw.tmp $@.tmp
+	rm -rf $@.raw.tmp && mv $@.tmp $@
+	$(call stage_done,flixbus)
+
 # National Italian db: the RAP region dbs + Trenitalia + STA in one (co-located same-name stops
 # merged). Cross-source ids don't collide, so qualification is a no-op here.
 #
@@ -891,19 +926,23 @@ $(IT_DB): $(IT2_DB) $(STA_DB) $(RAP_REGIONDBS) | $(DATA_DIR) $(TOOLKIT_JAR)
 # C2 is a conformance pass over the final site population, so it has to follow the consolidation.
 #
 # One consolidation pass over every feed, N shards out. A grouped target (&:, make 4.3+): the recipe
-# writes all three and make must run it once, not once per shard -- with a plain rule, `make -j`
-# would start three consolidations that each rebuild the same work and race on the same outputs.
+# writes all four and make must run it once, not once per shard -- with a plain rule, `make -j`
+# would start four consolidations that each rebuild the same work and race on the same outputs.
 $(CONS_DBS) &: $(FEED_DBS) $(FEEDSET_MARKER) | $(TOOLKIT_JAR)
-	$(call stage,cons-split,consolidating $(words $(FEED_DBS)) feeds -> $(words $(CONS_DBS)) per-country stores)
+	$(call stage,cons-split,consolidating $(words $(FEED_DBS)) feeds -> $(words $(CONS_DBS)) per-feed stores)
 	rm -rf $(CONS_DBS) $(addsuffix .tmp,$(CONS_DBS))
 	$(call drv,feeds-to-shards-db-to-db,NATIONAL) $(FEED_DBS) \
 		--split $(subst $(space),$(comma),$(strip $(addsuffix .tmp,$(CONS_DBS))))
-	set -e; for c in $(COUNTRIES); do mv $(DATA_DIR)/$$c-cons.lmdb.tmp $(DATA_DIR)/$$c-cons.lmdb; done
+	set -e; for f in $(FEEDS); do mv $(DATA_DIR)/$$f-cons.lmdb.tmp $(DATA_DIR)/$$f-cons.lmdb; done
 	$(call stage_done,cons-split)
 
-# The conversion, per country, concurrent under `make -j`.
-# The stem is the country, so the pattern reads it-cons.lmdb -> it-epip.lmdb and cannot match
+# The conversion, per feed, concurrent under `make -j`.
+# The stem is the feed, so the pattern reads it-cons.lmdb -> it-epip.lmdb and cannot match
 # epip.lmdb or epip-xb.lmdb, neither of which ends in `-epip.lmdb`.
+#
+# flix is pinned lower than XMX_EPIP_COUNTRY. Its store is three orders of magnitude smaller than
+# it.lmdb, and four shards at 16g would hold 64 GB of heap open at once under `make -j`.
+$(DATA_DIR)/flix-epip.lmdb: XMX_EPIP_COUNTRY := 4g
 $(DATA_DIR)/%-epip.lmdb: $(DATA_DIR)/%-cons.lmdb | $(TOOLKIT_JAR)
 	$(call stage,epip-$*,converting $(notdir $<) -> $(notdir $@) ($(EPIP_JOURNEY_WORKERS) journey workers))
 	rm -rf $@ $@.tmp
@@ -1058,7 +1097,7 @@ $(INPUT_DIR) $(STATE_DIR) $(DATA_DIR) $(OTP_DIR):
 # and geofabrik's europe-latest moves -- a re-fetch is a different extract, not the same bytes. Both
 # lists live here and not next to the sources they name, because := has to see $(RAP_SRCS),
 # $(PARKING_SRC) and the two OSM paths already expanded.
-FEED_SRCS := $(IT_SRC) $(CH_SRC) $(STA_SRC) $(AT_ZIPS) $(RAP_SRCS) $(PARKING_SRC)
+FEED_SRCS := $(IT_SRC) $(CH_SRC) $(STA_SRC) $(FLIX_SRC) $(AT_ZIPS) $(RAP_SRCS) $(PARKING_SRC)
 OSM_SRCS  := $(EUROPE_PBF) $(ELEVATION_ZIP)
 
 # $(call validators,<downloaded files>) -- the sidecars $(FETCH) keeps for them. They sit in

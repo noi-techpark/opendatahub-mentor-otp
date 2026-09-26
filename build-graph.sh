@@ -127,6 +127,6 @@ fi
 # The rest are named one by one here. This list has to stay in step with the pipeline's
 # download-feeds target, which also covers Austria.
 JOBS=1 run_make download-austria
-run_make download-swiss download-trenitalia download-sta download-rap download-parking
+run_make download-swiss download-trenitalia download-sta download-rap download-flixbus download-parking
 
 run_make all

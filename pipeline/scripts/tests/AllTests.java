@@ -31,6 +31,7 @@ public class AllTests {
         TestDropForeignJourneys.class,
         TestEpipSplitExport.class,
         TestFeedsToConsolidated.class,
+        TestFlattenWrappedNames.class,
         TestItMergeDbToDb.class,
         TestItRapDbToDb.class,
         TestItcTrailingLink.class,

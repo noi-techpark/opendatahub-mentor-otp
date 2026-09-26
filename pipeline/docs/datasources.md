@@ -6,6 +6,7 @@
 | Italian NAP — OAP   | [Trenitalia][nap-oap], via CCISS — [asset `1080596`][1080596] | NeTEx `.xml.gz`        |     1 | `input/trenitalia-netex.xml.gz` · `make download-trenitalia` | catalogue upload date     |
 | STA — South Tyrol   | [STA Alto Adige][sta], anonymous FTP                          | NeTEx EPIP zip (Mentz) |     1 | `input/sta.netex.zip` · `make download-sta`                  | FTP `MDTM`                |
 | Switzerland         | [opentransportdata.swiss (SKI+)][swiss]                       | NeTEx zip              |     1 | `input/swiss-netex.zip` · `make download-swiss`              | `ETag`                    |
+| FlixBus             | [opentransportdata.swiss (SKI+)][fernbus]                     | NeTEx EPIP zip         |     1 | `input/flixbus-netex.zip` · `make download-flixbus`          | `ETag`                    |
 | Austria             | [Mobilitätsverbünde Österreich (DBP)][dbp]                    | NeTEx zip (Mentz)      |     9 | `input/austria-*-netex.zip` · `make download-austria`        | API data set version      |
 | Street network      | [Geofabrik `europe-latest`][geofabrik]                        | OSM PBF                |     1 | `input/europe.osm.pbf` · `make download-osm`                 | `ETag`                    |
 | Elevation           | [`leonard.io/srtm` tile `39_03`][srtm]                        | SRTM GeoTIFF in a zip  |     1 | `input/srtm_39_03.zip`                                       | `ETag`                    |
@@ -19,6 +20,13 @@ anything: `ETag` and `MDTM` come back from the source itself, and the two rows t
 instead take it from the publisher's catalogue — CCISS sends no `ETag` and no `Last-Modified`, and
 DBP sends neither and ignores a range request.
 
+FlixBus and Switzerland share a portal and a `/permalink`, which redirects to the dataset's current
+resource. The FlixBus dataset holds two publishers — FlixBus and BlaBlaCar Bus — under one
+permalink, and it resolves by position rather than by date, so the served
+`Content-Disposition: epip_netex_flixbus_<date>.zip` is the only thing in the response that names
+the publisher. Check it after a refresh that brings back new bytes. The export is pan-European:
+2,285 stops across 33 countries, of which 493 fall inside the street extract `geo/` cuts.
+
 Parking asks nothing. The Transmodel API stamps every response with a `PublicationTimestamp` read
 at request time, so two bodies a second apart differ on that line and no comparison can ever hold
 the file. `make download-parking` replaces `input/parking-netex.xml` and rebuilds the zip on every
@@ -29,6 +37,7 @@ layer with it.
 [nap-oap]: https://www.cciss.it/nap/mmtis/public/en/catalog/Organisation/1077484
 [sta]: https://www.sta.bz.it/
 [swiss]: https://data.opentransportdata.swiss/dataset/timetablenetex_2026
+[fernbus]: https://data.opentransportdata.swiss/en/dataset/netex-fernbus
 [dbp]: https://data.mobilitaetsverbuende.at/
 [geofabrik]: https://download.geofabrik.de/europe.html
 [srtm]: https://srtm.csi.cgiar.org/
