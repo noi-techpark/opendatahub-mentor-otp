@@ -23,9 +23,9 @@ public class ItMergeDbToDb {
     public static void main(String[] args) throws Exception {
         Args a = Args.parse(args,
                 "ItMergeDbToDb <src1> [<src2> ...] <target> [--tags t1,t2,...] [--no-qualify] "
-                        + "[--no-consolidate-stops] [--synthesize-stops] [--object-level] "
-                        + "[--format v2] [--log-file F]",
-                "--tags=", "--log-file=", "--format=",
+                        + "[--no-consolidate-stops] [--synthesize-stops] [--merge-radius M] "
+                        + "[--object-level] [--format v2] [--log-file F]",
+                "--tags=", "--log-file=", "--format=", "--merge-radius=",
                 "--no-qualify", "--no-consolidate-stops", "--synthesize-stops",
                 "--object-level").expectAtLeast(2);
         String logFile = a.get("--log-file", null);
@@ -73,10 +73,26 @@ public class ItMergeDbToDb {
                 ? List.of(tagsArg.split(",", -1)) : null;
         String fmt = a.get("--format", null);
         if (fmt == null) fmt = sourceFmt;
+        // Unset leaves the toolkit's national radius in place; the flag is for a merge whose
+        // sources are all one mode, where a station's second copy is the only thing in range.
+        double mergeRadius = 0;
+        String radiusArg = a.get("--merge-radius", null);
+        if (radiusArg != null) {
+            try {
+                mergeRadius = Double.parseDouble(radiusArg);
+            } catch (NumberFormatException e) {
+                Log.error("[it-merge] --merge-radius %s is not a number", radiusArg);
+                System.exit(1);
+            }
+            if (mergeRadius <= 0) {
+                Log.error("[it-merge] --merge-radius must be positive, got %s", radiusArg);
+                System.exit(1);
+            }
+        }
         try {
             ItMerge.merge(sources, target, tags, !a.has("--no-qualify"),
                     !a.has("--no-consolidate-stops"), !a.has("--object-level"), fmt,
-                    a.has("--synthesize-stops"));
+                    a.has("--synthesize-stops"), mergeRadius);
         } catch (Exception e) {
             Log.error("%s", Log.trace(e));
             throw new RuntimeException(e);

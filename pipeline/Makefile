@@ -99,6 +99,8 @@ JDRV_sanitize-stop-assignments   = fix/SanitizeStopAssignments.java
 JDRV_fix-itc-trailing-link       = fix/FixItcTrailingLink.java
 JDRV_stitch-split-journeys       = fix/StitchSplitJourneys.java
 JDRV_flatten-wrapped-names       = fix/FlattenWrappedNames.java
+JDRV_align-italo-stop-names      = fix/AlignItaloStopNames.java
+JDRV_bind-quayless-assignments   = fix/BindQuaylessAssignments.java
 
 # -D knobs. Each one below differs from the jar's default and leaves the output byte-identical.
 # Keyed by driver, each being read by exactly one code path. Restore the jar's defaults with
@@ -192,6 +194,8 @@ AT_ZIPS  := $(foreach n,$(AT_NAMES),$(INPUT_DIR)/austria-$(n)-netex.zip)
 IT_DB   := $(DATA_DIR)/it.lmdb
 IT_RAW  := $(DATA_DIR)/it-trenitalia-raw.lmdb
 IT2_DB  := $(DATA_DIR)/it-trenitalia.lmdb
+# The long-distance rail publishers, merged before the national pass sees them -- see the rule.
+IT_RAIL_DB := $(DATA_DIR)/it-rail.lmdb
 CH_DB   := $(DATA_DIR)/ch.lmdb
 STA_DB  := $(DATA_DIR)/it-sta.lmdb
 # flix.lmdb is a publisher, not a country: FlixBus reaches 33 of them from one export.
@@ -383,9 +387,38 @@ RAP_SRCS      := $(foreach f,$(RAP_FEEDS),$(call rap_src,$(f)))
 RAP_REGIONDBS := $(foreach r,$(RAP_REGIONS),$(call rap_regiondb,$(r)))
 RAP_REFETCH   := $(foreach f,$(RAP_FEEDS),refetch-rap-$(call rap_region,$(f))-$(call rap_op,$(f)))
 
+# ---- Italian OAP feeds (cciss NAP), national operators: <name>:<cciss-assetId> ----------------
+# An OAP operator publishes for the country rather than under a region, so there is no region tier
+# here: one store per operator. Everything else is the RAP chain -- same URL shape, same catalogue
+# lookup, same drivers -- because a level-1 asset is a level-1 asset whoever registered it.
+#
+# These stores do not reach $(IT_DB) directly. Italo keys its stops by its own three-letter codes
+# and Trenitalia by RFI station code, and the two publish 59 of the same stations under names and
+# coordinates the national radius cannot reconcile. $(IT_RAIL_DB) folds them first; see that rule.
+#
+# Trenitalia is not in this list, having its own chain below for the TrainNumber synthesis -- but it
+# is the other half of that merge.
+#
+# FlixBus is not here either, and its cciss asset 1845789 is not the feed to add: that registration
+# is the Italian slice, 29 journeys over 4 lines, where $(FERNBUS_PERMALINK) above carries the whole
+# pan-European export.
+OAP_FEEDS := italo:1814124
+
+oap_name = $(word 1,$(subst :, ,$(1)))
+oap_id   = $(word 2,$(subst :, ,$(1)))
+
+oap_src  = $(INPUT_DIR)/it-oap-$(call oap_name,$(1))-$(call oap_id,$(1)).xml.gz
+oap_db   = $(DATA_DIR)/it-oap-$(call oap_name,$(1)).lmdb
+
+OAP_NAMES   := $(foreach f,$(OAP_FEEDS),$(call oap_name,$(f)))
+OAP_SRCS    := $(foreach f,$(OAP_FEEDS),$(call oap_src,$(f)))
+OAP_DBS     := $(foreach f,$(OAP_FEEDS),$(call oap_db,$(f)))
+OAP_REFETCH := $(foreach f,$(OAP_FEEDS),refetch-oap-$(call oap_name,$(f)))
+
 # `<assetId> <upload date>` for every cciss asset, written by one $(FEEDVER) pass.
 RAP_VERSIONS := $(STATE_DIR)/.versions.rap
-RAP_IDS      := $(TRENITALIA_ASSET) $(foreach f,$(RAP_FEEDS),$(call rap_id,$(f)))
+RAP_IDS      := $(TRENITALIA_ASSET) $(foreach f,$(OAP_FEEDS),$(call oap_id,$(f))) \
+                $(foreach f,$(RAP_FEEDS),$(call rap_id,$(f)))
 
 # $(call rap_validator,<assetId>) -- the --validator argument for one asset. $(RAP_VERSIONS) answers
 # when the run has built it; a single-feed target falls through to the catalogue for that one asset.
@@ -402,7 +435,7 @@ region_tags  = $(subst $(space),$(comma),$(strip $(foreach f,$(filter $(1):%,$(R
 # one, dirtying the epip db (make tracks mtimes, not variable values). The RAP count is derived, so
 # adding or removing a feed renames the marker on its own; swapping one for another does not, and
 # still needs the epip db removed by hand.
-FEEDSET        := it-ch-atm-sta-flix-$(words $(RAP_FEEDS))
+FEEDSET        := it-ch-atm-sta-flix-oap$(words $(OAP_FEEDS))-$(words $(RAP_FEEDS))
 FEEDSET_MARKER := $(STATE_DIR)/.feedset.$(FEEDSET)
 
 # ---- NeTEx export knobs ----------------------------------------------------------------------
@@ -527,7 +560,7 @@ endef
 	download-all download-toolkit \
 	download-feeds download-swiss download-trenitalia download-austria download-sta download-rap \
 	download-flixbus \
-	rap-versions $(RAP_REFETCH) \
+	rap-versions $(RAP_REFETCH) download-oap $(OAP_REFETCH) \
 	download-osm osm-extract download-parking verify-inputs repair-inputs \
 	clean clean-netex clean-feeds clean-osm clean-all
 .DEFAULT_GOAL := help
@@ -546,7 +579,7 @@ help: ## Show this help
 	@echo "  scripts   = $(SCRIPTS)"
 	@echo "  otp       = $(OTP_JAR)  (base dir $(OTP_DIR))"
 	@echo "              <- put there by hand, or named by OTP_JAR=<path>"
-	@echo "  FEEDSET   = $(FEEDSET)   ($(words $(RAP_FEEDS)) RAP feeds + Trenitalia + STA + CH + $(words $(AT_FEEDS))x AT + FlixBus)"
+	@echo "  FEEDSET   = $(FEEDSET)   ($(words $(RAP_FEEDS)) RAP feeds + $(words $(OAP_FEEDS)) OAP + Trenitalia + STA + CH + $(words $(AT_FEEDS))x AT + FlixBus)"
 	@echo "  EPIP_SHARDS = $(EPIP_SHARDS)   EPIP_JOURNEYS_PER_FILE = $(EPIP_JOURNEYS_PER_FILE)"
 	@echo "  envelope  = $(EPIP_ENVELOPE_FLAGS)"
 	@echo "              set EPIP_PUBLICATION_TIMESTAMP and EPIP_FRAME_VERSION for a reproducible zip"
@@ -595,7 +628,7 @@ endef
 # file rule fetches the tile when it is missing, and nothing re-fetches a static SRTM tile.
 download-all: download-toolkit download-feeds download-parking download-osm ## Re-fetch every external artefact: the toolkit jar and every source
 
-download-feeds: download-swiss download-trenitalia download-austria download-sta download-rap download-flixbus ## Re-fetch the source feeds, keeping any whose bytes are unchanged
+download-feeds: download-swiss download-trenitalia download-oap download-austria download-sta download-rap download-flixbus ## Re-fetch the source feeds, keeping any whose bytes are unchanged
 
 # The toolkit itself, on the same terms as a feed: no prerequisites, so it fires only when the jar
 # is missing and a newer release never lands mid-run. Every rule that launches a driver carries it
@@ -647,6 +680,10 @@ download-toolkit: ## Replace the toolkit jar from TOOLKIT_JAR_URL (TOOLKIT_VERSI
 # What each source answers a refresh with is tabulated in docs/datasources.md.
 download-swiss: | $(INPUT_DIR) $(STATE_DIR) ## Re-fetch the most recent Swiss NeTEx export
 	$(call fetch_src,swiss-dl,re-fetching Swiss NeTEx export,$(SWISS_PERMALINK),$(CH_SRC))
+
+download-oap: ## Re-fetch every OAP operator feed, keeping the ones the NAP has not re-published
+	$(MAKE) rap-versions
+	$(MAKE) $(OAP_REFETCH)
 
 download-trenitalia: | $(INPUT_DIR) $(STATE_DIR) ## Re-fetch the most recent Trenitalia NeTEx feed
 	$(call fetch_src,trenitalia-dl,re-fetching Trenitalia NeTEx feed,$(TRENITALIA_URL),$(IT_SRC),$(call rap_validator,$(TRENITALIA_ASSET)))
@@ -780,6 +817,30 @@ $$(DATA_DIR)/it-rap-$(1)-$(2).lmdb: $$(INPUT_DIR)/it-rap-$(1)-$(2)-$(3).xml.gz |
 endef
 $(foreach f,$(RAP_FEEDS),$(eval $(call rap_op_rules,$(call rap_region,$(f)),$(call rap_op,$(f)),$(call rap_id,$(f)))))
 
+# The same chain for a national operator, with align-italo-stop-names between the id normalisation
+# and the RAP passes. It reads $(IT2_DB) to find each stop's counterpart, so it has to follow the
+# TrainNumber synthesis rather than race it, and it writes names the $(IT_RAIL_DB) merge then folds
+# on. normalize-it-ids is kept though it is inert on a feed whose ids are uniformly `IT::`: the
+# modal-space vote excludes that form and finds no home, so no rule fires and nothing is rewritten.
+define oap_op_rules
+$$(INPUT_DIR)/it-oap-$(1)-$(2).xml.gz: | $$(INPUT_DIR) $$(STATE_DIR)
+	$$(call fetch_src,oap-$(1)-dl,fetching OAP $(1) (cciss asset $(2)),$$(call RAP_URL,$(2)),$$@,$$(call rap_validator,$(2)))
+
+refetch-oap-$(1): | $$(INPUT_DIR) $$(STATE_DIR)
+	$$(call fetch_src,oap-$(1)-dl,re-fetching OAP $(1) (cciss asset $(2)),$$(call RAP_URL,$(2)),$$(INPUT_DIR)/it-oap-$(1)-$(2).xml.gz,$$(call rap_validator,$(2)))
+
+$$(DATA_DIR)/it-oap-$(1).lmdb: $$(INPUT_DIR)/it-oap-$(1)-$(2).xml.gz $$(IT2_DB) | $$(DATA_DIR) $$(TOOLKIT_JAR)
+	$$(call stage,oap-$(1),loading OAP $(1) -> $$(notdir $$@))
+	rm -rf $$@ $$@.tmp $$@.raw.tmp $$@.ids.tmp $$@.align.tmp
+	$$(call drv,netex-to-db,FEED) $$< $$@.raw.tmp
+	$$(call drv,normalize-it-ids,FEED) $$@.raw.tmp $$@.ids.tmp
+	$$(call drv,align-italo-stop-names,FEED) $$@.ids.tmp $$(IT2_DB) $$@.align.tmp
+	$$(call drv,it-rap-db-to-db,FEED) $$@.align.tmp $$@.tmp
+	rm -rf $$@.raw.tmp $$@.ids.tmp $$@.align.tmp && mv $$@.tmp $$@
+	$$(call stage_done,oap-$(1))
+endef
+$(foreach f,$(OAP_FEEDS),$(eval $(call oap_op_rules,$(call oap_name,$(f)),$(call oap_id,$(f)))))
+
 # Per region: merge of its operator dbs (colliding ids get qualified).
 #
 # --no-consolidate-stops: the duplicate-stop merge runs once, nationally. Running it here too is
@@ -891,13 +952,16 @@ $(CH_DB): $(CH_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 	rm -rf $@.raw.tmp && mv $@.tmp $@
 	$(call stage_done,swiss)
 
-# The shortest chain here, and it is the feed that makes it so: one publication_delivery.xml in a
-# zip, one codespace (FTG), no ServiceLinks, and a coordinate on every one of its 2,285 Quays. So
-# the generic loader with no member filter, and -- as in the Swiss chain above -- no
-# sanitize-stop-assignments.
+# One publication_delivery.xml in a zip, one codespace (FTG), no ServiceLinks, and a coordinate on
+# every one of its 2,285 Quays -- so the generic loader with no member filter, and, as in the Swiss
+# chain above, no sanitize-stop-assignments. No republication drop either: FlixBus is the only
+# publisher of its own service, and the coaches its stops carry appear in no other feed here.
 #
-# No republication drop either. FlixBus is the only publisher of its own service; the coaches its
-# 2,285 stops carry appear in no other feed here.
+# The unwrap is this feed's one repair. It writes a name as <Name><Text>x</Text></Name>, the NeTEx
+# 2.0 form of a type it declares at 1.1, on 9,253 of its 9,254 name elements. OTP's 1.x reader
+# reads that name as empty. It runs directly after the load and ahead of the EPIP stage, which
+# mints an Authority per Operator and takes a copy of the name with it -- see the note on the
+# driver.
 $(FLIX_DB): $(FLIX_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 	$(call stage,flixbus,loading $(notdir $<) -> $(notdir $@) (+ name unwrap))
 	rm -rf $@ $@.tmp $@.raw.tmp
@@ -906,23 +970,52 @@ $(FLIX_DB): $(FLIX_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 	rm -rf $@.raw.tmp && mv $@.tmp $@
 	$(call stage_done,flixbus)
 
-# National Italian db: the RAP region dbs + Trenitalia + STA in one (co-located same-name stops
+# The long-distance rail db: Trenitalia and the OAP operators in one, at a radius the national pass
+# cannot use.
+#
+# 30 m is right nationally because the corpus holds urban stops 150 m apart, where a wider radius
+# merges two neighbouring bus stops. Over rail publishers alone that tension is gone -- stations are
+# sparse, and within a few hundred metres of one the only thing to find is another publisher's copy
+# of it. Italo's 70 stops sit 0-251 m from their Trenitalia counterpart, then nothing at all until
+# 539 m, where the 11 places that are genuinely not stations begin; 300 m is that empty band.
+#
+# align-italo-stop-names runs in the Italo chain above and is what makes the fold possible: the two
+# feeds share no station code and agree on almost no spelling, so the pass writes Trenitalia's name
+# onto the Italo stop and the stock name gate then matches. Without it this radius merges 26.
+#
+# No --synthesize-stops: that stays national, and minting Italo's quays here would give it one per
+# station and cost it the survivor election, which Trenitalia wins on quay count and should.
+#
+# bind-quayless-assignments is not optional. The merge re-points an assignment's StopPlaceRef and
+# re-points a QuayRef it already had; Italo's carry none, so they reach the survivor still naming no
+# quay, and the national backfill then skips them because that StopPlace has one. OTP indexes an
+# assignment by quay or by stop place and never both, so the two publishers' journeys would stand at
+# two stops on one platform.
+$(IT_RAIL_DB): $(IT2_DB) $(OAP_DBS) | $(DATA_DIR) $(TOOLKIT_JAR)
+	$(call stage,it-rail,merging Trenitalia + $(words $(OAP_DBS)) OAP -> $(notdir $@) (300 m + quay bind))
+	rm -rf $@ $@.tmp $@.merged.tmp
+	$(call drv,it-merge-db-to-db,MERGE) $(IT2_DB) $(OAP_DBS) $@.merged.tmp --merge-radius 300 --tags $(subst $(space),$(comma),$(strip trenitalia $(OAP_NAMES)))
+	$(call drv,bind-quayless-assignments,MERGE) $@.merged.tmp $@.tmp
+	rm -rf $@.merged.tmp && mv $@.tmp $@
+	$(call stage_done,it-rail)
+
+# National Italian db: the RAP region dbs + the rail db + STA in one (co-located same-name stops
 # merged). Cross-source ids don't collide, so qualification is a no-op here.
 #
 # --synthesize-stops mints the StopPlace + Quay + PassengerStopAssignment for every SSP-only feed
 # here rather than per operator, because the ids it derives are substitutions on a
-# ScheduledStopPoint id and so are unique only once qualification has settled those. STA and
-# Trenitalia contribute 0 -- every one of their SSPs is already PSA-bound.
+# ScheduledStopPoint id and so are unique only once qualification has settled those. STA and the
+# rail db contribute 0 -- every one of their SSPs is already PSA-bound.
 #
 # Prerequisite order here is scheduling, not merge order: make queues job slots FIFO, so whatever it
-# descends into first is what runs first, and $(IT2_DB) and $(STA_DB) can run at t=0 where the RAP
-# loads fill the queue. The recipe below names its inputs explicitly, in the order the merge wants
+# descends into first is what runs first, and $(IT_RAIL_DB) and $(STA_DB) can run at t=0 where the
+# RAP loads fill the queue. The recipe below names its inputs explicitly, in the order the merge wants
 # ($(RAP_REGIONDBS) first, matching --tags), so this list is free to differ; do not replace either
 # with $^.
-$(IT_DB): $(IT2_DB) $(STA_DB) $(RAP_REGIONDBS) | $(DATA_DIR) $(TOOLKIT_JAR)
-	$(call stage,it-national,merging $(words $(RAP_REGIONDBS)) RAPs + Trenitalia + STA -> $(notdir $@) (+ stop sanitize))
+$(IT_DB): $(IT_RAIL_DB) $(STA_DB) $(RAP_REGIONDBS) | $(DATA_DIR) $(TOOLKIT_JAR)
+	$(call stage,it-national,merging $(words $(RAP_REGIONDBS)) RAPs + rail + STA -> $(notdir $@) (+ stop sanitize))
 	rm -rf $@ $@.tmp $@.merged.tmp
-	$(call drv,it-merge-db-to-db,NATIONAL) $(RAP_REGIONDBS) $(IT2_DB) $(STA_DB) $@.merged.tmp --synthesize-stops --tags $(subst $(space),$(comma),$(strip $(RAP_REGIONS) trenitalia sta))
+	$(call drv,it-merge-db-to-db,NATIONAL) $(RAP_REGIONDBS) $(IT_RAIL_DB) $(STA_DB) $@.merged.tmp --synthesize-stops --tags $(subst $(space),$(comma),$(strip $(RAP_REGIONS) rail sta))
 	$(call drv,fix-itc-trailing-link,NATIONAL) $@.merged.tmp $@.itc.tmp
 	$(call drv,sanitize-stop-assignments,NATIONAL) $@.itc.tmp $@.tmp
 	rm -rf $@.merged.tmp $@.itc.tmp && mv $@.tmp $@
@@ -1107,7 +1200,7 @@ $(INPUT_DIR) $(STATE_DIR) $(DATA_DIR) $(OTP_DIR):
 # and geofabrik's europe-latest moves -- a re-fetch is a different extract, not the same bytes. Both
 # lists live here and not next to the sources they name, because := has to see $(RAP_SRCS),
 # $(PARKING_SRC) and the two OSM paths already expanded.
-FEED_SRCS := $(IT_SRC) $(CH_SRC) $(STA_SRC) $(FLIX_SRC) $(AT_ZIPS) $(RAP_SRCS) $(PARKING_SRC)
+FEED_SRCS := $(IT_SRC) $(CH_SRC) $(STA_SRC) $(FLIX_SRC) $(AT_ZIPS) $(RAP_SRCS) $(OAP_SRCS) $(PARKING_SRC)
 OSM_SRCS  := $(EUROPE_PBF) $(ELEVATION_ZIP)
 
 # $(call validators,<downloaded files>) -- the sidecars $(FETCH) keeps for them. They sit in

@@ -109,6 +109,21 @@ public class ItMerge {
             boolean qualify, boolean consolidateStops, boolean fastPath, String format,
             boolean synthesizeStops)
             throws Exception {
+        merge(sources, target, tags, qualify, consolidateStops, fastPath, format, synthesizeStops,
+                0);
+    }
+
+    /// As above, at a caller-chosen consolidation radius; `mergeRadiusM <= 0` takes the toolkit's,
+    /// which stays the only place the national figure is written down.
+    ///
+    /// A wider one is for a merge whose inputs are all rail. The national radius answers for a
+    /// corpus holding urban stops 150 m apart, where two publishers' copies of one station sit
+    /// further apart than two neighbouring stops do; over rail publishers alone that tension is
+    /// gone, because the stations are sparse and a second copy is the only thing nearby.
+    public static void merge(List<Path> sources, Path target, List<String> tags,
+            boolean qualify, boolean consolidateStops, boolean fastPath, String format,
+            boolean synthesizeStops, double mergeRadiusM)
+            throws Exception {
         if (tags == null) tags = new ArrayList<>(Collections.nCopies(sources.size(), (String) null));
         if (tags.size() != sources.size()) throw new IllegalArgumentException("tags must match sources 1:1");
 
@@ -272,9 +287,14 @@ public class ItMerge {
             // The consolidation is optional; the emit is not. Whatever was held back from the clone
             // has to be written whether or not it merged, and so does anything synthesis added.
             if (consolidateStops || synthesizeStops) {
-                ScheduledStopPoints.MergePlan plan = consolidateStops
-                        ? ScheduledStopPoints.planStopplaceMerge(stopBuf, psaBuf)
-                        : new ScheduledStopPoints.MergePlan(Map.of(), Set.of(), Map.of());
+                ScheduledStopPoints.MergePlan plan;
+                if (!consolidateStops) {
+                    plan = new ScheduledStopPoints.MergePlan(Map.of(), Set.of(), Map.of());
+                } else if (mergeRadiusM > 0) {
+                    plan = ScheduledStopPoints.planStopplaceMerge(stopBuf, psaBuf, mergeRadiusM);
+                } else {
+                    plan = ScheduledStopPoints.planStopplaceMerge(stopBuf, psaBuf);
+                }
                 if (consolidateStops) {
                     Log.info("[it-merge] stop consolidation: %d of %d StopPlaces merged away "
                             + "into %d survivors, %d assignments re-pointed",

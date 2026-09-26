@@ -4,6 +4,7 @@
 |---------------------|---------------------------------------------------------------|------------------------|------:|--------------------------------------------------------------|---------------------------|
 | Italian NAP — RAP   | [CCISS NAP][nap-catalog] (`cciss.it/nap/mmtis`)               | NeTEx `.xml.gz`        |   222 | `input/it-rap-*.xml.gz` · `make download-rap`                | catalogue upload date     |
 | Italian NAP — OAP   | [Trenitalia][nap-oap], via CCISS — [asset `1080596`][1080596] | NeTEx `.xml.gz`        |     1 | `input/trenitalia-netex.xml.gz` · `make download-trenitalia` | catalogue upload date     |
+| Italian NAP — OAP   | [Italo][nap-italo], via CCISS — [asset `1814124`][1814124]    | NeTEx `.xml.gz`        |     1 | `input/it-oap-italo-1814124.xml.gz` · `make download-oap`    | catalogue upload date     |
 | STA — South Tyrol   | [STA Alto Adige][sta], anonymous FTP                          | NeTEx EPIP zip (Mentz) |     1 | `input/sta.netex.zip` · `make download-sta`                  | FTP `MDTM`                |
 | Switzerland         | [opentransportdata.swiss (SKI+)][swiss]                       | NeTEx zip              |     1 | `input/swiss-netex.zip` · `make download-swiss`              | `ETag`                    |
 | FlixBus             | [opentransportdata.swiss (SKI+)][fernbus]                     | NeTEx EPIP zip         |     1 | `input/flixbus-netex.zip` · `make download-flixbus`          | `ETag`                    |
@@ -35,6 +36,7 @@ layer with it.
 
 [nap-catalog]: https://www.cciss.it/nap/mmtis/public/en/catalog/Organisation
 [nap-oap]: https://www.cciss.it/nap/mmtis/public/en/catalog/Organisation/1077484
+[nap-italo]: https://www.cciss.it/nap/mmtis/public/en/catalog/Organisation/1813930
 [sta]: https://www.sta.bz.it/
 [swiss]: https://data.opentransportdata.swiss/dataset/timetablenetex_2026
 [fernbus]: https://data.opentransportdata.swiss/en/dataset/netex-fernbus
@@ -443,5 +445,44 @@ level that is, so two rows for neighbouring regions can cite different levels of
 [1704416]: https://www.cciss.it/nap/mmtis/public/en/catalog/Asset/1704416
 [1784852]: https://www.cciss.it/nap/mmtis/public/en/catalog/Asset/1784852
 [1787866]: https://www.cciss.it/nap/mmtis/public/en/catalog/Asset/1787866
+[1814124]: https://www.cciss.it/nap/mmtis/public/en/catalog/Asset/1814124
 [1819046]: https://www.cciss.it/nap/mmtis/public/en/catalog/Asset/1819046
 [1847784]: https://www.cciss.it/nap/mmtis/public/en/catalog/Asset/1847784
+
+## Italian NAP — OAP: Italo
+
+Asset [`1814124`][1814124], 1,408 ServiceJourneys over 70 stations, all rail, all inside Italy. It
+is a second national operator beside Trenitalia, not a republication of it: mapping every Italo stop
+onto its nearest Trenitalia station and comparing journeys on their sequence of station and clock
+minute, 0 of the 1,333 comparable journeys are in the national feed.
+
+Italo keys its stops by its own three-letter codes and carries no UIC or RFI code, so the two feeds
+match on nothing. `fix/AlignItaloStopNames.java` matches them on position instead and writes the
+Trenitalia name onto the Italo stop, and `data/it-rail.lmdb` then folds the two publishers at 300 m
+before the national merge runs. 59 of the 70 fold; Trenitalia wins every survivor election, so the
+station keeps its RFI name and Italo's copy disappears into it.
+
+The radius is not tuned. Sorted by distance to the nearest Trenitalia station, Italo's stops are two
+populations: 59 counterparts from 0 m to 251 m, then nothing at all until 539 m, then these 11,
+which are separate places and stay separate. Nine are Italo's connecting coaches, one is a
+Circumvesuviana station and one is a ferry terminal.
+
+| Italo stop | nearest Trenitalia station | distance |
+|---|---|--:|
+| Villa San Giovanni Marittima | VILLA S.GIOVANNI | 539 m |
+| Lucca Comics and Games BUS | LUCCA | 927 m |
+| Napoli Molo Beverello BUS | NAPOLI MONTESANTO | 1,442 m |
+| Ercolano BUS | PORTICI-ERCOLANO | 1,476 m |
+| Treviso BUS | Lanzago | 1,600 m |
+| Tai di Cadore BUS | CALALZO PIEVE CADORE CORTINA | 3,233 m |
+| Meta BUS | CASTELLAMMARE DI STABIA | 8,684 m |
+| Sant'Agnello BUS | CASTELLAMMARE DI STABIA | 10,640 m |
+| Sorrento | CASTELLAMMARE DI STABIA | 12,231 m |
+| San Vito di Cadore BUS | PERAROLO DI CADORE | 14,262 m |
+| Cortina D'Ampezzo BUS | DOBBIACO | 21,729 m |
+
+Italo types all 70 as `railStation` with `TransportMode` `rail`, the coaches included.
+
+FlixBus registers with the NAP too, as organisation `1845536`. That asset is the Italian slice --
+29 journeys over 4 lines -- and the FlixBus row above carries the whole pan-European export
+instead.
