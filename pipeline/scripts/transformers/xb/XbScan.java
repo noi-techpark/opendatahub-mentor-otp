@@ -480,7 +480,7 @@ public final class XbScan {
         if (sj.getCalls() != null) {
             for (noi.netex.model.Call_VersionedChildStructure c
                     : noi.netex.calls.Calls.of(sj.getCalls())) {
-                String r = XbMergeStops.callRef(c);
+                String r = XbStopRefs.callRef(c);
                 if (r != null && !r.isEmpty()) railStopPoints.add(r);
             }
         } else if (sj.getJourneyPatternRef() != null) {

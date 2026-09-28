@@ -101,18 +101,18 @@ public final class XbStations {
         Set<String> railStopPoints = new HashSet<>(seen.stopPoints());
         if (!seen.patterns().isEmpty()) {
             for (Map.Entry<String, List<String>> e
-                    : XbMergeStops.patternSspRefs(db, txn).entrySet()) {
+                    : XbStopRefs.patternSspRefs(db, txn).entrySet()) {
                 if (!seen.patterns().contains(e.getKey())) continue;
                 for (String r : e.getValue()) {
                     if (r != null && !r.isEmpty()) railStopPoints.add(r);
                 }
             }
         }
-        return XbMergeStops.servedFromRailSsp(railStopPoints, psas);
+        return XbStopRefs.servedFromRailSsp(railStopPoints, psas);
     }
 
     public static Set<String> railServed(Store db, Txn txn, List<PassengerStopAssignment> psas) {
-        Map<String, List<String>> patternStops = XbMergeStops.patternSspRefs(db, txn);
+        Map<String, List<String>> patternStops = XbStopRefs.patternSspRefs(db, txn);
         XbLines.LineMaps<AllVehicleModesOfTransportEnumeration> modes =
                 XbLines.lineValueMaps(db, txn, Line::getTransportMode);
 
@@ -124,7 +124,7 @@ public final class XbStations {
             }
             addStops(sj, patternStops, railStopPoints);
         }
-        return XbMergeStops.servedFromRailSsp(railStopPoints, psas);
+        return XbStopRefs.servedFromRailSsp(railStopPoints, psas);
     }
 
     /// The journey's transport mode: its own, else its Line's, else null. Some exports tag the mode
@@ -163,7 +163,7 @@ public final class XbStations {
             Set<String> into) {
         if (sj.getCalls() != null) {
             for (Call_VersionedChildStructure c : Calls.of(sj.getCalls())) {
-                String r = XbMergeStops.callRef(c);
+                String r = XbStopRefs.callRef(c);
                 if (r != null && !r.isEmpty()) into.add(r);
             }
         } else if (sj.getJourneyPatternRef() != null) {
@@ -253,7 +253,7 @@ public final class XbStations {
     /// border station has three or four co-located copies, and nearest-only leaves the group
     /// fragmented. That is single linkage, so two rules bound the chain it can build:
     ///
-    /// - a pair whose ids share a [XbMergeStops#namespace] is not unioned. One publisher's records
+    /// - a pair whose ids share a [XbStopRefs#namespace] is not unioned. One publisher's records
     ///   inside the radius are consecutive stops rather than copies of one station: `ch:2:` carries
     ///   metre-gauge halts 96-400 m apart, `IT:ITC1:` a bus corridor.
     /// - a finished cluster wider than [XbProfile#CONSOLIDATE_MAX_DIAMETER_DEG] is dropped whole,
@@ -282,8 +282,8 @@ public final class XbStations {
                         double[] oc = coords.get(other);
                         if (oc == null || other.equals(sp.getId())) continue;
                         if (sep2Deg(c, oc) > r2) continue;
-                        if (XbMergeStops.namespace(sp.getId())
-                                .equals(XbMergeStops.namespace(other))) {
+                        if (XbStopRefs.namespace(sp.getId())
+                                .equals(XbStopRefs.namespace(other))) {
                             counters.unionsRefusedSameNamespace++;
                             continue;
                         }

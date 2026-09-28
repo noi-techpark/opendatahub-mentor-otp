@@ -203,7 +203,7 @@ public final class SspCountryCensus {
     }
 
     /// The two leading colon-separated tokens of an id — the feed-ish namespace, the same shape
-    /// `XbMergeStops.namespace` uses for StopPlaces.
+    /// `XbStopRefs.namespace` uses for StopPlaces.
     static String space(String id) {
         String[] p = id.split(":", 3);
         return p.length >= 2 ? p[0] + ":" + p[1] : p[0];
