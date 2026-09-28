@@ -32,6 +32,7 @@ public class AllTests {
         TestEpipSplitExport.class,
         TestFeedsToConsolidated.class,
         TestFlattenWrappedNames.class,
+        TestItaloAuthorityCodespace.class,
         TestItMergeDbToDb.class,
         TestItRapDbToDb.class,
         TestItcTrailingLink.class,

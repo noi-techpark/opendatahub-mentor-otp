@@ -483,7 +483,18 @@ Circumvesuviana station and one is a ferry terminal.
 
 Italo types all 70 as `railStation` with `TransportMode` `rail`, the coaches included.
 
-It emits its repeated children in lexical order of the child id rather than in `order`:
+The feed arrives with every id in `IT::` — country `IT`, empty participant token — which is Trenitalia's
+space too, and it publishes no `Authority`. `normalize-it-ids --home IT:ITALO` moves the whole feed into
+a space of its own — the token is the feed's own `<ParticipantRef>` — because sharing one has a
+consequence the two feeds cannot see: the EPIP stage attributes any Line reaching it without an
+`authorityRef` from the sole `Authority` of its codespace, and the `Authority` synthesised for Italo per
+feed is stored, so on the next run it is indistinguishable from a published one. Trenitalia's 14 Lines
+arrive unattributed, so while the two shared `IT::` those 14 — and with them all 16,675 of its
+journeys — came out under Italo.
+Trenitalia keeps `IT::`, which now has one tenant and answers only for itself. `XbGroups.publisher` reads
+the first two tokens of an id, so this is also what lets `XbStitch` tell the two publishers apart.
+
+It also emits its repeated children in lexical order of the child id rather than in `order`:
 `pointsInSequence` arrives `:1, :10, :11, :12, :2 … :9`, and each journey's `passingTimes` in the same
 shuffle. The `order` attributes on the pattern points are correct, so the sequence is recoverable, and
 `fix/SortItaloSequences.java` restores it at the head of the OAP chain. A `TimetabledPassingTime`

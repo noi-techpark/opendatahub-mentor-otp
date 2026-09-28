@@ -821,8 +821,14 @@ $(foreach f,$(RAP_FEEDS),$(eval $(call rap_op_rules,$(call rap_region,$(f)),$(ca
 # The same chain for a national operator, with align-italo-stop-names between the id normalisation
 # and the RAP passes. It reads $(IT2_DB) to find each stop's counterpart, so it has to follow the
 # TrainNumber synthesis rather than race it, and it writes names the $(IT_RAIL_DB) merge then folds
-# on. normalize-it-ids is kept though it is inert on a feed whose ids are uniformly `IT::`: the
-# modal-space vote excludes that form and finds no home, so no rule fires and nothing is rewritten.
+# on. normalize-it-ids gets `--home IT:ITALO` because the vote cannot reach this feed: its ids are
+# uniformly `IT::`, and the modal-space vote excludes an empty participant token precisely because it
+# names no publisher, so it counts nothing and every rule stays dormant. Stating the home is what makes
+# rule 3 fire, and the token it names is the feed's own `<ParticipantRef>`. It has to fire: `IT::` is
+# Trenitalia's space too, and the EPIP stage attributes a Line with no authorityRef from the sole
+# Authority of its codespace -- so while the two share the space, Italo's synthesised Authority
+# answers for Trenitalia's 14 Lines and every Trenitalia journey comes out under Italo. Trenitalia
+# keeps `IT::`, which then has one tenant and answers only for itself.
 #
 # sort-italo-sequences runs first, on the raw load. Italo emits pointsInSequence and passingTimes in
 # lexical order of the child id -- `:1, :10, :11, :12, :2 … :9` -- while the `order` attributes on the
@@ -845,7 +851,7 @@ $$(DATA_DIR)/it-oap-$(1).lmdb: $$(INPUT_DIR)/it-oap-$(1)-$(2).xml.gz $$(IT2_DB) 
 	rm -rf $$@ $$@.tmp $$@.raw.tmp $$@.seq.tmp $$@.ids.tmp $$@.align.tmp
 	$$(call drv,netex-to-db,FEED) $$< $$@.raw.tmp
 	$$(call drv,sort-italo-sequences,FEED) $$@.raw.tmp $$@.seq.tmp
-	$$(call drv,normalize-it-ids,FEED) $$@.seq.tmp $$@.ids.tmp
+	$$(call drv,normalize-it-ids,FEED) $$@.seq.tmp $$@.ids.tmp --home IT:ITALO
 	$$(call drv,align-italo-stop-names,FEED) $$@.ids.tmp $$(IT2_DB) $$@.align.tmp
 	$$(call drv,it-rap-db-to-db,FEED) $$@.align.tmp $$@.tmp
 	rm -rf $$@.raw.tmp $$@.seq.tmp $$@.ids.tmp $$@.align.tmp && mv $$@.tmp $$@

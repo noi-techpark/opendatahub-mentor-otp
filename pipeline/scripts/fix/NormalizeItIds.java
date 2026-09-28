@@ -10,9 +10,16 @@ package fix;
 // conform. The probe reads the id index, which holds top-level ids only — embedded objects are
 // indexed separately, in `_embedding_idx`, which the SPI does not expose for iteration — so a feed
 // whose only deviating ids are embedded probes clean. That is the RouteView case in `rename` below.
+//
+// The home space is normally voted from the feed's own ids, and `--home` overrides that vote. One feed
+// needs it: Italo publishes every id as `IT::`, an empty participant token, which the vote excludes
+// precisely because it names no publisher -- so the vote counts nothing and every rule stays dormant.
+// Leaving that feed in `IT::` shares the space with Trenitalia, and a shared space is what lets one
+// publisher's synthesised Authority answer for the other's Lines.
 
 import noi.netex.model.EntityStructure;
 import noi.netex.model.VersionOfObjectRefStructure;
+import toolkit.harness.Args;
 import toolkit.harness.DbToDb;
 import toolkit.keycodec.NulKeyCodec;
 import toolkit.model.NetexUtils;
@@ -26,6 +33,8 @@ import transformers.feedfix.ItIdSpaces;
 
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,8 +43,22 @@ import java.util.Set;
 
 public class NormalizeItIds {
 
-    public static void main(String[] args) {
-        DbToDb.driverMain("normalize-it-ids", args, NormalizeItIds::apply);
+    /// Hand-rolled rather than [DbToDb#driverMain] for `--home`, which that CLI has no slot for.
+    public static void main(String[] args) throws Exception {
+        Args a = Args.parse(args,
+                "NormalizeItIds <src> <target> [--home SPACE] [--format v2] [--log-file F]",
+                "--home=", "--format=", "--log-file=").expectPositional(2);
+        String logFile = a.get("--log-file", null);
+        if (logFile != null) Log.toFile(Path.of(logFile));
+        String home = a.get("--home", null);
+        Path src = Path.of(a.positional().get(0));
+        Path target = Path.of(a.positional().get(1));
+        if (!Files.exists(src)) {
+            Log.error("%s does not exist.", src);
+            System.exit(1);   // the Makefile treats exit 0 as success
+        }
+        DbToDb.runDbToDb((s, stx, d, dtx) -> apply(s, stx, d, dtx, home),
+                src, target, "normalize-it-ids", a.get("--format", null));
     }
 
     /// What the probe found: the feed's home space, whether anything needs correcting, and the
@@ -44,7 +67,14 @@ public class NormalizeItIds {
 
     /// Named so tests can run it via TestStore.runDbToDb, without the CLI sandwich.
     public static void apply(Store src, Txn stx, Store dst, Txn dtx) {
-        Plan plan = probe(src, stx);
+        apply(src, stx, dst, dtx, null);
+    }
+
+    /// `home` overrides the modal-space vote. A feed whose ids are uniformly `IT::` gives the vote
+    /// nothing to count — the empty participant token is excluded from it — so the space it belongs
+    /// in has to be stated rather than derived. Null keeps the vote, which is every RAP feed.
+    public static void apply(Store src, Txn stx, Store dst, Txn dtx, String home) {
+        Plan plan = probe(src, stx, home);
         Log.info("[it-ids] home space %s%s", plan.home() == null ? "(none)" : plan.home(),
                 plan.any() ? "" : " (no top-level id needs correcting)");
         for (int i = 0; i < ItIdSpaces.RULES.length; i++) {
@@ -66,7 +96,11 @@ public class NormalizeItIds {
     /// It refuses a correction that would land on an id this store already holds for the same class
     /// and version — that is not a rename, it is two objects becoming one.
     static Plan probe(Store db, Txn txn) {
-        String home = ItIdSpaces.homeSpace(db, txn);
+        return probe(db, txn, null);
+    }
+
+    static Plan probe(Store db, Txn txn, String homeOverride) {
+        String home = homeOverride != null ? homeOverride : ItIdSpaces.homeSpace(db, txn);
         Set<BytesKey> keys = new HashSet<>();
         for (IdRow row : db.iterIdIndex(txn)) keys.add(new BytesKey(row.encodedKey()));
         long[] byRule = new long[ItIdSpaces.RULES.length];

@@ -18,9 +18,11 @@ package transformers.feedfix;
 //   IT:IT14:Operator:       One per Lazio feed, carrying that feed's OperatorRefs. The same feeds'
 //                           other ids say ITI4. Lazio is down to one allowlisted feed, OP1, which
 //                           carries it.
-//   IT::Operator:           Two feeds, and the two are in different regions (bolzano ITH1,
-//                           veneto/DOLOMITIBUS ITH3). Both are out of the allowlist, so this rule
-//                           lies dormant too.
+//   IT::                    Italo publishes its WHOLE feed this way, and two RAP feeds carry it on
+//                           their Operators alone, in different regions (bolzano ITH1,
+//                           veneto/DOLOMITIBUS ITH3). Those two are out of the allowlist; Italo is
+//                           in, and is the one feed whose home has to be supplied rather than voted
+//                           -- see `homeSpace` for why the vote cannot reach it.
 //   it:apb:Operator:        bolzano -- alongside that feed's `IT::Operator:` ids, under different
 //                           local parts. Bolzano-only, so the rule lies dormant whenever that feed
 //                           is out of the allowlist.
@@ -34,7 +36,11 @@ package transformers.feedfix;
 // fix/RewriteStaSspIds.java). Both arrive on chains this pass is not wired into.
 //
 // The Authorities `it-rap-db-to-db` synthesises from Operators inherit the Operator's space, so a
-// bad Operator id makes a bad Authority id; the correction runs before that stage.
+// bad Operator id makes a bad Authority id; the correction runs before that stage. A SHARED space is
+// worse than a bad one: the EPIP stage attributes any Line that arrives without an authorityRef from
+// the sole Authority of its codespace, so two publishers in one space and only one of them
+// synthesised means that one answers for the other. `IT::` was exactly that pair -- Italo synthesised,
+// Trenitalia's 14 Lines unattributed -- until Italo was given a space of its own.
 //
 // The whole correction is a pure function of the id string: there is no rename map to build or
 // hold, and the same call corrects a top-level id, an embedded object's id and a reference alike.
@@ -123,6 +129,12 @@ public final class ItIdSpaces {
     /// one operator in one region, so its own space is 99%+ of its ids; anything less is a feed
     /// this table has not been read against, and the caller skips the rules that need a home
     /// rather than guessing one.
+    ///
+    /// A feed whose ids are UNIFORMLY a broken space votes nothing at all, so no rule can fire and
+    /// the feed keeps the space it should be leaving. Italo is that feed — every id `IT::` — and its
+    /// home is supplied instead, through `normalize-it-ids --home`. The exclusion above is why the
+    /// vote cannot reach it, and is right to: what a correction moves to cannot be voted for by the
+    /// thing being corrected.
     public static String homeSpace(Store db, Txn txn) {
         Map<String, Long> votes = new LinkedHashMap<>();
         long total = 0;

@@ -222,6 +222,101 @@ public class TestNormalizeItIds {
                 "correcting onto an id the store already holds refuses instead of merging: " + message);
     }
 
+    /// Italo in miniature: EVERY id in the empty-token space, so the vote has nothing to count.
+    private static final String ITALO = """
+        <ResourceFrame id="IT::ResourceFrame:1" version="1"><organisations>
+          <Operator id="IT::Operator:1" version="1"><Name>Italo</Name></Operator>
+        </organisations></ResourceFrame>
+        <ServiceFrame id="IT::ServiceFrame:1" version="1">
+          <lines>
+            <Line id="IT::Line:9916-1-1" version="1"><Name>9916</Name>
+              <TransportMode>rail</TransportMode>
+              <OperatorRef ref="IT::Operator:1" version="1"/>
+            </Line>
+          </lines>
+          <scheduledStopPoints>
+            <ScheduledStopPoint id="IT::ScheduledStopPoint:SAL" version="1"><Name>Salerno</Name></ScheduledStopPoint>
+          </scheduledStopPoints>
+          <journeyPatterns>
+            <ServiceJourneyPattern id="IT::ServiceJourneyPattern:9916-1-1-1" version="1">
+              <RouteView><LineRef ref="IT::Line:9916-1-1" version="1"/></RouteView>
+              <pointsInSequence>
+                <StopPointInJourneyPattern id="IT::StopPointInJourneyPattern:9916-1-1-1:1" version="1" order="1">
+                  <ScheduledStopPointRef ref="IT::ScheduledStopPoint:SAL" version="1"/>
+                </StopPointInJourneyPattern>
+              </pointsInSequence>
+            </ServiceJourneyPattern>
+          </journeyPatterns>
+        </ServiceFrame>
+        """;
+
+    /// A supplied home is the only way this feed moves, and it moves whole: top-level ids, the
+    /// embedded point's own id, and every reference.
+    public static void testSuppliedHomeMovesAUniformlyBrokenSpace(TestStore db) throws Exception {
+        db.loadNetex(ITALO);
+        TestStore target = db.runDbToDb(
+                (s, stx, d, dtx) -> NormalizeItIds.apply(s, stx, d, dtx, "IT:ITALO"));
+
+        Set<String> ids = new TreeSet<>();
+        Line line = null;
+        ServiceJourneyPattern sjp = null;
+        try (Txn txn = target.store.roTxn()) {
+            for (Class<?> clazz : target.store.dbNames(txn)) {
+                for (Object o : target.store.iterOnlyObjects(txn, clazz)) {
+                    if (o instanceof Line l) { line = l; ids.add(l.getId()); }
+                    else if (o instanceof ServiceJourneyPattern j) { sjp = j; ids.add(j.getId()); }
+                    else if (o instanceof Operator op) ids.add(op.getId());
+                    else if (o instanceof ScheduledStopPoint s) ids.add(s.getId());
+                }
+            }
+        }
+        for (String id : ids) {
+            Check.that(id.startsWith("IT:ITALO:"), "top-level id moved to IT:ITALO: -- " + id);
+        }
+        Check.equals(4, ids.size(), "four top-level objects survive the correction");
+
+        Check.equals("IT:ITALO:Operator:1", line.getOperatorRef().getRef(),
+                "the OperatorRef follows -- this is the ref the Authority mint reads");
+        StopPointInJourneyPattern point = (StopPointInJourneyPattern) sjp.getPointsInSequence()
+                .getPointInJourneyPatternOrStopPointInJourneyPatternOrTimingPointInJourneyPattern().get(0);
+        Check.equals("IT:ITALO:StopPointInJourneyPattern:9916-1-1-1:1", point.getId(),
+                "the embedded point's own id moves");
+        Check.equals("IT:ITALO:ScheduledStopPoint:SAL",
+                point.getScheduledStopPointRef().getValue().getRef(), "and the ref it holds");
+        Check.equals("IT:ITALO:Line:9916-1-1", sjp.getRouteView().getLineRef().getValue().getRef(),
+                "the RouteView's LineRef follows");
+    }
+
+    /// Without one, the same feed is left exactly as it arrived: the vote excludes the empty token,
+    /// so it finds no home and every rule needing one is skipped rather than guessed. This is also
+    /// what keeps `--home` from changing any RAP feed, none of which passes it.
+    public static void testWithoutASuppliedHomeTheBrokenSpaceStays(TestStore db) throws Exception {
+        db.loadNetex(ITALO);
+        TestStore target = db.runDbToDb(NormalizeItIds::apply);
+
+        // Not an export comparison: the pass re-inserts class map by class map, so the members come
+        // out in a different dependency order carrying identical bytes. The claim is about ids.
+        Set<String> ids = new TreeSet<>();
+        Line line = null;
+        ServiceJourneyPattern sjp = null;
+        try (Txn txn = target.store.roTxn()) {
+            for (Class<?> clazz : target.store.dbNames(txn)) {
+                for (Object o : target.store.iterOnlyObjects(txn, clazz)) {
+                    if (o instanceof Line l) { line = l; ids.add(l.getId()); }
+                    else if (o instanceof ServiceJourneyPattern j) { sjp = j; ids.add(j.getId()); }
+                    else if (o instanceof Operator op) ids.add(op.getId());
+                    else if (o instanceof ScheduledStopPoint s) ids.add(s.getId());
+                }
+            }
+        }
+        Check.equals(Set.of("IT::Operator:1", "IT::Line:9916-1-1", "IT::ScheduledStopPoint:SAL",
+                        "IT::ServiceJourneyPattern:9916-1-1-1"), ids,
+                "no home, no rewrite: every top-level id is the one the feed shipped");
+        Check.equals("IT::Operator:1", line.getOperatorRef().getRef(), "and every reference");
+        Check.equals("IT::Line:9916-1-1", sjp.getRouteView().getLineRef().getValue().getRef(),
+                "including the embedded RouteView's");
+    }
+
     /// The rules as pure string functions, including the two the store fixtures above do not reach.
     public static void testRuleTable(TestStore db) {
         Check.equals("IT:ITI3:Line:CONTRAM_0002",
