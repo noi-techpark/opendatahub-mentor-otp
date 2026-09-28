@@ -8,6 +8,7 @@ package tests;
 // test on both formats.
 
 import transformers.common.ItMerge;
+import noi.netex.model.EntityStructure;
 import noi.netex.model.Line;
 import noi.netex.model.LineRefStructure;
 import noi.netex.model.ObjectFactory;
@@ -194,6 +195,70 @@ public class TestItMergeDbToDb {
             if (line.contains(SWEEP_LINE)) n++;
         }
         return n;
+    }
+
+    /// A feed declaring one Codespace, plus a Line of its own so the sources are distinguishable.
+    private static String codespaceFrame(String xmlns, String url, String lineId) {
+        return "<ResourceFrame id=\"rf\" version=\"1\"><codespaces>"
+                + "<Codespace id=\"ita\"><Xmlns>" + xmlns + "</Xmlns>"
+                + "<XmlnsUrl>" + url + "</XmlnsUrl></Codespace>"
+                + "</codespaces></ResourceFrame>"
+                + linesFrame(lineId, lineId);
+    }
+
+    private static Set<String> codespaceIds(Path dbPath) throws Exception {
+        Set<String> ids = new TreeSet<>();
+        try (Store db = Stores.open(dbPath, true); Txn txn = db.roTxn()) {
+            Class<?> cs = db.classForName("Codespace");
+            if (cs == null) return ids;
+            for (Object o : db.iterOnlyObjects(txn, cs)) {
+                ids.add(((EntityStructure) o).getId());
+            }
+        }
+        return ids;
+    }
+
+    /// Every Italian NAP feed ships the same `<Codespace id="ita">` boilerplate, so qualifying the
+    /// repeats put one copy per feed in the export -- 160 of them in the national store, differing
+    /// only in the suffix. Identical bytes under one id are one declaration.
+    public static void testIdenticalDeclarationsCollapseToOne(TestStore ts) throws Exception {
+        Path target = ts.tempPath("merged-cs.mdbx");
+        ItMerge.merge(identicalDeclarationFeeds(ts), target, List.of("one", "two", "three"),
+                true, true, true, ts.format);
+
+        Check.equals(Set.of("ita"), codespaceIds(target),
+                "three feeds declaring the same codespace leave one declaration");
+        Check.equals(Set.of("l1", "l2", "l3"), new TreeSet<>(lineNames(target).keySet()),
+                "and nothing else is dropped with them");
+    }
+
+    /// The oracle must drop the same ones.
+    public static void testIdenticalDeclarationsCollapseObjectLevelToo(TestStore ts) throws Exception {
+        Path target = ts.tempPath("merged-cs-ol.mdbx");
+        ItMerge.merge(identicalDeclarationFeeds(ts), target, List.of("one", "two", "three"),
+                true, true, false, ts.format);
+
+        Check.equals(Set.of("ita"), codespaceIds(target), "object-level matches the fast path");
+    }
+
+    /// Byte equality is the whole test: two publishers claiming one codespace id for DIFFERENT
+    /// declarations are still two declarations, and neither may be silently lost.
+    public static void testDifferingDeclarationsStillQualify(TestStore ts) throws Exception {
+        Path target = ts.tempPath("merged-cs-diff.mdbx");
+        ItMerge.merge(List.of(
+                        ts.buildDbFile(codespaceFrame("ita", "http://www.ita.it", "l1"), "d1.mdbx"),
+                        ts.buildDbFile(codespaceFrame("other", "http://other.example", "l2"), "d2.mdbx")),
+                target, List.of("one", "two"), true, true, true, ts.format);
+
+        Check.equals(Set.of("ita", "ita:two"), codespaceIds(target),
+                "a declaration that differs is qualified, not dropped");
+    }
+
+    private static List<Path> identicalDeclarationFeeds(TestStore ts) throws Exception {
+        return List.of(
+                ts.buildDbFile(codespaceFrame("ita", "http://www.ita.it", "l1"), "c1.mdbx"),
+                ts.buildDbFile(codespaceFrame("ita", "http://www.ita.it", "l2"), "c2.mdbx"),
+                ts.buildDbFile(codespaceFrame("ita", "http://www.ita.it", "l3"), "c3.mdbx"));
     }
 
     /// Three single-Line feeds that all use the id `dup`, so sources 2 and 3 both collide.

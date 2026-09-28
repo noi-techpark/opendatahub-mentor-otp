@@ -7,6 +7,10 @@ package transformers.common;
 //   1. QUALIFY colliding ids instead of dropping. A later source's object whose id an earlier
 //      source already occupies is re-inserted as `<id>:<tag>` (tag = the source's operator code,
 //      or an `x<ordinal>` fallback), with every reference to it within the same source rewritten.
+//      One exception: a Codespace repeating one the target already holds, field for field, is the
+//      same declaration twice rather than two objects, so the kept copy stands for both. See
+//      `repeatedDeclarations` for why that is safe where qualifying is what the rest of a collision
+//      needs.
 //   2. CONSOLIDATE co-located same-name StopPlaces (<= ~15 m) over the whole merged corpus.
 //      StopPlace and PassengerStopAssignment are buffered — held back from every clone, collected
 //      across all sources, and emitted once at the tail, a db-to-db delete being "never copied in
@@ -24,11 +28,13 @@ package transformers.common;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import noi.netex.model.Codespace;
 import noi.netex.model.EntityStructure;
 import noi.netex.model.PassengerStopAssignment;
 import noi.netex.model.ScheduledStopPoint;
 import noi.netex.model.StopPlace;
 import noi.netex.model.VersionOfObjectRefStructure;
+import noi.netex.text.Mls;
 import toolkit.harness.CloneSupport;
 import toolkit.keycodec.NulKeyCodec;
 import toolkit.model.RecursiveAttributes;
@@ -72,6 +78,44 @@ public class ItMerge {
     /// cannot hold a NUL.
     private static String classIdKey(String className, String id) {
         return className + '\0' + id;
+    }
+
+    /// The ids of this source's declarations that repeat, field for field, one the target already
+    /// holds.
+    ///
+    /// Only Codespace, and only on exact equality. A declaration is not an object with a life of its
+    /// own — nothing in a store references one — so two feeds shipping one national profile's
+    /// boilerplate are saying the same thing twice, and the copy already in the target stands for
+    /// both. Qualifying the repeat instead puts one Codespace per feed in the export, differing only
+    /// in the suffix this merge gave them: the Italian NAP ships `<Codespace id="ita">` from every
+    /// one of its feeds, so the national store carried 160 of them.
+    ///
+    /// Equality of the declaration ITSELF is the whole test, and it is why dropping is safe where
+    /// qualifying two genuinely different objects is not: the kept copy has the same id, so every
+    /// reference still resolves and no referrer needs patching. Two declarations under one id that
+    /// differ in any field are two declarations, and qualify as before.
+    ///
+    /// Compared field by field rather than on stored bytes, because the two merge paths do not store
+    /// the same bytes for one object: the fast path clones a source verbatim, the object-level oracle
+    /// re-marshals it on insert. A byte test makes the oracle disagree with the path it exists to
+    /// check.
+    static Set<String> repeatedDeclarations(Store sdb, Txn rtx, Store tdb, Txn ttx) {
+        Class<?> cs = sdb.classForName("Codespace");
+        if (cs == null || !tdb.dbNames(ttx).contains(cs)) return Set.of();
+        Set<String> kept = new LinkedHashSet<>();
+        for (Object o : tdb.iterOnlyObjects(ttx, cs)) kept.add(declaration((Codespace) o));
+        Set<String> out = new LinkedHashSet<>();
+        for (Object o : sdb.iterOnlyObjects(rtx, cs)) {
+            Codespace c = (Codespace) o;
+            if (kept.contains(declaration(c))) out.add(c.getId());
+        }
+        return out;
+    }
+
+    /// Everything a Codespace says, NUL-joined: its id and every field the element carries.
+    private static String declaration(Codespace c) {
+        return c.getId() + "\0" + c.getXmlns() + "\0" + c.getXmlnsUrl()
+                + "\0" + Mls.textOrEmpty(c.getDescription()) + "\0" + c.getDataSourceRef();
     }
 
     /// rewrite every reference `obj` holds whose target id is in
@@ -175,6 +219,7 @@ public class ItMerge {
 
                     LongOpenHashSet dups;
                     List<Object> dupObjs = new ArrayList<>();
+                    int dropped = 0;              // repeated declarations, kept once
                     LongOpenHashSet skip;
                     LongOpenHashSet patch;
                     try (Txn wtx = tdb.rwTxn()) {
@@ -183,13 +228,23 @@ public class ItMerge {
                         // dropped outright (no-qualify).
                         dups = offset != 0 ? CloneSupport.duplicateIdFullKeys(sdb, rtx, tdb, wtx)
                                 : new LongOpenHashSet();
+                        // A repeat stays in `skip`, so the clone omits it, and never reaches
+                        // `dupObjs` -- dropped rather than qualified, with the kept copy standing
+                        // for both.
+                        Set<String> declRepeats = repeatedDeclarations(sdb, rtx, tdb, wtx);
                         if (qualify) {
                             // A set iterates unpredictably; the re-insert order must be stable.
                             LongArrayList sorted = new LongArrayList(dups);
                             sorted.sort(NulKeyCodec::compareFullKeysLe);
                             for (long k : sorted) {
                                 Object o = sdb.loadObjectByFullKey(rtx, k);
-                                if (o != null && ((EntityStructure) o).getId() != null) dupObjs.add(o);
+                                if (o == null || ((EntityStructure) o).getId() == null) continue;
+                                if (o instanceof Codespace
+                                        && declRepeats.contains(((EntityStructure) o).getId())) {
+                                    dropped++;
+                                    continue;
+                                }
+                                dupObjs.add(o);
                             }
                             for (Object o : dupObjs) {
                                 String oid = ((EntityStructure) o).getId();
@@ -229,10 +284,19 @@ public class ItMerge {
                     }
 
                     String msg = String.format("[it-merge] cloned %s (next offset %d)", src, offset);
-                    if (qualify && !remap.isEmpty()) {
-                        msg += String.format(" -- qualified %d colliding ids (tag %s)", remap.size(), tag);
+                    // Not `qualify && !remap.isEmpty()`: a source whose only collisions were repeated
+                    // declarations leaves the remap empty, and falling through would report a
+                    // qualifying merge as a no-qualify one.
+                    if (qualify) {
+                        if (!remap.isEmpty()) {
+                            msg += String.format(" -- qualified %d colliding ids (tag %s)",
+                                    remap.size(), tag);
+                        }
                     } else if (!dups.isEmpty()) {
                         msg += String.format(" -- dropped %d duplicate ids (no-qualify)", dups.size());
+                    }
+                    if (dropped > 0) {
+                        msg += String.format(" -- kept %d repeated declaration(s) once", dropped);
                     }
                     if (!patch.isEmpty()) {
                         msg += String.format(", re-extracted %d referrers", patch.size());
@@ -348,13 +412,19 @@ public class ItMerge {
         // never treated as colliding with each other).
         Map<String, String> remap = new LinkedHashMap<>();
         Set<String> skip = new LinkedHashSet<>();
+        Set<String> drop = new LinkedHashSet<>();   // repeated declarations, dropped in both modes
+        Set<String> declRepeats;
+        try (Txn ttx = tdb.roTxn()) {
+            declRepeats = repeatedDeclarations(sdb, rtx, tdb, ttx);
+        }
         for (Class<?> clazz : classes) {
             String cn = clazz.getSimpleName();
             for (Object obj : sdb.iterOnlyObjects(rtx, clazz)) {
                 String oid = String.valueOf(((EntityStructure) obj).getId());
                 String key = classIdKey(cn, oid);
                 if (seen.contains(key)) {
-                    if (qualify) remap.put(oid, qualified(oid, tag));
+                    if (obj instanceof Codespace && declRepeats.contains(oid)) drop.add(key);
+                    else if (qualify) remap.put(oid, qualified(oid, tag));
                     else skip.add(key);
                 }
             }
@@ -383,6 +453,9 @@ public class ItMerge {
                     }
                     Object obj = objects.next();
                     EntityStructure e = (EntityStructure) obj;
+                    if (drop.contains(classIdKey(cn, String.valueOf(e.getId())))) {
+                        continue; // a declaration the target already holds, byte for byte
+                    }
                     if (!qualify && skip.contains(classIdKey(cn, String.valueOf(e.getId())))) {
                         continue; // first-wins drop (no-qualify mode)
                     }
@@ -417,6 +490,7 @@ public class ItMerge {
         seen.addAll(local);
         String msg = String.format("[it-merge] copied %s object-level", src);
         if (!remap.isEmpty()) msg += String.format(" -- qualified %d colliding ids (tag %s)", remap.size(), tag);
+        if (!drop.isEmpty()) msg += String.format(" -- kept %d repeated declaration(s) once", drop.size());
         if (!skip.isEmpty()) msg += String.format(" -- dropped %d duplicate ids (no-qualify)", skip.size());
         Log.info("%s", msg);
         return offset;
