@@ -13,6 +13,7 @@ import noi.netex.model.Level;
 import noi.netex.model.PassengerStopAssignment;
 import noi.netex.model.Quay;
 import noi.netex.model.StopPlace;
+import noi.netex.text.Mls;
 import toolkit.store.Txn;
 import toolkit.test.Check;
 import toolkit.test.Runner;
@@ -163,6 +164,52 @@ public class TestXbStations {
 </TimetableFrame>
 """;
 
+    // Bolzano, in its own store: both copies are Italian, so the country gate ties and the election
+    // is decided below it. STA surveyed the station and publishes two rail platforms under a local
+    // id; the Lazio RAP feed republishes Trenitalia's slice of it as one quay under an id carrying
+    // the real UIC 830002026. The copy with the quays has to win, or the platforms, their types and
+    // the German name are all absorbed into the thinner record and lost.
+    static final String SAME_COUNTRY = """
+<SiteFrame id="site" version="1">
+  <stopPlaces>
+    <StopPlace id="it:apb:StopPlace:it-22021-468:" version="1"><Name>Bolzano, Stazione</Name>
+      <PrivateCode>468</PrivateCode>
+      <Centroid><Location><Latitude>46.496637</Latitude><Longitude>11.358386</Longitude></Location></Centroid>
+      <quays>
+        <Quay id="it:apb:Quay:it-22021-468-51:" version="1"><Name>Z1</Name><QuayType>railPlatform</QuayType><Centroid><Location><Latitude>46.496508</Latitude><Longitude>11.358524</Longitude></Location></Centroid></Quay>
+        <Quay id="it:apb:Quay:it-22021-468-53:" version="1"><Name>Z3+4</Name><QuayType>railPlatform</QuayType><Centroid><Location><Latitude>46.496370</Latitude><Longitude>11.358688</Longitude></Location></Centroid></Quay>
+      </quays>
+    </StopPlace>
+    <StopPlace id="IT:ITI4:StopPlace:830002026_pass_0083" version="1"><Name>BOLZANO</Name>
+      <PrivateCode>830002026_pass_0083</PrivateCode>
+      <Centroid><Location><Latitude>46.496324</Latitude><Longitude>11.358568</Longitude></Location></Centroid>
+      <quays>
+        <Quay id="IT::Quay:otherTRENITALIA:830002026" version="1"><Name>BOLZANO</Name><Centroid><Location><Latitude>46.496324</Latitude><Longitude>11.358568</Longitude></Location></Centroid></Quay>
+      </quays>
+    </StopPlace>
+  </stopPlaces>
+</SiteFrame>
+<ServiceFrame id="sf" version="1">
+  <stopAssignments>
+    <PassengerStopAssignment id="psa:sta" version="1" order="1"><ScheduledStopPointRef ref="ssp:sta"/><StopPlaceRef ref="it:apb:StopPlace:it-22021-468:"/></PassengerStopAssignment>
+    <PassengerStopAssignment id="psa:rap" version="1" order="2"><ScheduledStopPointRef ref="ssp:rap"/><StopPlaceRef ref="IT:ITI4:StopPlace:830002026_pass_0083"/></PassengerStopAssignment>
+  </stopAssignments>
+  <journeyPatterns>
+    <ServiceJourneyPattern id="Pat:bz" version="1"><pointsInSequence>
+      <StopPointInJourneyPattern id="bzp1" version="1" order="1"><ScheduledStopPointRef ref="ssp:sta" version="1"/></StopPointInJourneyPattern>
+      <StopPointInJourneyPattern id="bzp2" version="1" order="2"><ScheduledStopPointRef ref="ssp:rap" version="1"/></StopPointInJourneyPattern>
+    </pointsInSequence></ServiceJourneyPattern>
+  </journeyPatterns>
+</ServiceFrame>
+<TimetableFrame id="tf" version="1">
+  <vehicleJourneys>
+    <ServiceJourney id="it:apb:Sj:bz" version="1"><TransportMode>rail</TransportMode><ServiceJourneyPatternRef ref="Pat:bz" version="1"/>
+      <passingTimes><TimetabledPassingTime id="bzt1" version="1"><StopPointInJourneyPatternRef ref="bzp1" version="1" order="1"/><DepartureTime>08:00:00</DepartureTime></TimetabledPassingTime></passingTimes>
+    </ServiceJourney>
+  </vehicleJourneys>
+</TimetableFrame>
+""";
+
     /// The country the station physically sits in decides which copy survives, and it is voted from
     /// the members' REAL UIC codes. Here only the Swiss-published copy carries one — 8101187,
     /// Austria — so the vote says AT and the AUSTRIAN copy survives, on a code it does not itself
@@ -187,6 +234,26 @@ public class TestXbStations {
                 "the Swiss copy survives, though its id sorts second");
         Check.that(c.mergedAway().contains("at:obb:StopPlace:ch-23016-20302"),
                 "and the OeBB copy is merged away");
+    }
+
+    /// Both Bolzano copies are Italian, so the country gate cannot separate them and the quay tier
+    /// decides. The republication is the one carrying a real UIC, so a code-first election takes it
+    /// and discards the two surveyed platforms; the quay count has to be read first.
+    public static void testTheFullestCopyWinsWithinTheOwningCountry(TestStore db) throws Exception {
+        Consolidation c = consolidateSameCountry(db);
+
+        Check.equals(1L, c.counters().clusters, "one physical station, published twice");
+        Check.that(ids(c.survivors()).contains("it:apb:StopPlace:it-22021-468:"),
+                "the copy with two quays survives, though only the other one has a UIC");
+        Check.that(c.mergedAway().contains("IT:ITI4:StopPlace:830002026_pass_0083"),
+                "and the one-quay republication is merged away");
+
+        StopPlace survivor = byId(c.survivors(), "it:apb:StopPlace:it-22021-468:");
+        Check.equals("Bolzano, Stazione", Mls.text(survivor.getName()),
+                "so the station keeps the name the surveying publisher gave it");
+        Check.equals(3, quays(survivor).size(), "its own two platforms plus the one it inherited");
+        Check.equals(1L, c.counters().assignmentsRepointed,
+                "and the merged-away copy's assignment was re-pointed");
     }
 
     /// Only rail-served stops take part. The bus stop is 20 m away and must be untouched.
@@ -328,6 +395,27 @@ public class TestXbStations {
                             && rail.contains("ch:2:StopPlace:8509404"),
                     "all four rail copies are rail-served: " + rail);
             Check.that(!rail.contains("at:47:9999"), "and the bus stop is not");
+            return XbStations.consolidate(stopplaces, psas, rail);
+        }
+    }
+
+    static Consolidation consolidateSameCountry(TestStore db) throws Exception {
+        db.loadNetex(SAME_COUNTRY);
+        try (Txn txn = db.store.roTxn()) {
+            List<StopPlace> stopplaces = new ArrayList<>();
+            for (Object o : db.store.iterOnlyObjects(txn, StopPlace.class)) {
+                stopplaces.add((StopPlace) o);
+            }
+            List<PassengerStopAssignment> psas = new ArrayList<>();
+            for (Object o : db.store.iterOnlyObjects(txn, PassengerStopAssignment.class)) {
+                psas.add((PassengerStopAssignment) o);
+            }
+            stopplaces.sort(Comparator.comparing(StopPlace::getId));
+            psas.sort(Comparator.comparing(PassengerStopAssignment::getId));
+            Set<String> rail = XbStations.railServed(db.store, txn, psas);
+            Check.that(rail.contains("it:apb:StopPlace:it-22021-468:")
+                            && rail.contains("IT:ITI4:StopPlace:830002026_pass_0083"),
+                    "both copies are rail-served, or the cluster never forms: " + rail);
             return XbStations.consolidate(stopplaces, psas, rail);
         }
     }

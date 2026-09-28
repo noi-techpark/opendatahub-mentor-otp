@@ -336,22 +336,50 @@ public final class XbStations {
     /// The country the station physically sits in decides, and it is voted from the members' REAL
     /// UIC codes: a foreign feed references a station by its true UIC even when the owning feed's own
     /// copy has only a local id, so the codes reveal the owner from the outside. Ties — a border
-    /// station both countries code natively — fall to a fixed precedence. Within the owning country,
-    /// prefer a copy carrying a real UIC, then the smallest id.
+    /// station both countries code natively — fall to a fixed precedence.
+    ///
+    /// Within the owning country the copy with the most quays wins, then a copy carrying a real UIC,
+    /// then the smallest id. Quay count outranks the code because the code identifies the station
+    /// and the quays are the station: a publisher that surveyed the platforms has the names, the
+    /// entrances and the quay types, and a republication that carries only the UIC has none of them.
+    /// The country gate is checked first, so no cross-border election reaches this.
+    ///
+    /// [#nQuays] and the id make the order strict and total, so the result does not depend on the
+    /// order `members` arrives in.
     static StopPlace elect(List<StopPlace> members, Map<String, String> uics) {
         String owner = owningCountry(members, uics);
         StopPlace best = null;
-        long bestKey = 0;
         for (StopPlace sp : members) {
-            long key = (Objects.equals(XbIds.feedCountry(sp.getId()), owner) ? 0 : 2)
-                    + (uics.get(sp.getId()) != null ? 0 : 1);
-            if (best == null || key < bestKey
-                    || (key == bestKey && sp.getId().compareTo(best.getId()) < 0)) {
-                best = sp;
-                bestKey = key;
-            }
+            if (best == null || compareCandidates(sp, best, owner, uics) < 0) best = sp;
         }
         return best;
+    }
+
+    /// `a` against `b` on the election's tiers, negative when `a` is the better copy.
+    private static int compareCandidates(StopPlace a, StopPlace b, String owner,
+            Map<String, String> uics) {
+        int c = Integer.compare(foreign(a, owner), foreign(b, owner));
+        if (c != 0) return c;
+        c = Integer.compare(nQuays(b), nQuays(a));
+        if (c != 0) return c;
+        c = Integer.compare(uics.get(a.getId()) == null ? 1 : 0,
+                uics.get(b.getId()) == null ? 1 : 0);
+        return c != 0 ? c : a.getId().compareTo(b.getId());
+    }
+
+    private static int foreign(StopPlace sp, String owner) {
+        return Objects.equals(XbIds.feedCountry(sp.getId()), owner) ? 0 : 1;
+    }
+
+    /// The embedded Quays a copy would bring, which is what [#moveChildren] moves. A bare `QuayRef`
+    /// stays behind, so counting it would rank a copy on children it does not hand over.
+    static int nQuays(StopPlace sp) {
+        if (sp.getQuays() == null) return 0;
+        int n = 0;
+        for (JAXBElement<?> el : sp.getQuays().getQuayRefOrQuay()) {
+            if (el.getValue() instanceof Quay) n++;
+        }
+        return n;
     }
 
     /// The country a cluster's members' real UIC codes vote for, ties by border precedence. Null when
