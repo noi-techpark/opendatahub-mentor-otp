@@ -100,6 +100,7 @@ JDRV_fix-itc-trailing-link       = fix/FixItcTrailingLink.java
 JDRV_stitch-split-journeys       = fix/StitchSplitJourneys.java
 JDRV_flatten-wrapped-names       = fix/FlattenWrappedNames.java
 JDRV_align-italo-stop-names      = fix/AlignItaloStopNames.java
+JDRV_sort-italo-sequences        = fix/SortItaloSequences.java
 JDRV_bind-quayless-assignments   = fix/BindQuaylessAssignments.java
 
 # -D knobs. Each one below differs from the jar's default and leaves the output byte-identical.
@@ -822,6 +823,16 @@ $(foreach f,$(RAP_FEEDS),$(eval $(call rap_op_rules,$(call rap_region,$(f)),$(ca
 # TrainNumber synthesis rather than race it, and it writes names the $(IT_RAIL_DB) merge then folds
 # on. normalize-it-ids is kept though it is inert on a feed whose ids are uniformly `IT::`: the
 # modal-space vote excludes that form and finds no home, so no rule fires and nothing is rewritten.
+#
+# sort-italo-sequences runs first, on the raw load. Italo emits pointsInSequence and passingTimes in
+# lexical order of the child id -- `:1, :10, :11, :12, :2 … :9` -- while the `order` attributes on the
+# pattern points are correct; 397 of its 1,364 patterns carry more than nine points and are therefore
+# mis-sequenced. Everything downstream reads a stop sequence as list order rather than by `order`
+# (XbScan.stopRefs returns refs in passing-time order and XbScan.node takes the last element as the
+# terminus), so the repair belongs ahead of every stage rather than at the end of this chain.
+#
+# Two of the four passes below are Italo-specific by name. A second OAP operator would need both of
+# them gated on $(1) rather than this template growing a third.
 define oap_op_rules
 $$(INPUT_DIR)/it-oap-$(1)-$(2).xml.gz: | $$(INPUT_DIR) $$(STATE_DIR)
 	$$(call fetch_src,oap-$(1)-dl,fetching OAP $(1) (cciss asset $(2)),$$(call RAP_URL,$(2)),$$@,$$(call rap_validator,$(2)))
@@ -831,12 +842,13 @@ refetch-oap-$(1): | $$(INPUT_DIR) $$(STATE_DIR)
 
 $$(DATA_DIR)/it-oap-$(1).lmdb: $$(INPUT_DIR)/it-oap-$(1)-$(2).xml.gz $$(IT2_DB) | $$(DATA_DIR) $$(TOOLKIT_JAR)
 	$$(call stage,oap-$(1),loading OAP $(1) -> $$(notdir $$@))
-	rm -rf $$@ $$@.tmp $$@.raw.tmp $$@.ids.tmp $$@.align.tmp
+	rm -rf $$@ $$@.tmp $$@.raw.tmp $$@.seq.tmp $$@.ids.tmp $$@.align.tmp
 	$$(call drv,netex-to-db,FEED) $$< $$@.raw.tmp
-	$$(call drv,normalize-it-ids,FEED) $$@.raw.tmp $$@.ids.tmp
+	$$(call drv,sort-italo-sequences,FEED) $$@.raw.tmp $$@.seq.tmp
+	$$(call drv,normalize-it-ids,FEED) $$@.seq.tmp $$@.ids.tmp
 	$$(call drv,align-italo-stop-names,FEED) $$@.ids.tmp $$(IT2_DB) $$@.align.tmp
 	$$(call drv,it-rap-db-to-db,FEED) $$@.align.tmp $$@.tmp
-	rm -rf $$@.raw.tmp $$@.ids.tmp $$@.align.tmp && mv $$@.tmp $$@
+	rm -rf $$@.raw.tmp $$@.seq.tmp $$@.ids.tmp $$@.align.tmp && mv $$@.tmp $$@
 	$$(call stage_done,oap-$(1))
 endef
 $(foreach f,$(OAP_FEEDS),$(eval $(call oap_op_rules,$(call oap_name,$(f)),$(call oap_id,$(f)))))

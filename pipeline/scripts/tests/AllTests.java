@@ -40,6 +40,7 @@ public class AllTests {
         TestResolveMentzLineVersions.class,
         TestRewriteStaSspIds.class,
         TestSanitizeStopAssignments.class,
+        TestSortItaloSequences.class,
         TestSplitJourneys.class,
         TestSspCountryCensus.class,
         TestSspSynthesis.class,

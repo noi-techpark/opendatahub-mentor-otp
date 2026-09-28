@@ -483,6 +483,17 @@ Circumvesuviana station and one is a ferry terminal.
 
 Italo types all 70 as `railStation` with `TransportMode` `rail`, the coaches included.
 
+It emits its repeated children in lexical order of the child id rather than in `order`:
+`pointsInSequence` arrives `:1, :10, :11, :12, :2 … :9`, and each journey's `passingTimes` in the same
+shuffle. The `order` attributes on the pattern points are correct, so the sequence is recoverable, and
+`fix/SortItaloSequences.java` restores it at the head of the OAP chain. A `TimetabledPassingTime`
+carries no `order`, so a journey is sequenced by the `order` of the pattern point its
+`PointInJourneyPatternRef` names; a journey whose pattern cannot be sequenced is left as is. 397 of the
+1,364 patterns carry more than nine points and are therefore affected; a nine-point pattern sorts the
+same either way. This matters because the corridor reads a stop sequence as list order —
+`XbScan.stopRefs` returns refs in passing-time order and `XbScan.node` takes the last element as the
+terminus — so untouched, a twelve-stop journey would end six stops early.
+
 FlixBus registers with the NAP too, as organisation `1845536`. That asset is the Italian slice --
 29 journeys over 4 lines -- and the FlixBus row above carries the whole pan-European export
 instead.
