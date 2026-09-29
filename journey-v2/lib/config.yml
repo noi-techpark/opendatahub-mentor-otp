@@ -22,6 +22,10 @@ brandByDomain:
 reportIssue:
   mailto: info@noi.bz.it
 
+# Timezone of the transit system, used to properly display stop times for
+# users outside this timezone. Matches transitModelTimeZone in build-config.json.
+homeTimezone: Europe/Rome
+
 # To use OTP-RR with your own OTP deployment, at a minimum you will need to set the
 # host and port under the api section (for example to http://localhost and 8080).
 # The v2 configuration item here refers to OTP 2.x, not a versioned API with base URLs
@@ -348,6 +352,8 @@ modes:
       label: Subway
     - mode: FERRY
       label: Ferry
+    - mode: AIRPLANE
+      label: Airplane
 
 # # The following modules require the datastoreUrl and trinetReDirect properties
 # # to be set. Note: Most of these components are currently only configured for
