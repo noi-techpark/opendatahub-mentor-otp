@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=docker.io/opentripplanner/opentripplanner:2.11.0_2026-09-20T17-51
+ARG BASE_IMAGE=docker.io/lehrenfried/opentripplanner:stop-place-psa
 FROM ${BASE_IMAGE}
 
 WORKDIR /var/otp
