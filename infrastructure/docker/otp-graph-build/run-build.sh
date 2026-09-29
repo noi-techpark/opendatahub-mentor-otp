@@ -3,47 +3,38 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+# What cron runs. Owns the log directory, the OTP configuration the build reads, and the handover of
+# the finished graph to the serving container.
+
 set -e
+set -o pipefail
+
 DATE="$(date +%Y%m%d_%H%M%S)"
 
-LOGDIR="/graph/log"
-mkdir -p $LOGDIR
-
-# Copy static files needed by build-graph.sh into /graph so relative paths resolve
-# and so they are accessible when OTP mounts the volume in its own container
-for f in switzerland-italy.geojson \
-         build-config.json otp-config.json router-config.json; do
-  cp --remove-destination "/build/$f" "/graph/$f"
-done
+WORK=/build
+LOGDIR="$WORK/log"
+mkdir -p "$LOGDIR" "$WORK/graph"
 
 # Retain only the last 14 days of logs
 find "$LOGDIR" -type f -mtime +14 -delete
 
-cd /graph
-set -o pipefail
+# The configs OTP reads, into its base directory. install -C leaves a file whose contents already
+# match untouched, timestamp included: build-config.json is an ordinary prerequisite of
+# streetGraph.obj, the other two of graph.obj, so a fresh timestamp forces that rebuild.
+for f in build-config.json otp-config.json router-config.json; do
+  install -C -m 644 "/app/$f" "$WORK/graph/$f"
+done
 
+bash /app/build-graph.sh 2>&1 | tee "$LOGDIR/graph.${DATE}.log"
 
-# Convert switzerland NeTEx to EPIP format
-NETEX_ZIP=/graph/data/switzerland.epip.netex.zip
-NETEX_LOG="$LOGDIR/netex.swiss.${DATE}.log"
-if [ ! -f "$NETEX_ZIP" ] || [ "$(( $(date +%s) - $(stat -c %Y "$NETEX_ZIP") ))" -gt $((3 * 86400)) ]; then
-  OUTPUT_ZIP_FILE="$NETEX_ZIP" bash /build/build-switzerland-netex.sh 2>&1 | tee "$NETEX_LOG"
-else
-  echo "Skipping Switzerland NeTEx build: $NETEX_ZIP is less than 24h old" | tee "$NETEX_LOG"
-fi
-
-
-# Build STA netex
-NETEX_STA_LOG="$LOGDIR/build.netex.sta.${DATE}.log"
-OUTPUT_ZIP_FILE="/graph/data/sta.epip.netex.zip" bash /build/build-sta-netex.sh 2>&1 | tee "$LOGDIR/netex.sta.${DATE}.log"
-
-
-# Build OTP graph
-bash /build/build-graph.sh 2>&1 | tee "$LOGDIR/graph.${DATE}.log"
-
-# Atomically publish the new graph via rename so OTP's inotifywait sees a single moved_to
-# event only after the build is fully complete, never mid-write
-if [ -f /graph/graph.obj ]; then
-  mv /graph/graph.obj /graph/graph.obj.publishing
-  mv /graph/graph.obj.publishing /graph/graph.obj
+# Hand the new graph to the serving container, which watches /graph for it.
+#
+# /graph and $WORK are separate mounts, and rename(2) returns EXDEV across a mount point even when
+# both sides are one filesystem. A plain mv falls back to copy-then-unlink straight onto the watched
+# path and exposes a partial graph. Copying to a sibling name under /graph first leaves a rename
+# that stays within one mount: atomic, and a single moved_to for the watcher.
+if [ -f "$WORK/graph/graph.obj" ]; then
+  cp "$WORK/graph/graph.obj" /graph/graph.obj.tmp
+  mv /graph/graph.obj.tmp /graph/graph.obj
+  echo "published $(date '+%F %T'): $(stat -c %s /graph/graph.obj) bytes"
 fi

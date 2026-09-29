@@ -6,7 +6,7 @@
 # Pelias OSM importer (and `pelias prepare`) reads it — prepare only handles one
 # .pbf. osmium-tool does the merge.
 
-FROM debian:bookworm-slim
+FROM docker.io/library/debian:bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends osmium-tool \

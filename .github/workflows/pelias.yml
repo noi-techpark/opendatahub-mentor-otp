@@ -129,3 +129,4 @@ jobs:
             --limit=prod \
             --extra-vars "project_name=${{ env.PROJECT_NAME }}" \
             --extra-vars "release_name=$RELEASE_NAME"
+
