@@ -28,7 +28,8 @@
       "feedId": "netex",
       "sharedFilePattern": "shared-.*\\.xml",
       "sharedGroupFilePattern": "(g\\d+)-shared\\.xml",
-      "groupFilePattern": "(g\\d+)-\\d+\\.xml"
+      "groupFilePattern": "(g\\d+)-\\d+\\.xml",
+      "allowStopPlaceAsPassengerStopAssignment": true
     }
   ],
   "osm": [
