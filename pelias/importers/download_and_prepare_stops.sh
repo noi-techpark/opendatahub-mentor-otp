@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+set -euo pipefail
+
 STOP_JSON_FILE=./data/csv-importer/stops.json
 STOP_CSV=./data/csv-importer/stops.csv
 

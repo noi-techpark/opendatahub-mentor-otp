@@ -22,7 +22,12 @@ async function fetchAllPages() {
     while (page <= totalPages) {
         let url = `${ODH_API_URL}/v1/Accommodation?source=discoverswiss&pagesize=${PAGESIZE}&pagenumber=${page}`;
         console.log(`Fetching page ${page}/${totalPages}: ${url}`);
-        let response = await fetch(url).then((res) => res.json());
+        let response = await fetch(url).then((res) => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status} ${res.statusText} for ${url}`);
+            }
+            return res.json();
+        });
         totalPages = response.TotalPages;
         items = items.concat(response.Items);
         page++;
@@ -34,4 +39,7 @@ async function fetchAllPages() {
 fetchAllPages().then((items) => {
     fs.writeFileSync(EXPORT_FILE, JSON.stringify(items, null, 2));
     console.log(`Wrote ${items.length} discoverswiss accommodation records to ${EXPORT_FILE}`);
+}).catch((e) => {
+    console.error("Failed to fetch discoverswiss accommodation:", e);
+    process.exit(1);
 });

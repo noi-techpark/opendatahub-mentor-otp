@@ -24,15 +24,29 @@ const OTP_GRAPH_URL = process.env.OTP_GRAPH_URL || 'https://v2.otp.opendatahub.c
 console.log(`Using OTP instance: ${OTP_GRAPH_URL}`);
 GraphqlOtp.query(OTP_GRAPH_URL, GraphqlOtp.queries.getAllPoi)
     .then((data) => {
+        if (!data.data) {
+            throw new Error(`OTP GraphQL error: ${JSON.stringify(data.errors)}`);
+        }
+        if (data.errors) {
+            console.warn(`OTP returned ${data.errors.length} GraphQL errors, first: ${data.errors[0].message}`);
+        }
         let stops = data.data.stops;
         let stations = data.data.stations;
         let vehicleParkings = data.data.vehicleParkings;
         let rentalVehicles = data.data.rentalVehicles;
         let vehicleRentalStations = data.data.vehicleRentalStations;
+
+        if (!stops || stops.length === 0) {
+            throw new Error("OTP returned no stops");
+        }
         processStops(stops, stations);
         processVehicleParkings(vehicleParkings);
         processRentalVehicles(rentalVehicles);
         processVehicleRentalStations(vehicleRentalStations);
+    })
+    .catch((e) => {
+        console.error("Failed to fetch POI from OTP:", e);
+        process.exit(1);
     });
 
 
@@ -143,7 +157,14 @@ function processStops(stops, stations) {
     });
     
     // Save the processed points
-    fs.writeFileSync(EXPORT_STOPS, JSON.stringify(poi, null, 2));  
+    let fd = fs.openSync(EXPORT_STOPS, "w");
+    fs.writeSync(fd, "[\n");
+    poi.forEach((p, i) => {
+        fs.writeSync(fd, (i > 0 ? ",\n" : "") + JSON.stringify(p, null, 2));
+    });
+    fs.writeSync(fd, "\n]\n");
+    fs.closeSync(fd);
+    console.log(`Wrote ${poi.length} stops to ${EXPORT_STOPS}`);
 
 }
 

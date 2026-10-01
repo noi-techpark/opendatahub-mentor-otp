@@ -2,11 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 
-curl "https://tourism.api.opendatahub.com/v1/ODHActivityPoi?pagesize=50000" > ./data/csv-importer/touristic-poi-all.json
-curl "https://tourism.api.opendatahub.com/v1/STA/ODHActivityPoi?language=en&referer=SuedtirolMobilWeb&fields=Id%2CDetail.en.Title%2CContactInfos.en.City&pagesize=20000" > ./data/csv-importer/touristic-poi-filtered-set.json
+set -euo pipefail
 
-curl "https://tourism.api.opendatahub.com/v1/Accommodation?pagesize=20000" > ./data/csv-importer/accomodation-poi-all.json 
-curl "https://tourism.api.opendatahub.com/v1/STA/Accommodation?language=en&referer=SuedtirolMobilWeb&fields=Id%2CAccoDetail.en.Name%2CAccoDetail.en.City&pagesize=10000" > ./data/csv-importer/accomodation-poi-filtered-set.json
+curl -fsS --retry 3 --retry-delay 10 --retry-all-errors "https://tourism.api.opendatahub.com/v1/ODHActivityPoi?pagesize=50000" -o ./data/csv-importer/touristic-poi-all.json
+curl -fsS --retry 3 --retry-delay 10 --retry-all-errors "https://tourism.api.opendatahub.com/v1/STA/ODHActivityPoi?language=en&referer=SuedtirolMobilWeb&fields=Id%2CDetail.en.Title%2CContactInfos.en.City&pagesize=20000" -o ./data/csv-importer/touristic-poi-filtered-set.json
+
+curl -fsS --retry 3 --retry-delay 10 --retry-all-errors "https://tourism.api.opendatahub.com/v1/Accommodation?pagesize=20000" -o ./data/csv-importer/accomodation-poi-all.json
+curl -fsS --retry 3 --retry-delay 10 --retry-all-errors "https://tourism.api.opendatahub.com/v1/STA/Accommodation?language=en&referer=SuedtirolMobilWeb&fields=Id%2CAccoDetail.en.Name%2CAccoDetail.en.City&pagesize=10000" -o ./data/csv-importer/accomodation-poi-filtered-set.json
 
 node ./importers/process-touristic-poi.js
 node ./importers/fetch-discoverswiss-accomodation.js
