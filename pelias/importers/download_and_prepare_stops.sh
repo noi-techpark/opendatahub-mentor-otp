@@ -4,13 +4,8 @@
 
 set -euo pipefail
 
-STOP_JSON_FILE=./data/csv-importer/stops.json
-STOP_CSV=./data/csv-importer/stops.csv
-
-
 # fetch JSON data from OpenTripPlanner 
 node ./importers/fetch-poi.js
 
-# transform JSON data to CSV with jq
-echo "source,layer,id,name,lat,lon,popularity,categories,addendum_json_stop" > $STOP_CSV
-cat $STOP_JSON_FILE | jq --raw-output '.[] | ["otp","stops",.gtfsId,.name,.lat,.lon,.popularity,(.categories|tostring),(.|tostring)] | @csv' >> $STOP_CSV
+# transform JSON data to CSV
+sh ./importers/stops_to_csv.sh

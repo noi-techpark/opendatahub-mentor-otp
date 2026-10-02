@@ -10,6 +10,7 @@ let GraphqlOtp = require('./graphql_otp.js');
 // Config
 const DATA_DIR = __dirname + "/../data/csv-importer";
 const EXPORT_STOPS = DATA_DIR + "/stops.json";
+const EXPORT_TRANSPORT_STOPS = DATA_DIR + "/transport-stops.json";
 const EXPORT_PARKINGS = DATA_DIR + "/parkings.json";
 const EXPORT_RENTAL_VEHICLES = DATA_DIR + "/rental_vehicles.json";
 const EXPORT_RENTAL_STATIONS = DATA_DIR + "/rental_stations.json";
@@ -125,10 +126,10 @@ function processStops(stops, stations) {
         let popularity = 0;
         
         if(p.vehicleMode.includes("AIRPLANE")) {
-            popularity += 1500;
+            popularity += 20000;
         }
         if(p.vehicleMode.includes("RAIL")) {
-            popularity += 1000;
+            popularity += 5000;
         }
         if(p.vehicleMode.includes("BUS")) {
             popularity += 500;
@@ -165,6 +166,15 @@ function processStops(stops, stations) {
     fs.writeSync(fd, "\n]\n");
     fs.closeSync(fd);
     console.log(`Wrote ${poi.length} stops to ${EXPORT_STOPS}`);
+
+    // Compact air/rail subset used by dedupe_osm_transport.js, which can't
+    // parse the full stops.json (too large for a single string)
+    const transportModes = ["AIRPLANE", "RAIL", "SUBWAY", "TRAM"];
+    let transportStops = poi
+        .filter((p) => p.vehicleMode.some((vm) => transportModes.includes(vm)))
+        .map((p) => ({ gtfsId: p.gtfsId, name: p.name, lat: p.lat, lon: p.lon, vehicleMode: p.vehicleMode }));
+    fs.writeFileSync(EXPORT_TRANSPORT_STOPS, JSON.stringify(transportStops));
+    console.log(`Wrote ${transportStops.length} air/rail stops to ${EXPORT_TRANSPORT_STOPS}`);
 
 }
 

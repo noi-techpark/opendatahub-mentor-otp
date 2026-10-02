@@ -91,10 +91,17 @@ if [ "${FIRST_RUN}" = "true" ]; then
     pelias import oa
     pelias import osm
     pelias import polylines
+
+    log "Replacing OSM air/rail venues that duplicate OTP stops..."
+    docker compose run --rm pelias-opendatahub-importer sh importers/dedupe_osm_transport.sh
+
     pelias import csv
 else
     log "Removing stale stops and POI from Elasticsearch..."
     docker compose run --rm pelias-opendatahub-importer sh importers/delete_old_poi_and_stops.sh
+
+    log "Replacing OSM air/rail venues that duplicate OTP stops..."
+    docker compose run --rm pelias-opendatahub-importer sh importers/dedupe_osm_transport.sh
 
     log "Re-importing CSV data..."
     pelias import csv
