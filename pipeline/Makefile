@@ -3,10 +3,9 @@
 # elsewhere and sitting next to this file: netex-toolkit-shaded.jar and otp-shaded.jar, both uber
 # jars carrying their own dependencies. Neither is committed -- .gitignore covers *.jar.
 #
-# Both fetch themselves when missing -- netex-toolkit-shaded.jar from $(TOOLKIT_JAR_URL), a public
-# release asset; otp-shaded.jar from GitHub Packages, which authenticates every read, so that one
-# needs GH_TOKEN in the environment. `make download-toolkit` and `make download-otp` replace a jar
-# that is already present.
+# netex-toolkit-shaded.jar fetches itself when missing, from $(TOOLKIT_JAR_URL), a public release
+# asset; `make download-toolkit` replaces one that is already present. otp-shaded.jar is put there
+# by hand, or named by OTP_JAR where it lies.
 #
 # Every driver this runs lives in scripts/, so the jars are the only thing arriving from outside.
 
@@ -419,28 +418,15 @@ EPIP_ENVELOPE_FLAGS := \
     $(if $(EPIP_FRAME_VERSION),--frame-version $(EPIP_FRAME_VERSION))
 
 # ---- OTP graph -------------------------------------------------------------------------------
-OTP_JAR ?= $(ROOT)/otp-shaded.jar
-
-# Where a missing $(OTP_JAR) comes from. This is a Maven repository, so the jar's filename has to be
-# looked up before it can be fetched, and GitHub Packages authenticates every read -- an anonymous
-# GET of maven-metadata.xml is 401, public artefact or not. GH_TOKEN needs the read:packages scope
-# and travels the way MV_USERNAME/MV_PASSWORD do: environment only, never a file. It is sent to
-# maven.pkg.github.com alone.
+# The OTP this loads is the `noi-pipeline` branch of an OpenTripPlanner checkout, which carries
+# NeTEx fixes dev-2.x has not merged; some of them decide which journeys, stops and geometries
+# survive the load.
 #
-# OTP_VERSION is a Maven version, not a git tag. 2.10.0-SNAPSHOT is what dev-2.x deploys and it is
-# mutable: every push to that branch overwrites it, so a fresh checkout gets whatever built last,
-# and OTP's serialization id moves often enough for that to force a street rebuild. OTP_SNAPSHOT
-# pins one timestamped build -- `make OTP_SNAPSHOT=2.10.0-20260909.123008-1` -- and skips the
-# lookup. OTP_JAR_URL overrides everything, and reaches a mirror, a file:// path, or a local build
-# of the `noi-pipeline` branch, which carries NeTEx fixes dev-2.x has not merged; some of them
-# decide which journeys, stops and geometries survive the load.
-OTP_REPO     ?= opentripplanner/OpenTripPlanner
-OTP_GROUP    ?= org/opentripplanner
-OTP_ARTIFACT ?= otp-shaded
-OTP_VERSION  ?= 2.10.0-SNAPSHOT
-OTP_SNAPSHOT ?=
-OTP_JAR_URL  ?=
-OTP_BASE_URL ?= https://maven.pkg.github.com/$(OTP_REPO)/$(OTP_GROUP)/$(OTP_ARTIFACT)/$(OTP_VERSION)
+# $(OTP_JAR) is an order-only prerequisite of $(STREET_GRAPH) and $(GRAPH): checked for existence,
+# and its mtime dirties neither graph. Empty is a valid value, and the check goes with it:
+# build-graph.sh runs OTP from a container image and overrides otp_run, so there is no jar there for
+# the rule to find.
+OTP_JAR ?= $(ROOT)/otp-shaded.jar
 
 OTP_CONFIGS := $(addprefix $(OTP_DIR)/,build-config.json router-config.json otp-config.json)
 # Measured heaps: street (OSM+DEM), transit layering, serving. Transit below 54G G1-death-spirals
@@ -497,7 +483,7 @@ endef
 .DELETE_ON_ERROR:
 
 .PHONY: all netex feeds xb graph street serve data help test compile-gate \
-	download-all download-toolkit download-otp \
+	download-all download-toolkit \
 	download-feeds download-swiss download-trenitalia download-austria download-sta download-rap \
 	rap-versions $(RAP_REFETCH) \
 	download-osm osm-extract download-parking verify-inputs repair-inputs \
@@ -517,17 +503,15 @@ help: ## Show this help
 	@echo "              <- $(TOOLKIT_JAR_URL)  (fetched when missing)"
 	@echo "  scripts   = $(SCRIPTS)"
 	@echo "  otp       = $(OTP_JAR)  (base dir $(OTP_DIR))"
-	@echo "              <- $(if $(OTP_JAR_URL),$(OTP_JAR_URL)  (fetched when missing),$(OTP_BASE_URL)  (fetched when missing, needs GH_TOKEN))"
+	@echo "              <- put there by hand, or named by OTP_JAR=<path>"
 	@echo "  FEEDSET   = $(FEEDSET)   (221 RAP feeds + Trenitalia + STA + CH + 9x AT)"
 	@echo "  EPIP_SHARDS = $(EPIP_SHARDS)   EPIP_JOURNEYS_PER_FILE = $(EPIP_JOURNEYS_PER_FILE)"
 	@echo "  envelope  = $(EPIP_ENVELOPE_FLAGS)"
 	@echo "              set EPIP_PUBLICATION_TIMESTAMP and EPIP_FRAME_VERSION for a reproducible zip"
 	@echo
-	@echo "Two credentials, both taken from the environment and never stored here. The Austrian"
-	@echo "feeds need a data.mobilitaetsverbuende.at login; the OTP jar needs a GitHub token with"
-	@echo "the read:packages scope:"
+	@echo "One credential, taken from the environment and never stored here: the Austrian feeds"
+	@echo "need a data.mobilitaetsverbuende.at login."
 	@echo "  export MV_USERNAME=you@example.com MV_PASSWORD='...'"
-	@echo "  export GH_TOKEN=ghp_..."
 	@echo
 	@echo "Any variable: make print-<NAME>"
 
@@ -567,7 +551,7 @@ endef
 
 # Every artefact that arrives from outside. $(ELEVATION_ZIP) is the one download absent from it: its
 # file rule fetches the tile when it is missing, and nothing re-fetches a static SRTM tile.
-download-all: download-toolkit download-otp download-feeds download-parking download-osm ## Re-fetch every external artefact: both jars and every source
+download-all: download-toolkit download-feeds download-parking download-osm ## Re-fetch every external artefact: the toolkit jar and every source
 
 download-feeds: download-swiss download-trenitalia download-austria download-sta download-rap ## Re-fetch the source feeds, keeping any whose bytes are unchanged
 
@@ -587,41 +571,12 @@ $(TOOLKIT_JAR):
 	  echo "netex-toolkit checkout, then copy toolkit/target/$(TOOLKIT_ASSET) to $@." >&2; exit 1; }
 	$(call stage_done,toolkit-dl)
 
-# The OTP jar, on the same terms: no prerequisites, so it fires only when the jar is missing.
-#
-# A -SNAPSHOT is deployed under a timestamped filename (otp-shaded-2.10.0-20260909.123008-1.jar),
-# and maven-metadata.xml is what maps the version to it, so the metadata is read first, by a bare
-# curl | python3 as the Austrian token is. A release version needs no lookup; OTP_SNAPSHOT skips it
-# too.
-#
-# The Authorization header must reach maven.pkg.github.com and nothing else: the OTP_JAR_URL branch
-# sends none, so a mirror cannot see the token. curl drops the header itself on the cross-host
-# redirect GitHub issues to its blob store, where the URL signs itself.
+# No prerequisites, so this fires when the jar is missing, and stops the build before a JVM starts.
 $(OTP_JAR):
-	$(call stage,otp-dl,fetching $(notdir $@) <- $(if $(OTP_JAR_URL),$(OTP_JAR_URL),$(OTP_BASE_URL)))
-	@if [ -n "$(OTP_JAR_URL)" ]; then \
-	   $(FETCH) "$(OTP_JAR_URL)" $@; \
-	 else \
-	   test -n "$${GH_TOKEN:-}" && \
-	   { ver="$(OTP_SNAPSHOT)"; test -n "$$ver" || \
-	     case "$(OTP_VERSION)" in \
-	       *-SNAPSHOT) ver=$$(curl -fsS -H "Authorization: Bearer $$GH_TOKEN" \
-	           "$(OTP_BASE_URL)/maven-metadata.xml" | python3 -c 'import sys,xml.etree.ElementTree as E; \
-	v = next((s.findtext("value") for s in E.parse(sys.stdin).iterfind("versioning/snapshotVersions/snapshotVersion") \
-	          if s.findtext("extension") == "jar" and not s.findtext("classifier")), None); \
-	print(v or sys.exit(1))' 2>/dev/null) ;; \
-	       *)          ver="$(OTP_VERSION)" ;; \
-	     esac; } && \
-	   test -n "$$ver" && \
-	   $(FETCH) "$(OTP_BASE_URL)/$(OTP_ARTIFACT)-$$ver.jar" $@ -H "Authorization: Bearer $$GH_TOKEN"; \
-	 fi || { echo >&2; \
-	  echo "$(notdir $@) could not be fetched from $(OTP_BASE_URL)." >&2; \
-	  echo "GH_TOKEN must hold a GitHub token with the read:packages scope -- GitHub Packages" >&2; \
-	  echo "answers 401 to an anonymous read even for a public artefact. Pin one build with" >&2; \
-	  echo "OTP_SNAPSHOT=<version>, point somewhere else with OTP_JAR_URL=<url> (a mirror or a" >&2; \
-	  echo "file:// path), or build it: 'mvn -B -ntp package -DskipTests' in the OpenTripPlanner" >&2; \
-	  echo "checkout, then copy otp-shaded/target/$(OTP_ARTIFACT)-$(OTP_VERSION).jar to $@." >&2; exit 1; }
-	$(call stage_done,otp-dl)
+	@echo "$(notdir $@) is missing." >&2; \
+	 echo "Run 'mvn -B -ntp package -DskipTests' in an OpenTripPlanner checkout on the" >&2; \
+	 echo "noi-pipeline branch, then copy otp-shaded/target/otp-shaded-*.jar to $@," >&2; \
+	 echo "or point OTP_JAR=<path> at one built elsewhere." >&2; exit 1
 
 $(CH_SRC): | $(INPUT_DIR) $(STATE_DIR)
 	$(call fetch_src,swiss-dl,fetching Swiss NeTEx export,$(SWISS_PERMALINK),$@)
@@ -638,18 +593,11 @@ $(STA_SRC): | $(INPUT_DIR) $(STATE_DIR)
 # per command. Written as one `rm -f X && $(MAKE) X`, the whole line qualifies and `make -n
 # download-toolkit` really deletes the jar it was only supposed to describe.
 #
-# Only the two jars keep that shape. A replacement jar is wanted whole and wanted new, so there is
-# no validator for the delete to throw away.
+# A replacement jar is wanted whole and wanted new, so there is no validator for the delete to
+# throw away.
 download-toolkit: ## Replace the toolkit jar from TOOLKIT_JAR_URL (TOOLKIT_VERSION=<tag> pins a release)
 	rm -f $(TOOLKIT_JAR)
 	$(MAKE) $(TOOLKIT_JAR)
-
-# $(OTP_JAR) is an ordinary prerequisite of $(STREET_GRAPH), so the replacement's mtime dirties
-# streetGraph.obj and the next `make graph` runs a full --buildStreet. Keep it ordinary: a different
-# OTP means a different graph, and its serialization id may refuse the old one anyway.
-download-otp: ## Replace the OTP jar from GitHub Packages (OTP_SNAPSHOT=<version> pins a build)
-	rm -f $(OTP_JAR)
-	$(MAKE) $(OTP_JAR)
 
 # What each source answers a refresh with is tabulated in docs/datasources.md.
 download-swiss: | $(INPUT_DIR) $(STATE_DIR) ## Re-fetch the most recent Swiss NeTEx export
@@ -1050,7 +998,7 @@ download-parking: | $(INPUT_DIR) $(STATE_DIR) ## Re-fetch the parking NeTEx feed
 
 # Phase 1: street graph from OSM + DEM only. --buildStreet implies --save and writes
 # streetGraph.obj, which is reused across transit-feed refreshes.
-$(STREET_GRAPH): $(OTP_JAR) $(OTP_DIR)/build-config.json $(REGION_PBF) $(DEM_TIF)
+$(STREET_GRAPH): $(OTP_DIR)/build-config.json $(REGION_PBF) $(DEM_TIF) | $(OTP_JAR)
 	$(call stage,street,--buildStreet -> $(notdir $@))
 	$(call otp_run,$(STREET_HEAP),--abortOnUnknownConfig --buildStreet,$(OTP_BUILD_JVM))
 	$(call stage_done,street)
@@ -1058,7 +1006,7 @@ $(STREET_GRAPH): $(OTP_JAR) $(OTP_DIR)/build-config.json $(REGION_PBF) $(DEM_TIF
 street: $(STREET_GRAPH) ## Build only the street graph (phase 1: OSM + DEM)
 
 # Phase 2: layer transit onto the saved street graph. A transit-feed-only change reruns just this.
-$(GRAPH): $(STREET_GRAPH) $(OTP_JAR) $(OTP_CONFIGS) $(NETEX_ZIP) $(PARKING_ZIP)
+$(GRAPH): $(STREET_GRAPH) $(OTP_CONFIGS) $(NETEX_ZIP) $(PARKING_ZIP) | $(OTP_JAR)
 	$(call stage,graph,--loadStreet --save -> $(notdir $@))
 	$(call otp_run,$(TRANSIT_HEAP),--abortOnUnknownConfig --loadStreet --save,$(OTP_BUILD_JVM))
 	$(call stage_done,graph)

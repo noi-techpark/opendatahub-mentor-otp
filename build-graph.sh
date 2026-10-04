@@ -45,20 +45,12 @@ TOOLKIT_JAR="$WORK/netex-toolkit-shaded.jar"
 
 mkdir -p "$WORK"
 
-# The OTP version, as make sees it. The pipeline takes its OTP as an ordinary prerequisite of
-# streetGraph.obj, so OTP_JAR pointed at this file gives a changed image the effect a changed jar
-# has: the street graph is rebuilt. Written only when the reference changes, because the mtime is
-# what triggers that rebuild.
-STAMP="$WORK/otp-image.stamp"
-if [ "$(cat "$STAMP" 2>/dev/null)" != "$OTP_IMAGE" ]; then
-  printf '%s\n' "$OTP_IMAGE" > "$STAMP"
-fi
-
 # ROOT stays the checkout: the pipeline derives its scripts/ and geo/ from it. The state directories
 # are the ones that have to outlive the container, and only they move to the work volume.
 #
 # otp_run is the pipeline's one OTP command line; overriding it sends the OTP phases to
-# otp-docker.sh.
+# otp-docker.sh. OTP_JAR is emptied with it: OTP arrives as $OTP_IMAGE, so there is no jar for the
+# pipeline to find, and an empty value drops its existence check.
 run_make() {
   make -C "$PIPELINE_DIR" -j"${JOBS:-${MAKE_JOBS:-6}}" \
     INPUT_DIR="$WORK/input" \
@@ -66,7 +58,7 @@ run_make() {
     STATE_DIR="$WORK/state" \
     OTP_DIR="$WORK/graph" \
     TOOLKIT_JAR="$TOOLKIT_JAR" \
-    OTP_JAR="$STAMP" \
+    OTP_JAR= \
     OTP_DOCKER="$OTP_DOCKER" \
     "otp_run=\$(OTP_DOCKER) \$(1) \"\$(2)\" \"\$(3)\"" \
     "$@"
