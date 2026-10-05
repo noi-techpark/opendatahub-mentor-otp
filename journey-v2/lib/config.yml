@@ -231,6 +231,7 @@ geocoder:
   # This base URL is required as the libraries will default to using now-defunct
   # mapzen urls
   baseUrl: https://geocoder.otp.opendatahub.testingmachine.eu/v1
+  #baseUrl: http://192.168.2.49:4000/v1
   # This allows the location field dropdown headers to be colored based on Pelias layer
   #resultsColors:
   #  stops: "#007fae"
@@ -672,6 +673,9 @@ language:
       modes:
         airplane: Airplane
     components:
+      NextFlightSuggestion:
+        header: No flight at the selected time
+        body: "Next flights from {from} to {to}:"
       OTP2ErrorRenderer:
         NO_DIRECT_MODE_CONNECTION:
           header: No route found
@@ -874,6 +878,9 @@ language:
         tripDurationFormat: "{hours, plural, =0 {} other {# h }}{minutes} min { seconds,
           plural, =0 {} other {# sec}}"
     components:
+      NextFlightSuggestion:
+        header: Nessun volo all'orario selezionato
+        body: "Prossimi voli da {from} a {to}:"
       A11yPrefs:
         accessibilityRoutingByDefault: Preferisci viaggi accessibili per impostazione predefinita
       AccountSetupFinishPane:
@@ -1980,6 +1987,9 @@ language:
         tripDurationFormat: "{hours, plural, =0 {} other {# Std }}{minutes} Min {
           seconds, plural, =0 {} other {# Sek}}"
     components:
+      NextFlightSuggestion:
+        header: Kein Flug zur gewählten Zeit
+        body: "Nächste Flüge von {from} nach {to}:"
       A11yPrefs:
         accessibilityRoutingByDefault: Bevorzuge standardmäßig barrierefreie Reisen
       AccountSetupFinishPane:

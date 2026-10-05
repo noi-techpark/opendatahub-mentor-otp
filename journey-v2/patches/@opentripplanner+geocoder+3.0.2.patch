@@ -1,0 +1,40 @@
+diff --git a/node_modules/@opentripplanner/geocoder/esm/geocoders/abstract-geocoder.js b/node_modules/@opentripplanner/geocoder/esm/geocoders/abstract-geocoder.js
+index bba1ba6..2eb03bd 100644
+--- a/node_modules/@opentripplanner/geocoder/esm/geocoders/abstract-geocoder.js
++++ b/node_modules/@opentripplanner/geocoder/esm/geocoders/abstract-geocoder.js
+@@ -54,6 +54,16 @@ var Geocoder = /*#__PURE__*/function () {
+           rawGeocodedFeature: feature
+         });
+ 
++        // Transit stops indexed from OTP carry their GTFS id; keep it so
++        // routing can target the stop itself instead of its coordinates.
++        var props = feature.properties || {};
++        var stopGtfsId = props.layer === "stops" && (props.addendum && props.addendum.stop && props.addendum.stop.gtfsId || props.source === "otp" && props.id);
++
++        if (stopGtfsId) {
++          location.id = stopGtfsId;
++          location.type = "stop";
++        }
++
+         return Promise.resolve(location);
+       }
+ 
+diff --git a/node_modules/@opentripplanner/geocoder/lib/geocoders/abstract-geocoder.js b/node_modules/@opentripplanner/geocoder/lib/geocoders/abstract-geocoder.js
+index b7a1dd9..82f4b61 100644
+--- a/node_modules/@opentripplanner/geocoder/lib/geocoders/abstract-geocoder.js
++++ b/node_modules/@opentripplanner/geocoder/lib/geocoders/abstract-geocoder.js
+@@ -44,6 +44,14 @@ var Geocoder = /** @class */ (function () {
+     Geocoder.prototype.getLocationFromGeocodedFeature = function (feature) {
+         if (feature.geometry.type === "Point") {
+             var location_1 = __assign(__assign({}, (0, lonlat_1.fromCoordinates)(feature.geometry.coordinates)), { name: feature.properties.label, rawGeocodedFeature: feature });
++            // Transit stops indexed from OTP carry their GTFS id; keep it so
++            // routing can target the stop itself instead of its coordinates.
++            var props = feature.properties || {};
++            var stopGtfsId = props.layer === "stops" && ((props.addendum && props.addendum.stop && props.addendum.stop.gtfsId) || (props.source === "otp" && props.id));
++            if (stopGtfsId) {
++                location_1.id = stopGtfsId;
++                location_1.type = "stop";
++            }
+             return Promise.resolve(location_1);
+         }
+         return Promise.reject(new Error("Feature is not of type Point."));
