@@ -19,6 +19,11 @@
 /// That feed publishes the geometry and references none of it, and a link is reachable only through
 /// the pattern that names it, so the join is what makes it readable at all.
 ///
+/// `ItaloSequences` puts the Italo OAP export's `pointsInSequence` and `passingTimes` back into
+/// `order` sequence; that feed emits both in lexical order of the child id. It is the one repair here
+/// that spans two classes, because a passing time carries no `order` of its own and can only be
+/// sequenced through the pattern point it names.
+///
 /// A repair that returns an iterator reads only: nothing is inserted, so the same iterator serves
 /// an in-place fix and a db-to-db driver whose target is a different store. Nothing is yielded
 /// unless the repair fired, so an untouched object keeps the bytes it was cloned with.

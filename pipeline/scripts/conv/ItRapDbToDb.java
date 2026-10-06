@@ -9,7 +9,8 @@ package conv;
 // objects rather than over a second decode of the same rows.
 //
 // The authority backfill has to stay per operator: its soleAuthority shortcut assumes 0 or 1
-// Authorities in scope, and nationally there are 385.
+// Authorities in scope, and nationally there are hundreds, most of them synthesised here rather
+// than published.
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;

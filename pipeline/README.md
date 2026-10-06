@@ -3,20 +3,20 @@
 NeTEx feeds → one EPIP zip → an OTP `graph.obj`. The `Makefile` is the whole pipeline;
 `make help` lists every target and prints the resolved paths.
 
-Feed set (`FEEDSET = it-ch-atm-sta-221`): 221 Italian RAP operator feeds across 14 regions, Trenitalia and STA/South
-Tyrol; Switzerland; 9 Austrian Verbund exports.
+Feed set: the Italian RAP operator feeds, Trenitalia and STA/South Tyrol; Switzerland; the Austrian
+Verbund exports; FlixBus long-distance coach. `make help` prints the resolved `FEEDSET` with its
+counts, and [`docs/datasources.md`](docs/datasources.md) carries the per-region inventory.
 
 ## Requires
 
 - On PATH: `java` (JDK 25), `curl`, `python3`, `unzip`, `zip`, `osmium`.
-- Both jars fetch themselves next to the `Makefile` when missing. `netex-toolkit-shaded.jar` comes from a public
-  release asset; `otp-shaded.jar` comes from GitHub Packages, which authenticates every read, so it needs
-  `export GH_TOKEN=…` holding a token with the `read:packages` scope.
+- `netex-toolkit-shaded.jar` fetches itself next to the `Makefile` when missing, from a public release asset.
+- `otp-shaded.jar` has to be there before a graph can be built. The OTP this loads is the branch `noi-pipeline`
+  in an `OpenTripPlanner` checkout, which carries NeTEx fixes `dev-2.x` has not merged: run
+  `mvn -B -ntp package -DskipTests` there and copy `otp-shaded/target/otp-shaded-*.jar` next to the `Makefile`,
+  or point `OTP_JAR=<path>` at it where it lies.
 - The Austrian feeds need a data.mobilitaetsverbuende.at login, read from the environment and never stored here:
   `export MV_USERNAME=you@example.com MV_PASSWORD='…'`.
-- `OTP_VERSION` defaults to what OTP's `dev-2.x` deploys, and that version is overwritten on every push. Pin a
-  build with `OTP_SNAPSHOT=<version>`, or point `OTP_JAR_URL` at a `file://` path to run a patched OTP — the
-  branch `noi-pipeline` in an `OpenTripPlanner` checkout carries NeTEx fixes `dev-2.x` has not merged.
 - Room and RAM: ~1.6 GB of source feeds, ~140 GB of stores for a full chain, a 16 GB heap per country for the EPIP
   conversion (three run concurrently under `make -j`) and 50 GB for the transit graph build.
 
@@ -27,7 +27,7 @@ make help                # targets, artefact paths, the credentials note
 make all                 # everything up to graph/graph.obj
 make netex               # just graph/netex-epip-merged.zip
 make serve               # OTP on :8080
-make download-all        # refresh everything external: both jars and every source
+make download-all        # refresh everything external: the toolkit jar and every source
 make download-feeds      # refresh the sources (a plain `make all` never re-downloads)
 make verify-inputs       # integrity-check input/ ; repair-inputs re-fetches what fails
 make clean               # drop the stores and graphs, keep input/

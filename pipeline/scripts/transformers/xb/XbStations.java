@@ -101,18 +101,18 @@ public final class XbStations {
         Set<String> railStopPoints = new HashSet<>(seen.stopPoints());
         if (!seen.patterns().isEmpty()) {
             for (Map.Entry<String, List<String>> e
-                    : XbMergeStops.patternSspRefs(db, txn).entrySet()) {
+                    : XbStopRefs.patternSspRefs(db, txn).entrySet()) {
                 if (!seen.patterns().contains(e.getKey())) continue;
                 for (String r : e.getValue()) {
                     if (r != null && !r.isEmpty()) railStopPoints.add(r);
                 }
             }
         }
-        return XbMergeStops.servedFromRailSsp(railStopPoints, psas);
+        return XbStopRefs.servedFromRailSsp(railStopPoints, psas);
     }
 
     public static Set<String> railServed(Store db, Txn txn, List<PassengerStopAssignment> psas) {
-        Map<String, List<String>> patternStops = XbMergeStops.patternSspRefs(db, txn);
+        Map<String, List<String>> patternStops = XbStopRefs.patternSspRefs(db, txn);
         XbLines.LineMaps<AllVehicleModesOfTransportEnumeration> modes =
                 XbLines.lineValueMaps(db, txn, Line::getTransportMode);
 
@@ -124,7 +124,7 @@ public final class XbStations {
             }
             addStops(sj, patternStops, railStopPoints);
         }
-        return XbMergeStops.servedFromRailSsp(railStopPoints, psas);
+        return XbStopRefs.servedFromRailSsp(railStopPoints, psas);
     }
 
     /// The journey's transport mode: its own, else its Line's, else null. Some exports tag the mode
@@ -163,7 +163,7 @@ public final class XbStations {
             Set<String> into) {
         if (sj.getCalls() != null) {
             for (Call_VersionedChildStructure c : Calls.of(sj.getCalls())) {
-                String r = XbMergeStops.callRef(c);
+                String r = XbStopRefs.callRef(c);
                 if (r != null && !r.isEmpty()) into.add(r);
             }
         } else if (sj.getJourneyPatternRef() != null) {
@@ -253,7 +253,7 @@ public final class XbStations {
     /// border station has three or four co-located copies, and nearest-only leaves the group
     /// fragmented. That is single linkage, so two rules bound the chain it can build:
     ///
-    /// - a pair whose ids share a [XbMergeStops#namespace] is not unioned. One publisher's records
+    /// - a pair whose ids share a [XbStopRefs#namespace] is not unioned. One publisher's records
     ///   inside the radius are consecutive stops rather than copies of one station: `ch:2:` carries
     ///   metre-gauge halts 96-400 m apart, `IT:ITC1:` a bus corridor.
     /// - a finished cluster wider than [XbProfile#CONSOLIDATE_MAX_DIAMETER_DEG] is dropped whole,
@@ -282,8 +282,8 @@ public final class XbStations {
                         double[] oc = coords.get(other);
                         if (oc == null || other.equals(sp.getId())) continue;
                         if (sep2Deg(c, oc) > r2) continue;
-                        if (XbMergeStops.namespace(sp.getId())
-                                .equals(XbMergeStops.namespace(other))) {
+                        if (XbStopRefs.namespace(sp.getId())
+                                .equals(XbStopRefs.namespace(other))) {
                             counters.unionsRefusedSameNamespace++;
                             continue;
                         }
@@ -336,22 +336,50 @@ public final class XbStations {
     /// The country the station physically sits in decides, and it is voted from the members' REAL
     /// UIC codes: a foreign feed references a station by its true UIC even when the owning feed's own
     /// copy has only a local id, so the codes reveal the owner from the outside. Ties — a border
-    /// station both countries code natively — fall to a fixed precedence. Within the owning country,
-    /// prefer a copy carrying a real UIC, then the smallest id.
+    /// station both countries code natively — fall to a fixed precedence.
+    ///
+    /// Within the owning country the copy with the most quays wins, then a copy carrying a real UIC,
+    /// then the smallest id. Quay count outranks the code because the code identifies the station
+    /// and the quays are the station: a publisher that surveyed the platforms has the names, the
+    /// entrances and the quay types, and a republication that carries only the UIC has none of them.
+    /// The country gate is checked first, so no cross-border election reaches this.
+    ///
+    /// [#nQuays] and the id make the order strict and total, so the result does not depend on the
+    /// order `members` arrives in.
     static StopPlace elect(List<StopPlace> members, Map<String, String> uics) {
         String owner = owningCountry(members, uics);
         StopPlace best = null;
-        long bestKey = 0;
         for (StopPlace sp : members) {
-            long key = (Objects.equals(XbIds.feedCountry(sp.getId()), owner) ? 0 : 2)
-                    + (uics.get(sp.getId()) != null ? 0 : 1);
-            if (best == null || key < bestKey
-                    || (key == bestKey && sp.getId().compareTo(best.getId()) < 0)) {
-                best = sp;
-                bestKey = key;
-            }
+            if (best == null || compareCandidates(sp, best, owner, uics) < 0) best = sp;
         }
         return best;
+    }
+
+    /// `a` against `b` on the election's tiers, negative when `a` is the better copy.
+    private static int compareCandidates(StopPlace a, StopPlace b, String owner,
+            Map<String, String> uics) {
+        int c = Integer.compare(foreign(a, owner), foreign(b, owner));
+        if (c != 0) return c;
+        c = Integer.compare(nQuays(b), nQuays(a));
+        if (c != 0) return c;
+        c = Integer.compare(uics.get(a.getId()) == null ? 1 : 0,
+                uics.get(b.getId()) == null ? 1 : 0);
+        return c != 0 ? c : a.getId().compareTo(b.getId());
+    }
+
+    private static int foreign(StopPlace sp, String owner) {
+        return Objects.equals(XbIds.feedCountry(sp.getId()), owner) ? 0 : 1;
+    }
+
+    /// The embedded Quays a copy would bring, which is what [#moveChildren] moves. A bare `QuayRef`
+    /// stays behind, so counting it would rank a copy on children it does not hand over.
+    static int nQuays(StopPlace sp) {
+        if (sp.getQuays() == null) return 0;
+        int n = 0;
+        for (JAXBElement<?> el : sp.getQuays().getQuayRefOrQuay()) {
+            if (el.getValue() instanceof Quay) n++;
+        }
+        return n;
     }
 
     /// The country a cluster's members' real UIC codes vote for, ties by border precedence. Null when

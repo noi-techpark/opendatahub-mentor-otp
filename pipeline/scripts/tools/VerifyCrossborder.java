@@ -66,9 +66,9 @@ public final class VerifyCrossborder {
 
     /// One consolidated StopPlace, as far as this report needs it.
     ///
-    /// Both names are kept because either can be the useless one: the Trenitalia RAP feeds put the
-    /// UIC code in `Name` and the station in `ShortName` (`830008217` / `ROMA TIBURTINA`), while
-    /// the Verbund feeds publish neither. An export built after `CodeNames` ran carries the station
+    /// Both names are kept because either can be the useless one: the GTFS-converted RAP feeds put
+    /// the stop's code in `Name` and its name in `ShortName` (`0002` / `Piazza degli Irpini`), while
+    /// the Verbund feeds publish neither. An export built after `CodeNames` ran carries the name
     /// in `Name`, so the `ShortName` arm is what reads an older artefact.
     public record Stop(String id, String name, String shortName, Double lat, Double lon) {
         public String label() {
@@ -453,7 +453,7 @@ public final class VerifyCrossborder {
         return s == null ? id : s.label();
     }
 
-    /// The distance buckets, in report order. `XbMergeStops.CONSOLIDATE_RADIUS_DEG` is 0.004
+    /// The distance buckets, in report order. `XbProfile.CONSOLIDATE_RADIUS_DEG` is 0.004
     /// degrees of latitude, so anything below [#CONSOLIDATE_RADIUS_M] is a pair the rail
     /// consolidation would have folded into one station had it seen both. Above it the two ends are
     /// different stations and no stop merge can help.
@@ -464,7 +464,7 @@ public final class VerifyCrossborder {
             "> 20 km",
             "a handover stop carries no coordinate");
 
-    /// ~442 m: `XbMergeStops.CONSOLIDATE_RADIUS_DEG` (0.004 deg) in metres of latitude.
+    /// ~442 m: `XbProfile.CONSOLIDATE_RADIUS_DEG` (0.004 deg) in metres of latitude.
     static final double CONSOLIDATE_RADIUS_M = 0.004 * 110_540.0;
 
     /// Which [#DISTANCE_BUCKETS] entry `m` falls in; the no-coordinate bucket for null.
@@ -486,7 +486,7 @@ public final class VerifyCrossborder {
     }
 
     /// Metres between two stops, or null when either lacks a coordinate. Fast equirectangular
-    /// form, the same one `XbMergeStops.distM` uses.
+    /// form.
     public static Double distM(Stop a, Stop b) {
         if (a == null || b == null || a.lat() == null || a.lon() == null
                 || b.lat() == null || b.lon() == null) {
