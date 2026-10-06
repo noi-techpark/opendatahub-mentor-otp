@@ -105,7 +105,12 @@ exports.query = function(endpoint, query) {
         },
         body: JSON.stringify({query}),
     }
-    ).then((response) => response.json())
+    ).then((response) => {
+        if (!response.ok) {
+            throw new Error(`OTP HTTP ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    })
 }
 
 exports.queries = {
