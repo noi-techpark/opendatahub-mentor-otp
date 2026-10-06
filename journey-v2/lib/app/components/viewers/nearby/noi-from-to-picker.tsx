@@ -40,13 +40,20 @@ const NoiFromToPicker = ({
   setMainPanelContent
 }: Props) => {
   const { setIsPlanning } = usePlanning()
-  const location = useMemo(
-    () => ({
+  const location = useMemo(() => {
+    // gtfsId is only present on transit stops. Include it as id/type so OTP
+    // can route directly to/from the stop's own graph vertex, which matters
+    // for stops with no OSM street coverage nearby (e.g. flight-only
+    // airports).
+    const gtfsId = place.gtfsId ?? place.properties?.gtfsId
+    return {
       lat: place.lat ?? place.geometry.coordinates[1],
       lon: place.lon ?? place.geometry.coordinates[0],
       name: place.name ?? place.properties.name,
-      properties: place.properties
-    }),
+      properties: place.properties,
+      ...(gtfsId && { id: gtfsId, type: 'stop' })
+    }
+  },
     [place]
   )
   return (

@@ -38,3 +38,9 @@ path = ["pipeline/.gitignore", "pipeline/Makefile", "pipeline/README.md", "pipel
 precedence = "aggregate"
 SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = ["journey-v2/patches/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "(c) NOI Techpark <digital@noi.bz.it>"
+SPDX-License-Identifier = "MIT"

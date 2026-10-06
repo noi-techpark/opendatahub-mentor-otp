@@ -210,10 +210,10 @@ geocoder:
     # IF boundary is empty get bounds from current map bounds
     # Covers all of Italy + all of Switzerland
     rect:
-      minLon: 5.955911
-      maxLon: 18.784475
-      minLat: 35.288962
-      maxLat: 47.808465
+      minLon: -8.92482
+      maxLon: 40.1
+      minLat: 10.1
+      maxLat: 57.6628
   # Custom fetch options to pass to geocoder resource.
   # options:
   #   headers:

@@ -29,6 +29,7 @@ import * as uiActions from '@otp-react-redux/lib/actions/ui'
 import * as formActions from '@otp-react-redux/lib/actions/form'
 
 import NoiNearbyView from '../viewers/nearby/noi-nearby-view'
+import NextFlightSuggestion from './next-flight-suggestion'
 import { PlanningContext } from '../../context/planning-context'
 
 interface Props {
@@ -148,6 +149,7 @@ class DestinationPanel extends Component<Props> {
               overflowY: 'hidden'
             }}
           >
+            <NextFlightSuggestion />
             <NarrativeItineraries />
           </div>
         )}

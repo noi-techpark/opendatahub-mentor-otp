@@ -22,6 +22,10 @@ brandByDomain:
 reportIssue:
   mailto: info@noi.bz.it
 
+# Timezone of the transit system, used to properly display stop times for
+# users outside this timezone. Matches transitModelTimeZone in build-config.json.
+homeTimezone: Europe/Rome
+
 # To use OTP-RR with your own OTP deployment, at a minimum you will need to set the
 # host and port under the api section (for example to http://localhost and 8080).
 # The v2 configuration item here refers to OTP 2.x, not a versioned API with base URLs
@@ -213,10 +217,10 @@ geocoder:
     #IF boundary is empty get bounds from current map bounds
     # Covers all of Italy + all of Switzerland
     rect:
-      minLon: 5.955911
-      maxLon: 18.784475
-      minLat: 35.288962
-      maxLat: 47.808465
+      minLon: -8.92482
+      maxLon: 40.1
+      minLat: 10.1
+      maxLat: 57.6628
   # Custom fetch options to pass to geocoder resource.
   # options:
   #   headers:
@@ -227,6 +231,7 @@ geocoder:
   # This base URL is required as the libraries will default to using now-defunct
   # mapzen urls
   baseUrl: https://geocoder.otp.opendatahub.testingmachine.eu/v1
+  #baseUrl: http://192.168.2.49:4000/v1
   # This allows the location field dropdown headers to be colored based on Pelias layer
   #resultsColors:
   #  stops: "#007fae"
@@ -348,6 +353,8 @@ modes:
       label: Subway
     - mode: FERRY
       label: Ferry
+    - mode: AIRPLANE
+      label: Airplane
 
 # # The following modules require the datastoreUrl and trinetReDirect properties
 # # to be set. Note: Most of these components are currently only configured for
@@ -666,6 +673,9 @@ language:
       modes:
         airplane: Airplane
     components:
+      NextFlightSuggestion:
+        header: No flight at the selected time
+        body: "Next flights from {from} to {to}:"
       OTP2ErrorRenderer:
         NO_DIRECT_MODE_CONNECTION:
           header: No route found
@@ -868,6 +878,9 @@ language:
         tripDurationFormat: "{hours, plural, =0 {} other {# h }}{minutes} min { seconds,
           plural, =0 {} other {# sec}}"
     components:
+      NextFlightSuggestion:
+        header: Nessun volo all'orario selezionato
+        body: "Prossimi voli da {from} a {to}:"
       A11yPrefs:
         accessibilityRoutingByDefault: Preferisci viaggi accessibili per impostazione predefinita
       AccountSetupFinishPane:
@@ -1974,6 +1987,9 @@ language:
         tripDurationFormat: "{hours, plural, =0 {} other {# Std }}{minutes} Min {
           seconds, plural, =0 {} other {# Sek}}"
     components:
+      NextFlightSuggestion:
+        header: Kein Flug zur gewählten Zeit
+        body: "Nächste Flüge von {from} nach {to}:"
       A11yPrefs:
         accessibilityRoutingByDefault: Bevorzuge standardmäßig barrierefreie Reisen
       AccountSetupFinishPane:
