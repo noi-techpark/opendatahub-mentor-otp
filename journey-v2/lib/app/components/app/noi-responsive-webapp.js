@@ -14,7 +14,7 @@ import { injectIntl, IntlProvider } from 'react-intl'
 import { MapProvider } from 'react-map-gl'
 import { QueryParamProvider } from 'use-query-params'
 import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5'
-import { Route, Switch, withRouter } from 'react-router'
+import { Redirect, Route, Switch, withRouter } from 'react-router'
 import { Toaster } from 'react-hot-toast'
 import coreUtils from '@opentripplanner/core-utils'
 import isEqual from 'lodash.isequal'
@@ -430,6 +430,8 @@ class RouterWrapperWithAuth0 extends Component {
             >
               <QueryParamProvider adapter={ReactRouter5Adapter}>
                 <Switch>
+                  {/* Route viewer is disabled */}
+                  <Redirect from="/route" to="/" />
                   {routes.map((props, index) => {
                     const {
                       getContextComponent,
