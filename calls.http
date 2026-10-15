@@ -15,3 +15,25 @@
 POST https://amarillo.otp.opendatahub.testingmachine.eu/agency/ummadum/sync
 X-API-Key: {{ $dotenv ADMIN_TOKEN }}
 Accept: application/json
+
+#### OJP LocationInformationRequest
+
+POST http://docker.otp.opendatahub.testingmachine.eu:1393/ojp/
+Content-Type: application/xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<OJP xmlns="http://www.vdv.de/ojp" xmlns:siri="http://www.siri.org.uk/siri" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0" xsi:schemaLocation="http://www.vdv.de/ojp ../../OJP.xsd">
+	<OJPRequest>
+		<siri:ServiceRequest>
+			<siri:RequestTimestamp>2023-06-16T16:08:04+02:00</siri:RequestTimestamp>
+			<siri:RequestorRef>OTP-RR</siri:RequestorRef>
+			<siri:MessageIdentifier>123</siri:MessageIdentifier>
+			<OJPLocationInformationRequest>
+				<siri:RequestTimestamp>2023-06-16T16:08:04+02:00</siri:RequestTimestamp>
+				<InitialInput>
+					<Name>Cagliari</Name>
+				</InitialInput>
+			</OJPLocationInformationRequest>
+		</siri:ServiceRequest>
+	</OJPRequest>
+</OJP>
