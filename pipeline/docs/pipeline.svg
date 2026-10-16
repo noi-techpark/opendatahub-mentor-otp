@@ -157,14 +157,15 @@
     <text class="sub" x="1044" y="514">--home IT:ITALO — the vote cannot reach it</text>
   </a>
   <a href="../scripts/conv/ItRapDbToDb.java">
-    <rect class="step" x="1201" y="412" width="220" height="113" rx="4"/>
+    <rect class="step" x="1201" y="412" width="220" height="126" rx="4"/>
     <text class="lbl" x="1311" y="431">conv/ItRapDbToDb</text>
     <text class="sub" x="1215" y="447" style="text-anchor:start">· StopPlace centroids ← child quays</text>
     <text class="sub" x="1215" y="460" style="text-anchor:start">· stop Name ← ShortName if a code</text>
     <text class="sub" x="1215" y="473" style="text-anchor:start">· Line authorityRef backfill (← Operator)</text>
     <text class="sub" x="1215" y="486" style="text-anchor:start">· groups of lines nested into the Network</text>
-    <text class="sub" x="1215" y="499" style="text-anchor:start">· PublicCode ← ShortName</text>
-    <text class="sub" x="1215" y="512" style="text-anchor:start">· Name ← Description</text>
+    <text class="sub" x="1215" y="499" style="text-anchor:start">· a bare Network ← its Lines' authority</text>
+    <text class="sub" x="1215" y="512" style="text-anchor:start">· PublicCode ← ShortName</text>
+    <text class="sub" x="1215" y="525" style="text-anchor:start">· Name ← Description</text>
   </a>
 
   <a href="../scripts/fix/RewriteStaSspIds.java">
@@ -173,8 +174,8 @@
     <text class="sub" x="511" y="514">ScheduledStopPoint id → SIRI form</text>
   </a>
 
-  <rect class="artifact" x="1201" y="548" width="220" height="34" rx="4"/>
-  <text class="lbl" x="1311" y="569">it-rap-$REGION-$OPERATOR.lmdb</text>
+  <rect class="artifact" x="1201" y="558" width="220" height="34" rx="4"/>
+  <text class="lbl" x="1311" y="579">it-rap-$REGION-$OPERATOR.lmdb</text>
 
   <a href="../scripts/conv/ItMergeDbToDb.java">
     <rect class="step" x="1141" y="612" width="340" height="58" rx="4"/>
@@ -400,8 +401,8 @@
   <path class="edge" d="M 1311 174 L 1311 266"/>
   <path class="edge" d="M 1311 311 L 1311 344"/>
   <path class="edge" d="M 1311 389 L 1311 412"/>
-  <path class="edge" d="M 1311 525 L 1311 548"/>
-  <path class="edge" d="M 1311 582 L 1311 612"/>
+  <path class="edge" d="M 1311 538 L 1311 558"/>
+  <path class="edge" d="M 1311 592 L 1311 612"/>
   <path class="edge" d="M 1311 670 L 1311 700"/>
   <path class="edge" d="M 1577 174 L 1577 266"/>
   <path class="edge" d="M 1577 311 L 1577 344"/>

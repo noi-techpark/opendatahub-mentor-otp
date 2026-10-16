@@ -6,6 +6,7 @@ package conv;
 //   3. backfill Line authorities, synthesising Authorities from Operators as needed;
 //   4. nest the frame-level groups of lines into the feed's Network;
 //  4b. group a Line that names no group by that Network;
+//  4c. give that Network its Lines' authority where it names no organisation;
 //   5. repair a Line's PublicCode, which these feeds fill with an internal composite.
 //
 // 1 and 2 both overlay StopPlace, and a row decoded twice gives two objects, so 2 runs over 1's
@@ -35,6 +36,8 @@ package conv;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import noi.netex.model.Authority;
+import noi.netex.model.AuthorityRef;
+import noi.netex.model.AuthorityRefStructure;
 import noi.netex.model.EntityInVersionStructure;
 import noi.netex.model.EntityStructure;
 import noi.netex.model.FlexibleLine;
@@ -44,6 +47,7 @@ import noi.netex.model.GroupsOfLinesInFrame_RelStructure;
 import noi.netex.model.Line;
 import noi.netex.model.Line_VersionStructure;
 import noi.netex.model.Network;
+import noi.netex.model.ObjectFactory;
 import noi.netex.model.PassengerStopAssignment;
 import noi.netex.model.StopPlace;
 import noi.netex.model.VersionOfObjectRefStructure;
@@ -63,6 +67,8 @@ import transformers.feedfix.LineCodes;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -70,6 +76,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ItRapDbToDb {
+
+    private static final ObjectFactory FACTORY = new ObjectFactory();
 
     /// Hand-rolled rather than [DbToDb#driverMain] for `--tag`, which that CLI has no slot for.
     public static void main(String[] args) throws Exception {
@@ -217,6 +225,15 @@ public class ItRapDbToDb {
             }
         }
 
+        // 4c. A Network that now represents Lines but names no organisation takes their authority.
+        // OTP reads a grouped Line's agency off its Network alone, ignoring the Line's own
+        // authorityRef, and fails on a Network without one. The backfill above repairs only an
+        // Operator-typed ref, so a Network the feed published bare reaches here bare.
+        if (soleNetwork != null && soleNetwork.getTransportOrganisationRef() == null) {
+            giveNetworkItsLinesAuthority(soleNetwork, lineRows, lineFixed, flexRows, flexFixed,
+                    netFixed);
+        }
+
         Map<String, Object> stopOverlay = new LinkedHashMap<>(stopFixed);
 
         LongOpenHashSet skip = new LongOpenHashSet();       // rows the clone must not copy
@@ -328,6 +345,54 @@ public class ItRapDbToDb {
             grouped++;
         }
         return grouped;
+    }
+
+    /// Set `net`'s org ref to the authority most of its Lines name, recording it in `netFixed`. A
+    /// Line counts when its group is the Network or a group nested in it; the losing authorities'
+    /// Lines are logged, since a consumer reading the Network attributes them to the winner.
+    private static void giveNetworkItsLinesAuthority(Network net,
+            List<ObjectRow> lineRows, Map<String, Object> lineFixed,
+            List<ObjectRow> flexRows, Map<String, Object> flexFixed, Map<String, Object> netFixed) {
+        Set<String> groups = new HashSet<>();
+        groups.add(net.getId());
+        if (net.getGroupsOfLines() != null) {
+            for (GroupOfLines g : net.getGroupsOfLines().getGroupOfLines()) groups.add(g.getId());
+        }
+        Map<String, AuthorityRefStructure> byRef = new LinkedHashMap<>();
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        countAuthorities(lineRows, lineFixed, groups, byRef, counts);
+        countAuthorities(flexRows, flexFixed, groups, byRef, counts);
+        if (counts.isEmpty()) {
+            Log.info("[it-rap-db-to-db] %s names no organisation and none of its Lines an "
+                    + "authority; left without one", net.getId());
+            return;
+        }
+        String winner = Collections.max(counts.entrySet(), Map.Entry.comparingByValue()).getKey();
+        AuthorityRef ref = new AuthorityRef();
+        ref.setRef(winner);
+        ref.setVersion(byRef.get(winner).getVersion());
+        net.setTransportOrganisationRef(FACTORY.createAuthorityRef(ref));
+        netFixed.put(net.getId(), net);
+        int others = counts.values().stream().mapToInt(Integer::intValue).sum() - counts.get(winner);
+        Log.info("[it-rap-db-to-db] %s takes authority %s from its Lines; %d Lines name another",
+                net.getId(), winner, others);
+    }
+
+    private static void countAuthorities(List<ObjectRow> rows, Map<String, Object> fixed,
+            Set<String> groups, Map<String, AuthorityRefStructure> byRef,
+            Map<String, Integer> counts) {
+        for (ObjectRow r : rows) {
+            Line_VersionStructure row = (Line_VersionStructure) r.object();
+            Line_VersionStructure line = fixed.get(row.getId()) instanceof Line_VersionStructure held
+                    ? held : row;
+            GroupOfLinesRefStructure grp = line.getRepresentedByGroupRef();
+            AuthorityRefStructure auth = line.getAuthorityRef();
+            if (grp == null || !groups.contains(grp.getRef()) || auth == null || auth.getRef() == null) {
+                continue;
+            }
+            byRef.putIfAbsent(auth.getRef(), auth);
+            counts.merge(auth.getRef(), 1, Integer::sum);
+        }
     }
 
     /// The rows' objects by id, one per id — a class map may hold several versions of one.
