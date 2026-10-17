@@ -151,15 +151,16 @@
     <text class="sub" x="778" y="514">PublicCode 0083_REG → REG</text>
   </a>
   <a href="../scripts/fix/ItaloLineCodes.java">
-    <rect class="step" x="934" y="412" width="220" height="45" rx="4"/>
+    <rect class="step" x="934" y="412" width="220" height="58" rx="4"/>
     <text class="lbl" x="1044" y="431">fix/ItaloLineCodes</text>
-    <text class="sub" x="1044" y="446">PublicCode = Italo · Name = 9963 / 9944</text>
+    <text class="sub" x="1044" y="446">sold pairs → train + Itabus legs · interchange</text>
+    <text class="sub" x="1044" y="459">PublicCode = Italo · Name = 9963</text>
   </a>
-  <path class="edge" d="M 1044 457 L 1044 480"/>
+  <path class="edge" d="M 1044 470 L 1044 493"/>
   <a href="../scripts/fix/NormalizeItIds.java">
-    <rect class="step" x="934" y="480" width="220" height="45" rx="4"/>
-    <text class="lbl" x="1044" y="499">fix/NormalizeItIds</text>
-    <text class="sub" x="1044" y="514">--home IT:ITALO — the vote cannot reach it</text>
+    <rect class="step" x="934" y="493" width="220" height="45" rx="4"/>
+    <text class="lbl" x="1044" y="512">fix/NormalizeItIds</text>
+    <text class="sub" x="1044" y="527">--home IT:ITALO — the vote cannot reach it</text>
   </a>
   <a href="../scripts/conv/ItRapDbToDb.java">
     <rect class="step" x="1201" y="412" width="220" height="126" rx="4"/>
@@ -199,8 +200,8 @@
   <a href="../scripts/fix/AlignItaloStopNames.java">
     <rect class="step" x="934" y="764" width="220" height="58" rx="4"/>
     <text class="lbl" x="1044" y="783">fix/AlignItaloStopNames</text>
-    <text class="sub" x="1044" y="798">Italo stop names ← Trenitalia's</text>
-    <text class="sub" x="1044" y="811">so the national merge can fold them</text>
+    <text class="sub" x="1044" y="798">Italo station names ← Trenitalia's</text>
+    <text class="sub" x="1044" y="811">bus stops keep their own name</text>
   </a>
   <a href="../scripts/conv/ItRapDbToDb.java">
     <rect class="step" x="934" y="850" width="220" height="45" rx="4"/>
@@ -401,7 +402,7 @@
   <path class="edge" d="M 1044 174 L 1044 266"/>
   <path class="edge" d="M 1044 311 L 1044 344"/>
   <path class="edge" d="M 1044 389 L 1044 412"/>
-  <path class="edge" d="M 1044 525 L 1044 764"/>
+  <path class="edge" d="M 1044 538 L 1044 764"/>
   <path class="edge" d="M 1044 822 L 1044 850"/>
   <path class="edge" d="M 1044 895 L 1044 923"/>
   <path class="edge" d="M 1311 174 L 1311 266"/>

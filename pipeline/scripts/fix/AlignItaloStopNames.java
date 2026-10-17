@@ -31,6 +31,7 @@ package fix;
 // GUARD_M is the band the measurement says is empty. A stop landing in it is a coordinate that
 // moved, and the pass refuses instead of binding a station to a neighbour it cannot check.
 
+import noi.netex.model.AllVehicleModesOfTransportEnumeration;
 import noi.netex.model.StopPlace;
 import noi.netex.text.Mls;
 import toolkit.harness.Args;
@@ -122,11 +123,17 @@ public class AlignItaloStopNames {
     /// nearest counterpart sits in the guard band.
     private static List<Object> renamed(Store db, Txn txn, List<Station> stations) {
         List<Object> out = new ArrayList<>();
-        long matched = 0, unmatched = 0, unlocated = 0;
+        long matched = 0, unmatched = 0, unlocated = 0, buses = 0;
         List<String> ambiguous = new ArrayList<>();
         for (Object o : db.iterOnlyObjects(txn, StopPlace.class)) {
             StopPlace sp = (StopPlace) o;
             out.add(sp);
+            // A bus stop keeps its own name: the coach stop at a hub stands on the station's
+            // centroid, and the station's name would fold it into the station.
+            if (sp.getTransportMode() == AllVehicleModesOfTransportEnumeration.BUS) {
+                buses++;
+                continue;
+            }
             double[] c = toolkit.transform.common.ScheduledStopPoints.stopplaceCoord(sp);
             if (c == null) {
                 unlocated++;
@@ -161,8 +168,8 @@ public class AlignItaloStopNames {
                     ambiguous.size(), RADIUS_M, GUARD_M));
         }
         Log.info("[align-italo] renamed %d StopPlaces to their counterpart within %.0f m; "
-                + "%d beyond %.0f m left alone, %d unlocated",
-                matched, RADIUS_M, unmatched, GUARD_M, unlocated);
+                + "%d beyond %.0f m left alone, %d unlocated, %d bus stops kept",
+                matched, RADIUS_M, unmatched, GUARD_M, unlocated, buses);
         return out;
     }
 
