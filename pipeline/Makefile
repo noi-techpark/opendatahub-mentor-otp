@@ -107,6 +107,7 @@ JDRV_ch-line-products            = fix/ChLineProducts.java
 JDRV_ch-display-texts            = fix/ChDisplayTexts.java
 JDRV_italo-line-codes            = fix/ItaloLineCodes.java
 JDRV_flix-line-codes             = fix/FlixLineCodes.java
+JDRV_trenitalia-line-codes       = fix/TrenitaliaLineCodes.java
 
 # -D knobs. Each one below differs from the jar's default and leaves the output byte-identical.
 # Keyed by driver, each being read by exactly one code path. Restore the jar's defaults with
@@ -952,8 +953,11 @@ $(IT_RAW): $(IT_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 	$(call stage_done,trenitalia)
 
 $(IT2_DB): $(IT_RAW) | $(TOOLKIT_JAR)
-	$(call stage,train-numbers,Trenitalia TrainNumber synthesis -> $(notdir $@))
-	rm -rf $@ $@.tmp && $(call drv,trenitalia-db-to-db,FEED) $< $@.tmp && mv $@.tmp $@
+	$(call stage,train-numbers,Trenitalia TrainNumber synthesis + line codes -> $(notdir $@))
+	rm -rf $@ $@.tmp $@.tn.tmp
+	$(call drv,trenitalia-db-to-db,FEED) $< $@.tn.tmp
+	$(call drv,trenitalia-line-codes,FEED) $@.tn.tmp $@.tmp
+	rm -rf $@.tn.tmp && mv $@.tmp $@
 	$(call stage_done,train-numbers)
 
 # The South-Tyrol feed is a Mentz EPIP export like the AT ones: generic load, the republication

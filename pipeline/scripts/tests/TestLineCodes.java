@@ -31,7 +31,10 @@ public class TestLineCodes {
             <Line id="IT:ITI4:Line:211_OP1" version="1"><Name>211</Name><ShortName>211</ShortName><Description>211</Description><TransportMode>bus</TransportMode><PublicCode>211_OP1</PublicCode><PrivateCode>211_OP1</PrivateCode></Line>
             <Line id="IT:ITF3:Line:01-CE" version="1"><Name>01-CE</Name><ShortName>01-CE</ShortName><Description>Caserta-S.Maria C.V.-Capua</Description><TransportMode>bus</TransportMode><PublicCode/><PrivateCode>01-CE</PrivateCode></Line>
             <Line id="IT:ITI4:Line:620083_pass_0083" version="1"><Name>Regionale Veloce</Name><ShortName>RV</ShortName><TransportMode>rail</TransportMode><PublicCode>620083_pass_0083</PublicCode><PrivateCode>620083_pass_0083</PrivateCode></Line>
-            <Line id="IT::Line:railTRENITALIA:60083" version="1"><Name>Eurocity</Name><ShortName>EC</ShortName><TransportMode>rail</TransportMode><PublicCode>EC</PublicCode><PrivateCode>60083</PrivateCode></Line>
+            <Line id="IT::Line:railTRENITALIA:0083_60083" version="1"><Name>Eurocity</Name><ShortName>0083_EC</ShortName><TransportMode>rail</TransportMode><PublicCode>0083_EC</PublicCode><PrivateCode>0083_60083</PrivateCode></Line>
+            <Line id="IT:ITI3:Line:ADRIABUS_45" version="1"><Name>Carpegna-Sassocorvaro-Montecchio-Pesaro</Name><ShortName>ADRIABUS_45</ShortName><TransportMode>bus</TransportMode><PublicCode>ADRIABUS_45</PublicCode><PrivateCode>45</PrivateCode></Line>
+            <Line id="IT:ITH5:Line:TPER-BO:11_11A" version="1"><Name>ITC Luxemburg - Ponticella</Name><ShortName>11A</ShortName><TransportMode>bus</TransportMode><PublicCode>11_11A</PublicCode></Line>
+            <Line id="IT:ITG2:Line:busCTM:U_EX" version="1"><Name>Supplemento Linea University Express</Name><ShortName>U_EX</ShortName><TransportMode>bus</TransportMode><PublicCode>U_EX</PublicCode><PrivateCode>U_EX</PrivateCode></Line>
             <Line id="IT:ITC2:Line:110" version="1"><Name>AOSTA/PONT-SAINT-MARTIN</Name><ShortName>110</ShortName><TransportMode>bus</TransportMode><PublicCode>110</PublicCode><PrivateCode>10110</PrivateCode></Line>
             <Line id="IT:ITF1:Line:TNLINE495" version="1"><Name>S.U. LANCIANO LINEA 2/</Name><Description>S.U. LANCIANO LINEA 2/</Description><TransportMode>bus</TransportMode></Line>
             <Line id="IT:ITALO:Line:9963-9944-1-1" version="1"><Name>9963_9944</Name><TransportMode>rail</TransportMode><PublicCode>9963_9944</PublicCode></Line>
@@ -92,6 +95,37 @@ public class TestLineCodes {
                 "a _pass_ republication is covered without a rule of its own");
     }
 
+    /// A composite ending on another field's whole value gives way to that field.
+    public static void testACompositeEndingOnAFieldGivesWayToIt(TestStore db) throws Exception {
+        Map<String, Line> fixed = run(db, IT_FRAMES, LineCodes.Policy.IT_RAP);
+
+        Line marche = fixed.get("IT:ITI3:Line:ADRIABUS_45");
+        Check.equals("45", Codes.text(marche.getPublicCode()),
+                "an operator-prefixed code gives way to the PrivateCode it ends in");
+        Check.equals("45", Mls.text(marche.getShortName()),
+                "and the ShortName repeating the composite goes with it");
+        Check.equals("11A", Codes.text(fixed.get("IT:ITH5:Line:TPER-BO:11_11A").getPublicCode()),
+                "a code ending in the ShortName gives way to it, with no PrivateCode at all");
+        Check.isNull(fixed.get("IT:ITG2:Line:busCTM:U_EX"),
+                "a code that IS the ShortName and the PrivateCode ends in no other field");
+    }
+
+    /// Trenitalia prefixes its company onto both codes, and only the shared prefix goes.
+    public static void testTrenitaliaDropsTheCompanyPrefix(TestStore db) throws Exception {
+        Map<String, Line> fixed = run(db, IT_FRAMES, LineCodes.Policy.TRENITALIA);
+
+        Line ec = fixed.get("IT::Line:railTRENITALIA:0083_60083");
+        Check.equals("EC", Codes.text(ec.getPublicCode()), "the category behind the company prefix");
+        Check.equals("EC", Mls.text(ec.getShortName()), "and the ShortName that repeated it");
+        Check.equals("Eurocity", Mls.text(ec.getName()), "the name was already right");
+        Check.isNull(fixed.get("IT:ITH5:Line:TPER-BO:11_11A"),
+                "a prefix with no PrivateCode to share it is not a company");
+        Check.isNull(fixed.get("IT:ITI3:Line:ADRIABUS_45"),
+                "nor is one the PrivateCode does not open on");
+        Check.isNull(fixed.get("IT:ITG2:Line:busCTM:U_EX"),
+                "nor one the PrivateCode shares by being the same code");
+    }
+
     /// The Name is only taken from the Description where the Name is one of the Line's own codes.
     public static void testANameRepeatingACodeGivesWayToTheDescription(TestStore db)
             throws Exception {
@@ -112,8 +146,8 @@ public class TestLineCodes {
     public static void testACorrectlyCodedLineIsLeftAlone(TestStore db) throws Exception {
         Map<String, Line> fixed = run(db, IT_FRAMES, LineCodes.Policy.IT_RAP);
 
-        Check.isNull(fixed.get("IT::Line:railTRENITALIA:60083"),
-                "Trenitalia's EC line is untouched: its PublicCode differs from its PrivateCode");
+        Check.isNull(fixed.get("IT::Line:railTRENITALIA:0083_60083"),
+                "Trenitalia's EC line is untouched: its own stage drops the company prefix");
         Check.isNull(fixed.get("IT:ITC2:Line:110"),
                 "and so is a line whose PublicCode already equals its ShortName");
         Check.isNull(fixed.get("IT:ITF1:Line:TNLINE495"),

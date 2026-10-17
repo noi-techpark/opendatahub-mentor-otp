@@ -145,6 +145,11 @@
     <text class="lbl" x="778" y="431">conv/TrenitaliaDbToDb</text>
     <text class="sub" x="778" y="446">TrainNumber synthesis</text>
   </a>
+  <a href="../scripts/fix/TrenitaliaLineCodes.java">
+    <rect class="step" x="668" y="480" width="220" height="45" rx="4"/>
+    <text class="lbl" x="778" y="499">fix/TrenitaliaLineCodes</text>
+    <text class="sub" x="778" y="514">PublicCode 0083_REG → REG</text>
+  </a>
   <a href="../scripts/fix/ItaloLineCodes.java">
     <rect class="step" x="934" y="412" width="220" height="45" rx="4"/>
     <text class="lbl" x="1044" y="431">fix/ItaloLineCodes</text>
@@ -164,7 +169,7 @@
     <text class="sub" x="1215" y="473" style="text-anchor:start">· Line authorityRef backfill (← Operator)</text>
     <text class="sub" x="1215" y="486" style="text-anchor:start">· groups of lines nested into the Network</text>
     <text class="sub" x="1215" y="499" style="text-anchor:start">· a bare Network ← its Lines' authority</text>
-    <text class="sub" x="1215" y="512" style="text-anchor:start">· PublicCode ← ShortName</text>
+    <text class="sub" x="1215" y="512" style="text-anchor:start">· PublicCode ← ShortName or the _ suffix</text>
     <text class="sub" x="1215" y="525" style="text-anchor:start">· Name ← Description</text>
   </a>
 
@@ -391,7 +396,8 @@
   <path class="edge" d="M 778 174 L 778 266"/>
   <path class="edge" d="M 778 311 L 778 344"/>
   <path class="edge" d="M 778 378 L 778 412"/>
-  <path class="edge" d="M 778 457 L 778 700"/>
+  <path class="edge" d="M 778 457 L 778 480"/>
+  <path class="edge" d="M 778 525 L 778 700"/>
   <path class="edge" d="M 1044 174 L 1044 266"/>
   <path class="edge" d="M 1044 311 L 1044 344"/>
   <path class="edge" d="M 1044 389 L 1044 412"/>
