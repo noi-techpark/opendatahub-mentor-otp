@@ -5,3 +5,14 @@
 **/.env
 **/.token*
 **/node_modules
+
+# Build output, none of it tracked. Every context here is the repository root and the
+# otp-graph-build image does COPY pipeline/, so anything unlisted is uploaded and then baked into a
+# layer: the LMDB stores and the per-feed validators match none of the extensions above. Entries
+# here are context-root-relative and * does not cross a /, so `work` is this directory's own, not
+# .gitignore's any-depth match of the same word.
+work
+pipeline/data
+pipeline/input
+pipeline/state
+**/*.obj
