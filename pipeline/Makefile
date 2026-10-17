@@ -48,7 +48,7 @@ JAVA_CP := $(TOOLKIT_JAR)
 # jar built by hand.
 TOOLKIT_REPO    ?= flaktack/netex-toolkit
 TOOLKIT_ASSET   ?= netex-toolkit-shaded.jar
-TOOLKIT_VERSION ?= v0.0.4
+TOOLKIT_VERSION ?= v0.0.5
 TOOLKIT_JAR_URL ?= https://github.com/$(TOOLKIT_REPO)/releases/$(if $(filter latest,$(TOOLKIT_VERSION)),latest/download,download/$(TOOLKIT_VERSION))/$(TOOLKIT_ASSET)
 
 # Per-stage heaps, measured rather than chosen. Measure before lowering one: `make netex

@@ -54,8 +54,12 @@ public class EpipDbToDb {
         try {
             // --codespace decides the prefix of every generated id no source object could supply;
             // unset, the EPIP data codespace the profile reserves for exactly that.
+            //
+            // A Line carrying both an operatorRef and an authorityRef keeps its Operator primary
+            // and its Authority moves to the front of additionalOperators.
             EpipToDb.cloneAndTransform(source, target, fmt,
-                    GeneratorDefaults.withCodespace(a.get("--codespace", null)));
+                    GeneratorDefaults.withCodespace(a.get("--codespace", null))
+                            .withAuthorityPrimary(false));
         } catch (Exception e) {
             Log.error("%s", Log.trace(e));
             throw new RuntimeException(e);

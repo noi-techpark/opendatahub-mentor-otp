@@ -280,7 +280,7 @@
     <text class="num" x="181" y="1892">2</text>
     <text class="fsteptxt" x="199" y="1892" font-weight="600">conv/EpipDbToDb ×4 — one per consolidated feed, concurrent under make -j (four write txns, not one)</text>
     <text class="fsteptxt" x="199" y="1910">A1 / A2 — de-embed ServiceCalendar children · PassengerStopAssignment StopPlaceRef backfill</text>
-    <text class="fsteptxt" x="199" y="1925">B — six generators in order: sanitize · calendar · interchange · lines · locations · journeys</text>
+    <text class="fsteptxt" x="199" y="1925">B — six generators in order: sanitize · calendar · interchange · lines · locations · journeys — a Line keeps its Operator primary, its Authority → additionalOperators</text>
     <text class="fsteptxt" x="199" y="1940">C — repair interchange points, then two ensemble passes: WGS84 reprojection · direction inference ·</text>
     <text class="fsteptxt" x="199" y="1955">      headsign ← a display for its last stop · operator / vehicleType / quay-name · line name ← its terminus pair</text>
     <text class="fsteptxt" x="199" y="1970">C2 — strip orphan LevelRefs (a LevelRef whose Level its own Site does not define)</text>
