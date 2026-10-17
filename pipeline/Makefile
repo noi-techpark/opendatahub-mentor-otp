@@ -771,10 +771,6 @@ verify-crossborder: | $(TOOLKIT_JAR) ## Verify the IT/AT/CH cross-border links i
 		$(NETEX_ZIP) $(if $(FULL),--full) --out $(XB_REPORT) \
 		$(if $(wildcard $(OTP_DIR)/report/StopPointsMismatch1.html),--otp-report $(OTP_DIR)/report)
 
-verify-line-labels: | $(TOOLKIT_JAR) ## Report, per publisher, what the merged NeTEx zip names its routes and trips
-	@test -f $(NETEX_ZIP) || { echo "$(NETEX_ZIP) is missing -- run 'make netex' first" >&2; exit 1; }
-	$(JAVA) -Xmx4g $(JVM) -cp "$(JAVA_CP)" $(SCRIPTS)/tools/VerifyLineLabels.java $(NETEX_ZIP)
-
 XB_ATLAS := $(OTP_DIR)/report/xb
 
 # Reads epip.lmdb, not epip-xb.lmdb, and re-runs the coupling to draw it. A refused group leaves no
