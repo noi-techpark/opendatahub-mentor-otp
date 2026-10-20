@@ -27,6 +27,7 @@ import noi.netex.model.StopPlace;
 import noi.netex.model.StopPointInJourneyPattern;
 import noi.netex.model.StopTypeEnumeration;
 import noi.netex.model.TimetabledPassingTime;
+import noi.netex.model.TrainNumber;
 import noi.netex.text.Codes;
 import noi.netex.text.Mls;
 import toolkit.store.ObjectRow;
@@ -389,6 +390,29 @@ public class TestItaloConnections {
         Check.equals("9967", Codes.text(r.journey("9967-1-1-1").getPublicCode()), "9967");
         Check.equals("Italo", Codes.text(r.all(Line.class).get("IT::Line:8111-1-1").getPublicCode()),
                 "and a train Line keeps the operator as its code");
+    }
+
+    /// A numbered train journey references a TrainNumber of its number, one per number; a coach
+    /// leg references none.
+    public static void testTrainJourneysReferenceTheirTrainNumber(TestStore db) throws Exception {
+        Run r = run(db);
+        Map<String, TrainNumber> tns = r.all(TrainNumber.class);
+        Check.equals("8111", tns.get(tnRef(r.journey("8111--2-1-1-1"))).getForAdvertisement(),
+                "the solo 8111");
+        Check.equals("IT::TrainNumber:8959", tnRef(r.journey("8959-8959-9987-1-1-1")), "the 8959 leg");
+        Check.equals("IT::TrainNumber:8959", tnRef(r.journey("8959-1-1-1")), "shares the solo's");
+        Check.isNull(r.journey("1021-1021-8907-1-1-1").getTrainNumbers(), "the coach leg has none");
+        Set<String> numbers = new TreeSet<>();
+        for (TrainNumber tn : tns.values()) {
+            Check.that(numbers.add(tn.getForAdvertisement()), "one TrainNumber per number");
+        }
+        for (ServiceJourney sj : r.all(ServiceJourney.class).values()) {
+            if (sj.getTrainNumbers() != null) Check.that(tns.containsKey(tnRef(sj)), "resolves");
+        }
+    }
+
+    private static String tnRef(ServiceJourney sj) {
+        return sj.getTrainNumbers().getTrainNumberRef().get(0).getRef();
     }
 
     /// Removed pairs take their calendars with them; a calendar an emitted leg uses stays.

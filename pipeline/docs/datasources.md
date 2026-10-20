@@ -505,6 +505,11 @@ same either way. This matters because the corridor reads a stop sequence as list
 `XbScan.stopRefs` returns refs in passing-time order and `XbScan.node` takes the last element as the
 terminus — so untouched, a twelve-stop journey would end six stops early.
 
+Italo publishes no `TrainNumber`, and a journey's `Name` is a stop code (`NAC`). Its numbers are in
+the Line name, one or a pair. `fix/ItaloLineCodes.java` splits the pairs, so every train journey is
+left with one number as `PublicCode`, and the same pass links each journey to a `TrainNumber` of that
+number. Itabus coach legs get none.
+
 FlixBus registers with the NAP too, as organisation `1845536`. That asset is the Italian slice --
 29 journeys over 4 lines -- and the FlixBus row above carries the whole pan-European export
 instead.

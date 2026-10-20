@@ -154,7 +154,7 @@
     <rect class="step" x="934" y="412" width="220" height="58" rx="4"/>
     <text class="lbl" x="1044" y="431">fix/ItaloLineCodes</text>
     <text class="sub" x="1044" y="446">sold pairs → train + Itabus legs · interchange</text>
-    <text class="sub" x="1044" y="459">PublicCode = Italo · Name = 9963</text>
+    <text class="sub" x="1044" y="459">PublicCode = Italo · a TrainNumber per train</text>
   </a>
   <path class="edge" d="M 1044 470 L 1044 493"/>
   <a href="../scripts/fix/NormalizeItIds.java">
