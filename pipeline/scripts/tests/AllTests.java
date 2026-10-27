@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 public class AllTests {
 
     static final Class<?>[] CLASSES = {
+        TestAlignItaloStopNames.class,
         TestAtLineProducts.class,
         TestAuthorityNames.class,
         TestConfReads.class,
@@ -35,6 +36,7 @@ public class AllTests {
         TestFeedsToConsolidated.class,
         TestFlattenWrappedNames.class,
         TestItaloAuthorityCodespace.class,
+        TestItaloConnections.class,
         TestItMergeDbToDb.class,
         TestItRapDbToDb.class,
         TestItcTrailingLink.class,

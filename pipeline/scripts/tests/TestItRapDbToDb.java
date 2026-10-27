@@ -547,6 +547,61 @@ public class TestItRapDbToDb {
                         + "rather than attached to whichever was scanned first");
     }
 
+    // ------------------------------------------- the authority of a Network the feed published bare
+
+    /// A bare Network, two Lines on authority A and one on B, one of them in a group beside it.
+    static final String BARE_NETWORK = """
+        <ServiceFrame id="sf" version="1">
+          <Network id="IT:ITF1:Network:1" version="1"><Name>Net</Name></Network>
+          <groupsOfLines>
+            <GroupOfLines id="IT:ITF1:GroupOfLines:G" version="1"><Name>G</Name></GroupOfLines>
+          </groupsOfLines>
+          <lines>
+            <Line id="IT:ITF1:Line:1" version="1"><Name>One</Name><TransportMode>bus</TransportMode><AuthorityRef ref="IT:ITF1:Authority:A" version="2"/><RepresentedByGroupRef ref="IT:ITF1:GroupOfLines:G" version="1"/></Line>
+            <Line id="IT:ITF1:Line:2" version="1"><Name>Two</Name><TransportMode>bus</TransportMode><AuthorityRef ref="IT:ITF1:Authority:A" version="2"/></Line>
+            <Line id="IT:ITF1:Line:3" version="1"><Name>Three</Name><TransportMode>bus</TransportMode><AuthorityRef ref="IT:ITF1:Authority:B" version="1"/></Line>
+          </lines>
+        </ServiceFrame>
+        <ResourceFrame id="rf" version="1"><organisations>
+          <Authority id="IT:ITF1:Authority:A" version="2"><Name>A</Name></Authority>
+          <Authority id="IT:ITF1:Authority:B" version="1"><Name>B</Name></Authority>
+        </organisations></ResourceFrame>
+        """;
+
+    public static void testABareNetworkTakesItsLinesCommonestAuthority(TestStore db) throws Exception {
+        TestStore target = runTagged(db, BARE_NETWORK, "IT-ITF1-TUA");
+        try (Txn txn = target.store.roTxn()) {
+            Network net = (Network) target.store.iterOnlyObjects(txn, Network.class).iterator().next();
+            Check.that(net.getTransportOrganisationRef() != null,
+                    "a Network that represents Lines names an organisation, which OTP requires");
+            var org = net.getTransportOrganisationRef().getValue();
+            Check.that(org instanceof AuthorityRefStructure, "an Authority");
+            Check.equals("IT:ITF1:Authority:A", org.getRef(),
+                    "the one most of its Lines name, the grouped Line counted with the rest");
+            Check.equals("2", org.getVersion(), "versioned as the Lines reference it");
+        }
+    }
+
+    public static void testANetworkWithAnAuthorityKeepsIt(TestStore db) throws Exception {
+        TestStore target = runTagged(db, BARE_NETWORK.replace("<Name>Net</Name>",
+                "<Name>Net</Name><AuthorityRef ref=\"IT:ITF1:Authority:B\" version=\"1\"/>"),
+                "IT-ITF1-TUA");
+        try (Txn txn = target.store.roTxn()) {
+            Network net = (Network) target.store.iterOnlyObjects(txn, Network.class).iterator().next();
+            Check.equals("IT:ITF1:Authority:B", net.getTransportOrganisationRef().getValue().getRef(),
+                    "an authority the feed states is not overruled by its Lines");
+        }
+    }
+
+    public static void testABareNetworkWithoutLineAuthoritiesStaysBare(TestStore db) throws Exception {
+        TestStore target = runTagged(db, UNGROUPED, "IT-ITI1-20");
+        try (Txn txn = target.store.roTxn()) {
+            Network net = (Network) target.store.iterOnlyObjects(txn, Network.class).iterator().next();
+            Check.isNull(net.getTransportOrganisationRef(),
+                    "with nothing to take an authority from, none is invented");
+        }
+    }
+
     /// The one Quay a fixture stop embeds.
     private static Quay onlyQuay(StopPlace sp) {
         for (JAXBElement<?> el : sp.getQuays().getQuayRefOrQuay()) {

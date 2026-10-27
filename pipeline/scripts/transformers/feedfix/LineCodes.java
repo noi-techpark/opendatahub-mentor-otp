@@ -16,6 +16,13 @@ package transformers.feedfix;
 // land from water, so parsing would have to know `terra` from `mare` from `UL`. IT-1 needs to know
 // none of them.
 //
+// A composite can also END on the code a rider reads, with another of the Line's fields holding that
+// code alone: Marche's `ADRIABUS_45` beside PrivateCode `45`, TPER Bologna's `11_11A` beside
+// ShortName `11A`. IT-3 takes the field the composite ends in.
+//
+// Trenitalia prefixes its company code onto both PublicCode and PrivateCode, `0083_REG` beside
+// `0083_10083`. The shared prefix is what says the leading token is the company and not the line.
+//
 // Italo is a policy rather than a derivation: it publishes one Line per train-number pair and names
 // it after the pair, so the pair becomes the line's name and the operator becomes its code. Its
 // Lines carry no ShortName, PrivateCode or Description at all, so the access-point rules cannot fire
@@ -46,7 +53,9 @@ public final class LineCodes {
         /// The `route_id` private code behind a `FlixBus `-prefixed public code.
         FLIX,
         /// One Line per train-number pair, named after the pair.
-        ITALO
+        ITALO,
+        /// The company code Trenitalia prefixes onto both its public and its private code.
+        TRENITALIA
     }
 
     /// Italo's trailing variant counter. The counter is also in the Line's id, which is what says it
@@ -78,12 +87,14 @@ public final class LineCodes {
                 case IT_RAP -> {
                     code = takeShortNameAsPublicCode(target);
                     name = takeDescriptionAsName(target);
+                    code |= takeSuffixAsPublicCode(target);
                 }
                 case FLIX -> code = takeRouteIdAsPublicCode(target);
                 case ITALO -> {
                     code = nameTheOperator(target);
                     name = spellTheTrainNumberPair(target);
                 }
+                case TRENITALIA -> code = dropSharedPrefix(target);
             }
             if (code) codes++;
             if (name) names++;
@@ -123,6 +134,45 @@ public final class LineCodes {
         }
         Mls.setText(line.getName(), description);
         return true;
+    }
+
+    /// IT-3. A PublicCode ending on `_` and then the whole of the ShortName or the PrivateCode is a
+    /// composite around that field, and the field is the code. The ShortName goes with it where it
+    /// repeated the composite. Whether it fired.
+    static boolean takeSuffixAsPublicCode(Line line) {
+        String code = Codes.text(line.getPublicCode());
+        if (code == null) return false;
+        String shortName = Mls.text(line.getShortName());
+        String privateCode = line.getPrivateCode() == null ? null : line.getPrivateCode().getValue();
+        for (String field : new String[] {shortName, privateCode}) {
+            if (field == null || field.isBlank() || field.equals(code)) continue;
+            if (!code.endsWith("_" + field)) continue;
+            takeCode(line, code, field);
+            return true;
+        }
+        return false;
+    }
+
+    /// The Trenitalia arm. A PublicCode and a different PrivateCode opening on the same `<token>_`
+    /// carry the company in that token; the rest of the PublicCode is the code. A PrivateCode equal
+    /// to the PublicCode shares every prefix and says nothing. Whether it fired.
+    static boolean dropSharedPrefix(Line line) {
+        String code = Codes.text(line.getPublicCode());
+        if (code == null || line.getPrivateCode() == null) return false;
+        String privateCode = line.getPrivateCode().getValue();
+        int sep = code.indexOf('_');
+        if (sep <= 0 || privateCode == null || privateCode.equals(code)) return false;
+        String prefix = code.substring(0, sep + 1);
+        String rest = code.substring(sep + 1);
+        if (rest.isBlank() || !privateCode.startsWith(prefix)) return false;
+        takeCode(line, code, rest);
+        return true;
+    }
+
+    /// Replace the composite `old` with `code` in PublicCode, and in a ShortName that repeated it.
+    private static void takeCode(Line line, String old, String code) {
+        line.setPublicCode(Codes.of(code));
+        if (old.equals(Mls.text(line.getShortName()))) Mls.setText(line.getShortName(), code);
     }
 
     /// The FlixBus arm. The export carries the line's own code as a `route_id` private code and

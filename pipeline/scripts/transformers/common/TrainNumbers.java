@@ -68,7 +68,14 @@ public final class TrainNumbers {
     public static Iterator<Object> synthesizeTrainNumbers(Store db, Txn txn,
             Function<ServiceJourney, String> numberForJourney, Function<String, String> tnId,
             String logTag) {
-        Iterator<Object> journeys = db.iterOnlyObjects(txn, ServiceJourney.class).iterator();
+        return synthesizeTrainNumbers(db.iterOnlyObjects(txn, ServiceJourney.class).iterator(),
+                numberForJourney, tnId, logTag);
+    }
+
+    /// The same over journeys already in hand.
+    public static Iterator<Object> synthesizeTrainNumbers(Iterator<?> journeys,
+            Function<ServiceJourney, String> numberForJourney, Function<String, String> tnId,
+            String logTag) {
         return new Iterator<>() {
             final Map<String, TrainNumber> trainNumbers = new LinkedHashMap<>();
             final Deque<Object> ready = new ArrayDeque<>(2);

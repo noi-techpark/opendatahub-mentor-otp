@@ -48,7 +48,7 @@ JAVA_CP := $(TOOLKIT_JAR)
 # jar built by hand.
 TOOLKIT_REPO    ?= flaktack/netex-toolkit
 TOOLKIT_ASSET   ?= netex-toolkit-shaded.jar
-TOOLKIT_VERSION ?= v0.0.4
+TOOLKIT_VERSION ?= v0.0.5
 TOOLKIT_JAR_URL ?= https://github.com/$(TOOLKIT_REPO)/releases/$(if $(filter latest,$(TOOLKIT_VERSION)),latest/download,download/$(TOOLKIT_VERSION))/$(TOOLKIT_ASSET)
 
 # Per-stage heaps, measured rather than chosen. Measure before lowering one: `make netex
@@ -107,6 +107,7 @@ JDRV_ch-line-products            = fix/ChLineProducts.java
 JDRV_ch-display-texts            = fix/ChDisplayTexts.java
 JDRV_italo-line-codes            = fix/ItaloLineCodes.java
 JDRV_flix-line-codes             = fix/FlixLineCodes.java
+JDRV_trenitalia-line-codes       = fix/TrenitaliaLineCodes.java
 
 # -D knobs. Each one below differs from the jar's default and leaves the output byte-identical.
 # Keyed by driver, each being read by exactly one code path. Restore the jar's defaults with
@@ -771,10 +772,6 @@ verify-crossborder: | $(TOOLKIT_JAR) ## Verify the IT/AT/CH cross-border links i
 		$(NETEX_ZIP) $(if $(FULL),--full) --out $(XB_REPORT) \
 		$(if $(wildcard $(OTP_DIR)/report/StopPointsMismatch1.html),--otp-report $(OTP_DIR)/report)
 
-verify-line-labels: | $(TOOLKIT_JAR) ## Report, per publisher, what the merged NeTEx zip names its routes and trips
-	@test -f $(NETEX_ZIP) || { echo "$(NETEX_ZIP) is missing -- run 'make netex' first" >&2; exit 1; }
-	$(JAVA) -Xmx4g $(JVM) -cp "$(JAVA_CP)" $(SCRIPTS)/tools/VerifyLineLabels.java $(NETEX_ZIP)
-
 XB_ATLAS := $(OTP_DIR)/report/xb
 
 # Reads epip.lmdb, not epip-xb.lmdb, and re-runs the coupling to draw it. A refused group leaves no
@@ -956,8 +953,11 @@ $(IT_RAW): $(IT_SRC) | $(DATA_DIR) $(TOOLKIT_JAR)
 	$(call stage_done,trenitalia)
 
 $(IT2_DB): $(IT_RAW) | $(TOOLKIT_JAR)
-	$(call stage,train-numbers,Trenitalia TrainNumber synthesis -> $(notdir $@))
-	rm -rf $@ $@.tmp && $(call drv,trenitalia-db-to-db,FEED) $< $@.tmp && mv $@.tmp $@
+	$(call stage,train-numbers,Trenitalia TrainNumber synthesis + line codes -> $(notdir $@))
+	rm -rf $@ $@.tmp $@.tn.tmp
+	$(call drv,trenitalia-db-to-db,FEED) $< $@.tn.tmp
+	$(call drv,trenitalia-line-codes,FEED) $@.tn.tmp $@.tmp
+	rm -rf $@.tn.tmp && mv $@.tmp $@
 	$(call stage_done,train-numbers)
 
 # The South-Tyrol feed is a Mentz EPIP export like the AT ones: generic load, the republication
