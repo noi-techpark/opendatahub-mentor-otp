@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-# Drives pipeline/ from the source feeds to a graph.obj. Runs in the otp-graph-build container,
+# Drives pipeline/ from the source feeds to a graph-<id>.obj. Runs in the otp-graph-build container,
 # where cron reaches it through run-build.sh, and on a developer's machine from the repository root.
 #
 # Everything worth keeping between runs lives under $WORK -- the source feeds, the LMDB stores, the
@@ -45,6 +45,13 @@ TOOLKIT_JAR="$WORK/netex-toolkit-shaded.jar"
 
 mkdir -p "$WORK"
 
+# The image's entrypoint fixes a base directory and appends its arguments, hence --entrypoint.
+if [ -z "${OTP_SERIALIZATION_ID:-}" ]; then
+  OTP_SERIALIZATION_ID=$(docker run --rm --entrypoint java "$OTP_IMAGE" \
+    -cp @/app/jib-classpath-file @/app/jib-main-class-file --serializationVersionId)
+fi
+export OTP_SERIALIZATION_ID
+
 # ROOT stays the checkout: the pipeline derives its scripts/ and geo/ from it. The state directories
 # are the ones that have to outlive the container, and only they move to the work volume.
 #
@@ -60,6 +67,7 @@ run_make() {
     TOOLKIT_JAR="$TOOLKIT_JAR" \
     OTP_JAR= \
     OTP_DOCKER="$OTP_DOCKER" \
+    OTP_SERIALIZATION_ID="$OTP_SERIALIZATION_ID" \
     "otp_run=\$(OTP_DOCKER) \$(1) \"\$(2)\" \"\$(3)\"" \
     "$@"
 }

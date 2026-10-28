@@ -49,7 +49,10 @@ reaches OTP as one feed; `build-config.json` names that archive. The GTFS feeds 
 NeTEx are named there directly.
 
 The graph build itself runs OTP in a container started from `$OTP_IMAGE` -- the same image that
-serves the graph, because OTP refuses a `graph.obj` written by a different build.
+serves the graph, because OTP refuses a graph written by a different serialization version. Both
+graphs carry that version in their names, `streetGraph-<id>.obj` and `graph-<id>.obj`, through the
+`${otp.serialization.version.id}` that `build-config.json` uses: a new OTP builds graphs of
+its own, and each server loads the one it can read.
 
 ## Execute OTP instance
 

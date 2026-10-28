@@ -1,5 +1,7 @@
 {
   "embedRouterConfig": true,
+  "streetGraph": "streetGraph-${otp.serialization.version.id}.obj",
+  "graph": "graph-${otp.serialization.version.id}.obj",
   "areaVisibility": true,
   "staticParkAndRide": false,
   "transitModelTimeZone": "Europe/Rome",

@@ -31,7 +31,7 @@ the publisher. Check it after a refresh that brings back new bytes. The export i
 Parking asks nothing. The Transmodel API stamps every response with a `PublicationTimestamp` read
 at request time, so two bodies a second apart differ on that line and no comparison can ever hold
 the file. `make download-parking` replaces `input/parking-netex.xml` and rebuilds the zip on every
-run; the zip is a prerequisite of `graph/graph.obj`, so the next `make graph` rebuilds the transit
+run; the zip is a prerequisite of `graph/graph-<id>.obj`, so the next `make graph` rebuilds the transit
 layer with it.
 
 [nap-catalog]: https://www.cciss.it/nap/mmtis/public/en/catalog/Organisation
