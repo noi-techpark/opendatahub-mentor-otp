@@ -57,6 +57,20 @@ OTP builds graphs of its own, and each server loads the one it can read.
 
 ## Deployment
 
+The `otp-graph-build` container rebuilds every night at 02:00: the OSM update, the feed refresh, and
+then whatever is out of date. A deploy restarts it, and it then builds only what the deployed change
+needs, from the inputs already on its volume:
+
+| Change                                   | Rebuilt                                   |
+|------------------------------------------|-------------------------------------------|
+| `pipeline/geo/*.geojson`                 | OSM update, region re-cut, street, graph  |
+| `pipeline/Makefile`, `pipeline/scripts/` | the NeTEx stores, graph                   |
+| the Dockerfile's `ARG BASE_IMAGE`        | street, graph                             |
+| an OTP config                            | graph (street too for `build-config.json`)|
+| anything else                            | nothing                                   |
+
+`/app/run-build.sh deploy --dry-run` in that container prints the decision without building.
+
 OTP serves from a compose project of its own, `<project>-otp`, which the deploy playbook does not
 take down. Its compose file ships in each release as `docker-compose.otp.yml`, so when the deploy
 role reverts a failed release, the restored `otp-graph-build` rolls OTP back with it. Traefik
