@@ -32,14 +32,14 @@ services:
         context: ./
         dockerfile: infrastructure/docker/gbfs/Dockerfile
 
+  # Named, so otp-graph-build below can build the graph with the image that serves it.
   otp:
+    image: odh-mentor-otp:local
     ports:
       - "8080:8080"
     build:
       context: ./
       dockerfile: infrastructure/docker/otp/Dockerfile
-      args:
-        BASE_IMAGE: ${OTP_IMAGE}
     depends_on:
       - amarillo
       - gbfs
@@ -61,7 +61,7 @@ services:
     environment:
       - TRANSMODEL_HOST=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}
       - OTP_WORK_VOLUME=otp-work
-      - OTP_IMAGE=${OTP_IMAGE}
+      - OTP_IMAGE=odh-mentor-otp:local
       - TOOLKIT_VERSION=${TOOLKIT_VERSION:-}
       - MV_USERNAME=${MV_USERNAME:-}
       - MV_PASSWORD=${MV_PASSWORD:-}

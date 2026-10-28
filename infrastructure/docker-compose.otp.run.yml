@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+# The serving OTP, outside the main project the deploy playbook takes down on every release. It
+# ships in each release as docker-compose.otp.yml beside the main project's .env, and runs as
+# project <COMPOSE_PROJECT_NAME>-otp: every caller passes that name, and Traefik's constraint
+# matches it.
+services:
+  traefik:
+    image: docker.io/library/traefik:v3.6.25
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME}-otp`)
+      - --entrypoints.web.address=:80
+    ports:
+      - ${SERVER_PORT_OTP}:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # No ports and no container_name: docker rollout runs two side by side. OTP passes the
+  # healthcheck only once its graph is loaded.
+  otp:
+    image: ${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
+    restart: unless-stopped
+    environment:
+      JAVA_OPTS: ${OTP_JAVA_OPTS}
+    env_file:
+      - .env
+    volumes:
+      - otp-graph:/var/otp
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8080/otp/actuators/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30m
+      start_interval: 5s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.otp.entrypoints=web
+      - traefik.http.routers.otp.rule=PathPrefix(`/`)
+      - traefik.http.routers.otp.middlewares=otp-retry
+      - traefik.http.middlewares.otp-retry.retry.attempts=3
+      - traefik.http.services.otp.loadbalancer.server.port=8080
+
+volumes:
+  # Shared with the main project's otp-graph-build, which publishes into it.
+  otp-graph:
+    name: otp-graph

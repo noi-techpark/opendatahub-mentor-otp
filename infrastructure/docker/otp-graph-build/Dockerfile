@@ -7,12 +7,14 @@ FROM docker.io/library/eclipse-temurin:25-jdk-noble
 
 # JDK 25 comes from the base image: the pipeline's drivers are source-launched under JEP 458 and
 # have no build step. docker.io is here for the CLI, which otp-docker.sh uses over the mounted
-# socket. make drives the pipeline; gzip verifies the gzipped feeds before they are kept.
+# socket, and docker-compose-v2 for otp-rollout.sh. make drives the pipeline; gzip verifies the
+# gzipped feeds before they are kept.
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
     cron \
     curl \
     docker.io \
+    docker-compose-v2 \
     gzip \
     make \
     nginx \
@@ -29,7 +31,16 @@ COPY build-graph.sh .
 COPY build-config.json otp-config.json router-config.json ./
 COPY infrastructure/docker/otp-graph-build/otp-docker.sh .
 COPY infrastructure/docker/otp-graph-build/run-build.sh .
-RUN chmod +x build-graph.sh otp-docker.sh run-build.sh
+COPY infrastructure/docker/otp-graph-build/otp-rollout.sh .
+RUN chmod +x build-graph.sh otp-docker.sh run-build.sh otp-rollout.sh
+
+ARG DOCKER_ROLLOUT_VERSION=v0.14
+ARG DOCKER_ROLLOUT_SHA256=cdeaba6ae9eee3b0b606286e585bbda6787283d801a6ad6d9b9d2bc347fda05b
+RUN mkdir -p /usr/local/lib/docker/cli-plugins \
+    && curl -fsSL -o /usr/local/lib/docker/cli-plugins/docker-rollout \
+      "https://raw.githubusercontent.com/wowu/docker-rollout/${DOCKER_ROLLOUT_VERSION}/docker-rollout" \
+    && echo "${DOCKER_ROLLOUT_SHA256}  /usr/local/lib/docker/cli-plugins/docker-rollout" | sha256sum -c - \
+    && chmod +x /usr/local/lib/docker/cli-plugins/docker-rollout
 
 # The pipeline, vendored whole: its Makefile derives scripts/ and geo/ from its own directory.
 COPY pipeline/ /pipeline/
@@ -50,9 +61,10 @@ ENV INPUT_DIR=/build/input \
 
 # Everything the pipeline and its drivers reach for on PATH. A base image or package list that
 # stops providing one fails this build.
-RUN for c in java make curl python3 unzip zip gzip osmium pyosmium-up-to-date docker; do \
+RUN for c in java make curl python3 unzip zip gzip osmium pyosmium-up-to-date docker flock; do \
       command -v "$c" >/dev/null || { echo "missing from PATH: $c" >&2; exit 1; }; \
-    done
+    done \
+    && docker compose version && docker rollout --version
 
 # nginx: serve build artifacts from /build for debugging (directory listing only)
 RUN echo 'server {\n\
