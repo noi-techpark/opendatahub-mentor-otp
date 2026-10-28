@@ -24,7 +24,7 @@ counts, and [`docs/datasources.md`](docs/datasources.md) carries the per-region 
 
 ```
 make help                # targets, artefact paths, the credentials note
-make all                 # everything up to graph/graph.obj
+make all                 # everything up to graph/graph-<id>.obj
 make netex               # just graph/netex-epip-merged.zip
 make serve               # OTP on :8080
 make download-all        # refresh everything external: the toolkit jar and every source

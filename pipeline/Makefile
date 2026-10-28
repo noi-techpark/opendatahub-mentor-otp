@@ -537,6 +537,14 @@ EPIP_CODESPACE_FLAG := $(if $(EPIP_CODESPACE),--codespace $(EPIP_CODESPACE))
 # the rule to find.
 OTP_JAR ?= $(ROOT)/otp-shaded.jar
 
+# The id OTP stamps into every graph it saves and checks on every load. build-config.json names both
+# graphs after it, and $(STREET_GRAPH) and $(GRAPH) have to match. build-graph.sh passes the id of
+# its image; here the jar is asked once, and the export spares each recursive $(MAKE) a JVM.
+ifeq ($(origin OTP_SERIALIZATION_ID),undefined)
+OTP_SERIALIZATION_ID := $(if $(wildcard $(OTP_JAR)),$(shell $(JAVA) -jar $(OTP_JAR) --serializationVersionId))
+endif
+export OTP_SERIALIZATION_ID
+
 OTP_CONFIGS := $(addprefix $(OTP_DIR)/,build-config.json router-config.json otp-config.json)
 # Measured heaps: street (OSM+DEM), transit layering, serving. Transit below 54G G1-death-spirals
 # and above 58G swaps on a 61G box; 56G builds entirely in RAM.
@@ -565,8 +573,8 @@ REGION_PBF    := $(OTP_DIR)/regional.osm.pbf
 DEM_TIF       := $(OTP_DIR)/srtm_39_03.tif
 PARKING_ZIP   := $(OTP_DIR)/parking-netex.xml.zip
 NETEX_ZIP     := $(OTP_DIR)/netex-epip-merged.zip
-STREET_GRAPH  := $(OTP_DIR)/streetGraph.obj
-GRAPH         := $(OTP_DIR)/graph.obj
+STREET_GRAPH  := $(OTP_DIR)/streetGraph-$(OTP_SERIALIZATION_ID).obj
+GRAPH         := $(OTP_DIR)/graph-$(OTP_SERIALIZATION_ID).obj
 
 # USE -j6. Measured over four full national runs on 2026-09-06 (../log-j1.txt, log-j6.txt,
 # log-j6-2.txt, log-j16.txt): -j1 4 h 09 m, -j6 2 h 26 m, -j6-2 2 h 14 m, -j16 2 h 24 m. Past six
@@ -647,7 +655,7 @@ test: | $(TOOLKIT_JAR) ## Run this repository's test suite (scripts/tests/AllTes
 compile-gate: | $(TOOLKIT_JAR) ## javac every .java under scripts/ -- the only check that sees ObbToDb and SwissToDb
 	TOOLKIT_JAR=$(TOOLKIT_JAR) $(SCRIPTS)/compile-gate.sh
 
-all: $(GRAPH) ## Build everything up to graph.obj (street + transit)
+all: $(GRAPH) ## Build everything up to graph-<id>.obj (street + transit)
 
 # ===== sources ================================================================================
 # The file rules fire only when the input is missing (a normal `make all` never re-downloads); the
@@ -1244,9 +1252,14 @@ download-parking: | $(INPUT_DIR) $(STATE_DIR) ## Re-fetch the parking NeTEx feed
 
 # ===== OTP graph ==============================================================================
 
+# An empty id would name both graphs graph-.obj, which OTP, substituting its own id, never writes.
+need_otp_id = @test -n '$(OTP_SERIALIZATION_ID)' || \
+	{ echo "OTP_SERIALIZATION_ID is empty: no OTP_JAR to ask, and none passed" >&2; exit 1; }
+
 # Phase 1: street graph from OSM + DEM only. --buildStreet implies --save and writes
-# streetGraph.obj, which is reused across transit-feed refreshes.
+# streetGraph-<id>.obj, which is reused across transit-feed refreshes.
 $(STREET_GRAPH): $(OTP_DIR)/build-config.json $(REGION_PBF) $(DEM_TIF) | $(OTP_JAR)
+	$(need_otp_id)
 	$(call stage,street,--buildStreet -> $(notdir $@))
 	$(call otp_run,$(STREET_HEAP),--abortOnUnknownConfig --buildStreet,$(OTP_BUILD_JVM))
 	$(call stage_done,street)
@@ -1255,13 +1268,14 @@ street: $(STREET_GRAPH) ## Build only the street graph (phase 1: OSM + DEM)
 
 # Phase 2: layer transit onto the saved street graph. A transit-feed-only change reruns just this.
 $(GRAPH): $(STREET_GRAPH) $(OTP_CONFIGS) $(NETEX_ZIP) $(PARKING_ZIP) | $(OTP_JAR)
+	$(need_otp_id)
 	$(call stage,graph,--loadStreet --save -> $(notdir $@))
 	$(call otp_run,$(TRANSIT_HEAP),--abortOnUnknownConfig --loadStreet --save,$(OTP_BUILD_JVM))
 	$(call stage_done,graph)
 
-graph: $(GRAPH) ## Build graph.obj (phase 1 + phase 2)
+graph: $(GRAPH) ## Build graph-<id>.obj (phase 1 + phase 2)
 
-serve: $(GRAPH) ## Serve graph.obj with OTP on :8080 (Ctrl-C to stop)
+serve: $(GRAPH) ## Serve graph-<id>.obj with OTP on :8080 (Ctrl-C to stop)
 	$(call otp_run,$(SERVE_HEAP),--load --serve)
 
 # ===== relative goal names ====================================================================
