@@ -8,7 +8,8 @@ WORKDIR /var/otp
 # the graph.
 COPY build-config.json router-config.json otp-config.json /etc/otp/
 
-RUN apt-get update && apt-get install -y --no-install-recommends inotify-tools \
+# The healthcheck in docker-compose.otp.run.yml runs curl.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY infrastructure/docker/otp/entrypoint.sh /entrypoint.sh

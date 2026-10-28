@@ -41,6 +41,8 @@ OTP_DOCKER="${OTP_DOCKER:-$HERE/infrastructure/docker/otp-graph-build/otp-docker
 WORK="${WORK:-$HERE/work}"
 TOOLKIT_JAR="$WORK/netex-toolkit-shaded.jar"
 
+# The base OTP the Dockerfile names, unless the environment names the image that serves the graph.
+OTP_IMAGE="${OTP_IMAGE:-$(sed -n 's/^ARG BASE_IMAGE=//p' "$HERE/infrastructure/docker/otp/Dockerfile" 2>/dev/null)}"
 : "${OTP_IMAGE:?must name the OTP image that both builds and serves the graph}"
 
 mkdir -p "$WORK"

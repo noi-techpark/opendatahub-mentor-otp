@@ -7,22 +7,6 @@ services:
     ports:
       - ${SERVER_PORT_JOURNEY_V2}:80
 
-  otp:
-    image: ${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
-    restart: unless-stopped
-    environment:
-      JAVA_OPTS: ${OTP_JAVA_OPTS}
-    env_file:
-      - .env
-    ports:
-      - ${SERVER_PORT_OTP}:8080
-    volumes:
-      - otp-graph:/var/otp
-    depends_on:
-      - amarillo
-      - charger
-      - carsharing-cron
-
   otp-graph-build:
     image: ${DOCKER_IMAGE_OTP_GRAPH_BUILD}:${DOCKER_TAG}
     restart: unless-stopped
@@ -32,10 +16,14 @@ services:
       - otp-work:/build
       - otp-graph:/graph
       - /var/run/docker.sock:/var/run/docker.sock
+      # The deploy role's releases, at the same path, so its absolute current link resolves here.
+      - /var/docker/${COMPOSE_PROJECT_NAME}:/var/docker/${COMPOSE_PROJECT_NAME}:ro
     environment:
+      - OTP_DEPLOY=/var/docker/${COMPOSE_PROJECT_NAME}/current
+      - OTP_PROJECT=${COMPOSE_PROJECT_NAME}-otp
       - TRANSMODEL_HOST=${TRANSMODEL_HOST:-https://transmodel.api.opendatahub.com}
       - OTP_WORK_VOLUME=otp-work
-      - OTP_IMAGE=${OTP_IMAGE}
+      - OTP_IMAGE=${DOCKER_IMAGE_OTP}:${DOCKER_TAG}
       - TOOLKIT_VERSION=${TOOLKIT_VERSION:-}
       - MV_USERNAME=${MV_USERNAME:-}
       - MV_PASSWORD=${MV_PASSWORD:-}

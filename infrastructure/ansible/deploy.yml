@@ -6,6 +6,9 @@
     - name: Login to GitHub Container Registry
       ansible.builtin.shell:
         cmd: echo "{{ docker_password }}" | docker login "{{ docker_host }}" --username "{{ docker_username }}" --password-stdin
+
+    # docker-compose.otp.yml is a release file: when the role reverts a failed release, the restored
+    # otp-graph-build rolls OTP back with it.
     - name: Execute Docker deployment
       ansible.builtin.include_role:
         name: ansible-docker-deployment
@@ -15,5 +18,14 @@
         docker_deployment_release_files:
           - local: ../docker-compose.run.yml
             remote: docker-compose.yml
+          - local: ../docker-compose.otp.run.yml
+            remote: docker-compose.otp.yml
           - local: ../../.env
             remote: .env
+        docker_deployment_post_release_setup_hook: '{{ playbook_dir }}/pull-otp.yml'
+
+    # After the role: until it takes the old project down, an otp there may hold the port.
+    - name: Start Traefik in front of OTP
+      ansible.builtin.command:
+        cmd: docker compose --project-name {{ project_name }}-otp --file docker-compose.otp.yml up --detach traefik
+        chdir: /var/docker/{{ project_name }}/current

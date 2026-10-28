@@ -21,7 +21,6 @@ env:
   DOCKER_IMAGE_ECHARGING: ghcr.io/${{ github.repository }}/odh-mentor-otp-echarging
   DOCKER_IMAGE_AMARILLO: ghcr.io/${{ github.repository }}/odh-mentor-otp-amarillo
   DOCKER_IMAGE_OJP_PROXY: ghcr.io/leonardehrenfried/ojp-proxy:2026-10-13T15-15-21Z
-  OTP_IMAGE: docker.io/opentripplanner/opentripplanner:2.11.0_2026-11-05T14-51
 
 jobs:
   deploy-test:
@@ -59,8 +58,6 @@ jobs:
           X_DOCKER_ECHARGING_PORT: 1087
           X_DOCKER_AMARILLO_PORT: 1092
           X_DOCKER_OJP_PROXY_PORT: 1393
-
-          X_OTP_IMAGE: ${{ env.OTP_IMAGE }}
 
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
           X_PELIAS_URL: "https://geocoder.otp.opendatahub.testingmachine.eu"
@@ -130,8 +127,6 @@ jobs:
           X_DOCKER_ECHARGING_PORT: 1067
           X_DOCKER_AMARILLO_PORT: 1070
           X_DOCKER_OJP_PROXY_PORT: 1071
-
-          X_OTP_IMAGE: ${{ env.OTP_IMAGE }}
 
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.com"
           X_PELIAS_URL: "https://geocoder.otp.opendatahub.com"

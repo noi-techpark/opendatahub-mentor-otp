@@ -41,6 +41,7 @@ exec docker run \
   -v "${OTP_WORK_VOLUME}:/var/opentripplanner/:z" \
   -e JAVA_TOOL_OPTIONS="-Xmx${heap} -Xms${heap} ${jvm} -XX:+UseContainerSupport" \
   --entrypoint java \
+  --pull never \
   "${OTP_IMAGE}" \
   -cp @/app/jib-classpath-file @/app/jib-main-class-file \
   /var/opentripplanner/graph ${otp_args}
