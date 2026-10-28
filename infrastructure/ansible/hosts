@@ -2,4 +2,4 @@
 docker.otp.opendatahub.testingmachine.eu ansible_user='noi-techpark-bot' ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [prod]
-docker03.opendatahub.com ansible_user='noi-techpark-bot' ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+docker.otp.opendatahub.com ansible_user='noi-techpark-bot' ansible_ssh_common_args='-o StrictHostKeyChecking=no'
