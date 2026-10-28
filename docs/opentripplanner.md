@@ -35,12 +35,21 @@ However, if you want to build a graph locally, you can use the following command
 OTP takes the following inputs for graph building:
 
 - OSM
-- GTFS
+- elevation
+- NeTEx and GTFS
 
-As OSM data we download the entire [North East of Italy](https://download.geofabrik.de/europe/italy/nord-est.html)
-and use `osmium` to cut out South Tyrol. The exact boundaries are defined in `south-tyrol.geojson`.
+As OSM data we download the entire [Europe extract](https://download.geofabrik.de/europe.html) and
+use `osmium` to cut out the region. The exact boundaries are defined in
+`pipeline/geo/switzerland-italy.geojson`, and `build-graph.sh` keeps the extract current with
+`pyosmium-up-to-date`, which applies the OSM replication diffs.
 
-The GTFS feeds to use are defined in `build-config.json`.
+The NeTEx sources are listed in `pipeline/Makefile` and documented in
+`pipeline/docs/datasources.md`. They are converted to EPIP and merged into a single archive, which
+reaches OTP as one feed; `build-config.json` names that archive. The GTFS feeds and the parking
+NeTEx are named there directly.
+
+The graph build itself runs OTP in a container started from `$OTP_IMAGE` -- the same image that
+serves the graph, because OTP refuses a `graph.obj` written by a different build.
 
 ## Execute OTP instance
 

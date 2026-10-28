@@ -37,7 +37,19 @@ function delete_old_accomodation {
   }
   '
 }
+function delete_old_discoverswiss_accomodation {
+  curl -X POST "${ELASTICSEARCH_HOST}:9200/pelias/_delete_by_query?pretty" -H 'Content-Type: application/json' -d'
+  {
+    "query": {
+      "match": {
+        "source": "discoverswiss-accomodation"
+      }
+    }
+  }
+  '
+}
 
 delete_old_stops
 delete_old_poi
 delete_old_accomodation
+delete_old_discoverswiss_accomodation

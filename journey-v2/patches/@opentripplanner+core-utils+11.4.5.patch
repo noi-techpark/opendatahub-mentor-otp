@@ -1,0 +1,42 @@
+diff --git a/node_modules/@opentripplanner/core-utils/esm/query-gen.js b/node_modules/@opentripplanner/core-utils/esm/query-gen.js
+index 8e93d3a..9106dde 100644
+--- a/node_modules/@opentripplanner/core-utils/esm/query-gen.js
++++ b/node_modules/@opentripplanner/core-utils/esm/query-gen.js
+@@ -217,12 +217,14 @@ export function generateOtp2Query(_ref) {
+       bikeReluctance: bikeReluctance,
+       carReluctance: carReluctance,
+       date: date,
+-      fromPlace: "".concat(from.name, "::").concat(from.lat, ",").concat(from.lon),
++      // A chosen transit stop is sent by GTFS id so OTP routes from the stop's
++      // own vertex; coordinates fail where there is no OSM street coverage.
++      fromPlace: from.type === "stop" && from.id ? "".concat(from.name, "::").concat(from.id) : "".concat(from.name, "::").concat(from.lat, ",").concat(from.lon),
+       modes: modes,
+       numItineraries: numItineraries,
+       preferred: preferred,
+       time: time,
+-      toPlace: "".concat(to.name, "::").concat(to.lat, ",").concat(to.lon),
++      toPlace: to.type === "stop" && to.id ? "".concat(to.name, "::").concat(to.id) : "".concat(to.name, "::").concat(to.lat, ",").concat(to.lon),
+       unpreferred: unpreferred,
+       walkReluctance: walkReluctance,
+       walkSpeed: walkSpeed,
+diff --git a/node_modules/@opentripplanner/core-utils/lib/query-gen.js b/node_modules/@opentripplanner/core-utils/lib/query-gen.js
+index 14d0a1b..685cffd 100644
+--- a/node_modules/@opentripplanner/core-utils/lib/query-gen.js
++++ b/node_modules/@opentripplanner/core-utils/lib/query-gen.js
+@@ -194,12 +194,14 @@ function generateOtp2Query({
+       bikeReluctance,
+       carReluctance,
+       date,
+-      fromPlace: `${from.name}::${from.lat},${from.lon}`,
++      // A chosen transit stop is sent by GTFS id so OTP routes from the stop's
++      // own vertex; coordinates fail where there is no OSM street coverage.
++      fromPlace: from.type === "stop" && from.id ? `${from.name}::${from.id}` : `${from.name}::${from.lat},${from.lon}`,
+       modes,
+       numItineraries,
+       preferred,
+       time,
+-      toPlace: `${to.name}::${to.lat},${to.lon}`,
++      toPlace: to.type === "stop" && to.id ? `${to.name}::${to.id}` : `${to.name}::${to.lat},${to.lon}`,
+       unpreferred,
+       walkReluctance,
+       walkSpeed,

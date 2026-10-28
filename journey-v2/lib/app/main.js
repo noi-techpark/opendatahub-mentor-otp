@@ -54,13 +54,19 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // set up the Redux store
+const reducers = {
+  otp: createOtpReducer(otpConfig),
+  router: connectRouter(history),
+  user: createUserReducer(otpConfig) // add optional initial query here
+}
+// createCallTakerReducer returns undefined when the call-taker module isn't
+// enabled in config; omit the key entirely rather than passing undefined,
+// which combineReducers otherwise warns about.
+const callTakerReducer = createCallTakerReducer(otpConfig)
+if (callTakerReducer) reducers.callTaker = callTakerReducer
+
 const store = createStore(
-  combineReducers({
-    callTaker: createCallTakerReducer(otpConfig),
-    otp: createOtpReducer(otpConfig),
-    router: connectRouter(history),
-    user: createUserReducer(otpConfig) // add optional initial query here
-  }),
+  combineReducers(reducers),
   compose(applyMiddleware(...middleware))
 )
 

@@ -1,0 +1,22 @@
+diff --git a/node_modules/uncontrollable/index.js b/node_modules/uncontrollable/index.js
+index 492bfe0..b4a4c64 100644
+--- a/node_modules/uncontrollable/index.js
++++ b/node_modules/uncontrollable/index.js
+@@ -79,7 +79,7 @@ function uncontrollable(Component, controlledValues, methods) {
+       return !this._notifying;
+     };
+ 
+-    _proto.componentWillMount = function componentWillMount() {
++    _proto.UNSAFE_componentWillMount = function UNSAFE_componentWillMount() {
+       var _this2 = this;
+ 
+       var props = this.props;
+@@ -89,7 +89,7 @@ function uncontrollable(Component, controlledValues, methods) {
+       });
+     };
+ 
+-    _proto.componentWillReceiveProps = function componentWillReceiveProps(nextProps) {
++    _proto.UNSAFE_componentWillReceiveProps = function UNSAFE_componentWillReceiveProps(nextProps) {
+       var _this3 = this;
+ 
+       var props = this.props;

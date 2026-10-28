@@ -3,10 +3,15 @@
     "numItineraries": 5
   },
   "transit": {
+    "maxNumberOfTransfers": 6,
     "dynamicSearchWindow": {
-      "minWindow": "4h",
-      "maxWindow": "16h"
+      "minWindow": "1h",
+      "maxWindow": "3h"
     }
+  },
+  "ojpApi" : {
+    "hideFeedId" : true,
+    "hardcodedInputFeedId" : "netex"
   },
   "vectorTiles": {
     "layers": [
@@ -79,13 +84,13 @@
   "updaters": [
     {
       "type": "siri-et-lite",
-      "feedId": "sta",
+      "feedId": "netex",
       "url": "https://efa.sta.bz.it/siri-lite/estimated-timetable/xml",
       "fuzzyTripMatching": true
     },
     {
       "type": "siri-sx-lite",
-      "feedId": "sta",
+      "feedId": "netex",
       "url": "https://efa.sta.bz.it/siri-lite/situation-exchange/xml"
     },
     {

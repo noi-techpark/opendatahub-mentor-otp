@@ -5,26 +5,43 @@
 const fs = require('fs');
 
 const DATA_DIR = __dirname + "/../data/csv-importer";
-const touristicAll = require(DATA_DIR + '/touristic-poi-all.json');
-const touristicFilteredSet = require(DATA_DIR + '/touristic-poi-filtered-set.json');
 
-const accomodationAll = require(DATA_DIR + '/accomodation-poi-all.json');
-const accomodationFilteredSet = require(DATA_DIR + '/accomodation-poi-filtered-set.json');
+// Each POI type is processed independently so a failed download of one
+// type does not block the other.
+const TYPES = {
+    touristic: {
+        all: DATA_DIR + '/touristic-poi-all.json',
+        filtered: DATA_DIR + '/touristic-poi-filtered-set.json',
+        out: DATA_DIR + '/touristic-poi.json',
+    },
+    accomodation: {
+        all: DATA_DIR + '/accomodation-poi-all.json',
+        filtered: DATA_DIR + '/accomodation-poi-filtered-set.json',
+        out: DATA_DIR + '/accomodation-poi.json',
+    },
+};
 
-const EXPORT_POIS = DATA_DIR + "/touristic-poi.json";
-const EXPORT_ACCOMODATION = DATA_DIR + "/accomodation-poi.json";
+const type = process.argv[2];
+const config = TYPES[type];
+if (!config) {
+    console.error("Usage: node process-touristic-poi.js <" + Object.keys(TYPES).join("|") + ">");
+    process.exit(1);
+}
+
+const all = JSON.parse(fs.readFileSync(config.all, 'utf8'));
+const filteredSet = JSON.parse(fs.readFileSync(config.filtered, 'utf8'));
+
 // Index POI by id
-const touristicAllIndex = {};
-touristicAll.Items.forEach((item) => {
-    touristicAllIndex[item.Id] = item;
+const allIndex = {};
+all.Items.forEach((item) => {
+    allIndex[item.Id] = item;
 });
 
-
-var touristicPois = touristicFilteredSet.Items.map((filteredItem) => {
+const pois = filteredSet.Items.map((filteredItem) => {
     // Retrieve poi data
-    let poi = touristicAllIndex[filteredItem.Id];
-    
-    if(!poi) {
+    const poi = allIndex[filteredItem.Id];
+
+    if (!poi) {
         console.log("Missing poi", filteredItem);
     }
 
@@ -34,28 +51,4 @@ var touristicPois = touristicFilteredSet.Items.map((filteredItem) => {
 });
 
 // Write poi to file
-fs.writeFileSync(EXPORT_POIS, JSON.stringify(touristicPois, null, 2));
-delete touristicPois;
-delete touristicAllIndex;
-
-// Index accomodation by id
-const accomodationIndex = {};
-accomodationAll.Items.forEach((item) => {
-    accomodationIndex[item.Id] = item;
-});
-
-var accomodationPois = accomodationFilteredSet.Items.map((filteredItem) => {
-    // Retrieve poi data
-    let poi = accomodationIndex[filteredItem.Id];
-    
-    if(!poi) {
-        console.log("Missing poi", filteredItem);
-    }
-
-    return poi;
-}).filter((poi) => {
-    return poi;
-});
-
-// Write poi to file
-fs.writeFileSync(EXPORT_ACCOMODATION, JSON.stringify(accomodationPois, null, 2));
+fs.writeFileSync(config.out, JSON.stringify(pois, null, 2));

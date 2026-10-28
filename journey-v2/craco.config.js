@@ -191,6 +191,17 @@ module.exports = {
           favicon: 'branding/opendatahub/favicon.ico'
         }),
         new MiniCssExtractPlugin(),
+        // Swap vendor components for local overrides (route viewer link removed)
+        new webpack.NormalModuleReplacementPlugin(
+          /(^|\/)(app-menu|view-switcher)$/,
+          (resource) => {
+            const name = resource.request.split('/').pop()
+            resource.request = path.resolve(
+              __dirname,
+              `lib/app/components/app/${name}`
+            )
+          }
+        ),
         new webpack.DefinePlugin({
           CSS: JSON.stringify(CUSTOM_CSS),
           JS_CONFIG: JSON.stringify(customJsFile),

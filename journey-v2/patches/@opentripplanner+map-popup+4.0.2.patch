@@ -1,0 +1,60 @@
+diff --git a/node_modules/@opentripplanner/map-popup/esm/index.js b/node_modules/@opentripplanner/map-popup/esm/index.js
+index f07e9e0..30fa4a3 100644
+--- a/node_modules/@opentripplanner/map-popup/esm/index.js
++++ b/node_modules/@opentripplanner/map-popup/esm/index.js
+@@ -21,15 +21,22 @@ var generateLocation = function generateLocation(entity, name) {
+   var entityLon = entity.lon,
+       entityLat = entity.lat,
+       x = entity.x,
+-      y = entity.y;
++      y = entity.y,
++      gtfsId = entity.gtfsId;
+   var lat = entityLat || y;
+   var lon = entityLon || x;
+   if (!lat || !lon) return null;
+-  return {
++  // gtfsId is only present on transit stops, either directly on the entity
++  // or nested under entity.properties (raw GeoJSON Feature shape). Include it
++  // so OTP can route directly to/from the stop's own graph vertex, which
++  // matters for stops with no OSM street coverage nearby (e.g. flight-only
++  // airports).
++  var stopGtfsId = gtfsId || (entity.properties && entity.properties.gtfsId);
++  return Object.assign({
+     lat: lat,
+     lon: lon,
+     name: name
+-  };
++  }, stopGtfsId && { id: stopGtfsId, type: 'stop' });
+ };
+ 
+ var StationHubDetails = function StationHubDetails(_ref) {
+diff --git a/node_modules/@opentripplanner/map-popup/lib/index.js b/node_modules/@opentripplanner/map-popup/lib/index.js
+index 31d7bc1..74b2000 100644
+--- a/node_modules/@opentripplanner/map-popup/lib/index.js
++++ b/node_modules/@opentripplanner/map-popup/lib/index.js
+@@ -46,15 +46,23 @@ const generateLocation = (entity, name) => {
+     lon: entityLon,
+     lat: entityLat,
+     x,
+-    y
++    y,
++    gtfsId
+   } = entity;
+   const lat = entityLat || y;
+   const lon = entityLon || x;
+   if (!lat || !lon) return null;
++  // gtfsId is only present on transit stops, either directly on the entity
++  // or nested under entity.properties (raw GeoJSON Feature shape). Include it
++  // so OTP can route directly to/from the stop's own graph vertex, which
++  // matters for stops with no OSM street coverage nearby (e.g. flight-only
++  // airports).
++  const stopGtfsId = gtfsId || entity.properties?.gtfsId
+   return {
+     lat,
+     lon,
+-    name
++    name,
++    ...(stopGtfsId && { id: stopGtfsId, type: 'stop' })
+   };
+ };
+ 

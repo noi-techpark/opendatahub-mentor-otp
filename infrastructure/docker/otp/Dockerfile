@@ -1,9 +1,11 @@
-ARG BASE_IMAGE=opentripplanner/opentripplanner:2.8.0_2025-08-25T13-49
+ARG BASE_IMAGE=docker.io/lehrenfried/opentripplanner:stop-place-psa-v2
 FROM ${BASE_IMAGE}
 
 WORKDIR /var/otp
 
-ADD router-config.json otp-config.json /var/otp/
+# Docker seeds /var/otp from the image only when the volume is first created, so the configs land
+# in /etc/otp and entrypoint.sh installs them into /var/otp on every start.
+COPY router-config.json otp-config.json /etc/otp/
 
 RUN apt-get update && apt-get install -y --no-install-recommends inotify-tools \
     && rm -rf /var/lib/apt/lists/*

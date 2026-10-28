@@ -10,12 +10,4 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Cache OSM and elevation data
-        uses: actions/cache@v4
-        with:
-          path: |
-            data/srtm*
-            data/italy-nord-est.osm.pbf
-          key: input-data-${{ github.GITHUB_REF_NAME }}
-
 #      - run: ./build-graph.sh

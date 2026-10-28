@@ -8,3 +8,9 @@ services:
     build:
       context: ../
       dockerfile: infrastructure/docker/pelias-opendatahub-importer/Dockerfile
+
+  pelias-osm-merger:
+    image: ${DOCKER_IMAGE_PELIAS_OSM_MERGER}:${DOCKER_TAG}
+    build:
+      context: ../
+      dockerfile: infrastructure/docker/pelias-osm-merger/Dockerfile

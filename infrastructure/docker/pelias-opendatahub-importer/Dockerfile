@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-FROM node:18-alpine
+FROM docker.io/library/node:18-alpine
 
 RUN apk add --no-cache curl jq bash
 

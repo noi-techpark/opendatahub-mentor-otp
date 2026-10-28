@@ -16,13 +16,13 @@ services:
   # ── Runtime services (restart: always) ──────────────────────────────────────
 
   libpostal:
-    image: pelias/libpostal-service
+    image: docker.io/pelias/libpostal-service
     container_name: pelias_libpostal
     restart: always
     ports: [ "127.0.0.1:4400:4400" ]
 
   api:
-    image: pelias/api:master
+    image: docker.io/pelias/api:master
     container_name: pelias_api
     restart: always
     environment: [ "PORT=4000" ]
@@ -31,7 +31,7 @@ services:
       - "./pelias.json:/code/pelias.json"
 
   placeholder:
-    image: pelias/placeholder:master
+    image: docker.io/pelias/placeholder:master
     container_name: pelias_placeholder
     restart: always
     environment: [ "PORT=4100" ]
@@ -41,7 +41,7 @@ services:
       - pelias-data:/data
 
   interpolation:
-    image: pelias/interpolation:master
+    image: docker.io/pelias/interpolation:master
     container_name: pelias_interpolation
     restart: always
     environment: [ "PORT=4300" ]
@@ -51,7 +51,7 @@ services:
       - pelias-data:/data
 
   pip:
-    image: pelias/pip-service:master
+    image: docker.io/pelias/pip-service:master
     container_name: pelias_pip-service
     restart: always
     environment: [ "PORT=4200" ]
@@ -61,9 +61,13 @@ services:
       - pelias-data:/data
 
   elasticsearch:
-    image: pelias/elasticsearch:7.16.1
+    image: docker.io/pelias/elasticsearch:7.16.1
     container_name: pelias_elasticsearch
     restart: always
+    # Work around a JDK 17 NPE detecting container support on cgroup v2 hosts
+    # (modern kernels).
+    environment:
+      - "JDK_JAVA_OPTIONS=-XX:-UseContainerSupport"
     ports: [ "127.0.0.1:9200:9200", "127.0.0.1:9300:9300" ]
     volumes:
       - "./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro"
@@ -92,50 +96,64 @@ services:
     volumes:
       - pelias-data:/pelias/data
 
+  # Merges the Italy + Switzerland OSM extracts into one pbf.
+  # Must run after `pelias download` and before `pelias prepare`/`pelias import`.
+  pelias-osm-merger:
+    image: ${DOCKER_IMAGE_PELIAS_OSM_MERGER}:${DOCKER_TAG}
+    container_name: pelias_osm_merger
+    volumes:
+      - pelias-data:/data
+      - pelias-polylines-osm:/data/openstreetmap-polylines
+
   schema:
-    image: pelias/schema:master
+    image: docker.io/pelias/schema:master
     container_name: pelias_schema
     volumes:
       - "./pelias.json:/code/pelias.json"
 
   whosonfirst:
-    image: pelias/whosonfirst:master
+    image: docker.io/pelias/whosonfirst:master
     container_name: pelias_whosonfirst
     volumes:
       - "./pelias.json:/code/pelias.json"
       - pelias-data:/data
 
   openstreetmap:
-    image: pelias/openstreetmap:master
+    image: docker.io/pelias/openstreetmap:master
     container_name: pelias_openstreetmap
     volumes:
       - "./pelias.json:/code/pelias.json"
       - pelias-data:/data
 
   openaddresses:
-    image: pelias/openaddresses:master
+    image: docker.io/pelias/openaddresses:master
     container_name: pelias_openaddresses
     volumes:
       - "./pelias.json:/code/pelias.json"
       - pelias-data:/data
 
   csv-importer:
-    image: pelias/csv-importer:master
+    image: docker.io/pelias/csv-importer:master
     container_name: pelias_csv_importer
     volumes:
       - "./pelias.json:/code/pelias.json"
       - pelias-data:/data
 
   polylines:
-    image: pelias/polylines:master
+    image: docker.io/pelias/polylines:master
     container_name: pelias_polylines
     volumes:
       - "./pelias.json:/code/pelias.json"
       - pelias-data:/data
+      - pelias-polylines-osm:/data/openstreetmap:ro
 
 volumes:
   # Shared data volume used by all importers and runtime services.
   pelias-data:
+
+  # Highway-only OSM extract for the polylines service (see merge_osm.sh);
+  # kept separate so it can be mounted over /data/openstreetmap there only.
+  pelias-polylines-osm:
 
   # Elasticsearch data, kept separate to allow independent backup/restore.
   pelias-elasticsearch:

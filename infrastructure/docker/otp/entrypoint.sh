@@ -12,6 +12,10 @@ while true; do
   echo "graph.obj found, starting OTP"
   GRAPH_MTIME=$(stat -c '%Y' "$GRAPH" 2>/dev/null || echo 0)
 
+  # /var/otp is a volume seeded from the image only at creation, so the image's configs reach a
+  # running container here, on every start.
+  install -C -m644 /etc/otp/router-config.json /etc/otp/otp-config.json /var/otp/
+
   java $JAVA_OPTS -cp @/app/jib-classpath-file @/app/jib-main-class-file /var/otp/ --load --serve &
   OTP_PID=$!
 
