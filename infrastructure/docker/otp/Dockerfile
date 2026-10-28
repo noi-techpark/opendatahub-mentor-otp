@@ -1,5 +1,8 @@
+# run-build.sh rebuilds the graphs when the label changes.
 ARG BASE_IMAGE=docker.io/lehrenfried/opentripplanner:stop-place-psa-v2
 FROM ${BASE_IMAGE}
+ARG BASE_IMAGE
+LABEL org.opentripplanner.base=${BASE_IMAGE}
 
 WORKDIR /var/otp
 

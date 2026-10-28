@@ -16,11 +16,11 @@ print("\n".join(f"export {k}={shlex.quote(v)}" for k, v in os.environ.items() if
 chmod 600 /etc/environment.sh
 
 # Set up the cron job to rebuild every night
-echo "0 2 * * * root . /etc/environment.sh && /app/run-build.sh >> /proc/1/fd/1 2>&1" > /etc/cron.d/build-graph
+echo "0 2 * * * root . /etc/environment.sh && /app/run-build.sh nightly >> /proc/1/fd/1 2>&1" > /etc/cron.d/build-graph
 
-# If this container has not had a build yet, schedule one immediately on startup
+# A new container is a deploy
 if [ ! -f /run/.build-initialized ]; then
-  echo "@reboot root . /etc/environment.sh && /app/run-build.sh >> /proc/1/fd/1 2>&1 && touch /run/.build-initialized" >> /etc/cron.d/build-graph
+  echo "@reboot root . /etc/environment.sh && /app/run-build.sh deploy >> /proc/1/fd/1 2>&1 && touch /run/.build-initialized" >> /etc/cron.d/build-graph
 fi
 chmod 0644 /etc/cron.d/build-graph
 

@@ -136,7 +136,14 @@ fi
 #
 # The rest are named one by one here. This list has to stay in step with the pipeline's
 # download-feeds target, which also covers Austria.
-JOBS=1 run_make download-austria
-run_make download-swiss download-trenitalia download-sta download-rap download-flixbus download-parking
+#
+# REFRESH=0, no, off or false skips this step.
+case "${REFRESH:-}" in
+0 | no | off | false) echo "Leaving the source feeds alone (REFRESH=${REFRESH})" ;;
+*)
+  JOBS=1 run_make download-austria
+  run_make download-swiss download-trenitalia download-sta download-rap download-flixbus download-parking
+  ;;
+esac
 
 run_make all
