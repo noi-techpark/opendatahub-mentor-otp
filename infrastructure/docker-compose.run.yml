@@ -77,7 +77,8 @@ services:
       FILE=/data/nord_est_latest.osm.pbf
       if [ ! -f $$FILE ] || [ $$(find $$FILE -mtime +30 | wc -l) -eq 1 ]; then
         echo 'Downloading new file...'
-        wget -q https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf -O $$FILE
+        # Download to a temp file so an interrupted download is never mistaken for a complete one
+        wget -q https://download.geofabrik.de/europe/italy/nord-est-latest.osm.pbf -O $$FILE.part && mv $$FILE.part $$FILE || exit 1
       fi
       exec ./graphhopper.sh -c config-example.yml --host 0.0.0.0 -i $$FILE
       "
