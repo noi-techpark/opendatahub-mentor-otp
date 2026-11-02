@@ -95,7 +95,7 @@ jobs:
           X_DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER: ${{ env.DOCKER_IMAGE_PELIAS_OPENDATAHUB_IMPORTER }}
           X_DOCKER_IMAGE_PELIAS_OSM_MERGER: ${{ env.DOCKER_IMAGE_PELIAS_OSM_MERGER }}
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
-          X_OTP_GRAPH_URL: 'https://v2.otp.opendatahub.com/otp/gtfs/v1'
+          X_OTP_GRAPH_URL: 'https://otp.opendatahub.com/otp/gtfs/v1'
 
       - name: Build and push
         uses: noi-techpark/github-actions/docker-build-and-push@v2

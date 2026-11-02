@@ -133,8 +133,8 @@ jobs:
 
           X_OTP_IMAGE: ${{ env.OTP_IMAGE }}
 
-          X_CARSHARING_BASEURL: "https://carsharing.v2.otp.opendatahub.com"
-          X_PELIAS_URL: "https://geocoder.v2.otp.opendatahub.com"
+          X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.com"
+          X_PELIAS_URL: "https://geocoder.otp.opendatahub.com"
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
           # The Austrian Verbund feeds; data.mobilitaetsverbuende.at authenticates every download.
