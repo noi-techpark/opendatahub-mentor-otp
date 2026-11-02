@@ -9,9 +9,6 @@ brandByDomain:
   journey.opendatahub.com:
     branding: opendatahub
     title: Open Data Hub / Open Trip Planner
-  journey.v2.otp.opendatahub.com:
-    branding: opendatahub
-    title: Open Data Hub / Open Trip Planner
   journey.impact.digital.noi.bz.it:
     branding: impact 
     title: Open Trip Planner
@@ -29,7 +26,7 @@ reportIssue:
 # All locally relevant modes of transport in the 'modes: transitModes' section;
 # If needed, any language codes and names in the 'language' section.
 api:
-  host: https://v2.otp.opendatahub.com
+  host: https://otp.opendatahub.com
   # Path will be deprecated once the REST API is deprecated, which will be soon.
   # If the OTP server is hosted at /otp, then no path needs to be configured
   path: /otp/routers/default
@@ -165,7 +162,7 @@ map:
         - type: stations # couldn't find any
     - type: charger
       name: E-Charger
-      url: https://charger.v2.otp.opendatahub.com/charger/stations.json
+      url: https://charger.otp.opendatahub.com/charger/stations.json
         
   ### Optional transitive.js (route rendering) properties:
   ### - labeledModes: an array of OTP modes for which the route label should be
@@ -223,7 +220,7 @@ geocoder:
   layers: 
   # This base URL is required as the libraries will default to using now-defunct
   # mapzen urls
-  baseUrl: https://geocoder.v2.otp.opendatahub.com/v1
+  baseUrl: https://geocoder.otp.opendatahub.com/v1
   # This allows the location field dropdown headers to be colored based on Pelias layer
   #resultsColors:
   #  stops: "#007fae"

@@ -91,26 +91,26 @@
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://gbfs.v2.otp.opendatahub.com/bz/2.1/gbfs.json"
+      "url" : "https://gbfs.otp.opendatahub.com/bz/2.1/gbfs.json"
     },
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://gbfs.v2.otp.opendatahub.com/me/2.1/gbfs.json"
+      "url" : "https://gbfs.otp.opendatahub.com/me/2.1/gbfs.json"
     },
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://gbfs.v2.otp.opendatahub.com/papin/2.1/gbfs.json"
+      "url" : "https://gbfs.otp.opendatahub.com/papin/2.1/gbfs.json"
     },
     {
       "type" : "vehicle-rental",
       "sourceType" : "gbfs",
-      "url" : "https://carsharing.v2.otp.opendatahub.com/alpsgo/gbfs.json"
+      "url" : "https://carsharing.otp.opendatahub.com/alpsgo/gbfs.json"
     },
     {
       "type": "stop-time-updater",
-      "url": "https://amarillo.v2.otp.opendatahub.com/gtfs/amarillo.altoadige.gtfsrt.pbf",
+      "url": "https://amarillo.otp.opendatahub.com/gtfs/amarillo.altoadige.gtfsrt.pbf",
       "feedId": "amarillo"
     },
     {
