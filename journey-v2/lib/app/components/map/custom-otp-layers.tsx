@@ -8,7 +8,7 @@ import { Label as BsLabel } from 'react-bootstrap'
 import ReactDOMServer from 'react-dom/server'
 import { FormattedMessage, injectIntl } from 'react-intl'
 import { ClassicModeIcon } from '@opentripplanner/icons'
-import { Parking } from '@styled-icons/fa-solid'
+import { Bicycle, Parking } from '@styled-icons/fa-solid'
 import { Rss } from '@styled-icons/fa-solid/Rss'
 import { Wheelchair } from '@styled-icons/fa-solid/Wheelchair'
 import { setViewedStop } from '@otp-react-redux/lib/actions/ui'
@@ -331,25 +331,39 @@ const LAYER_CONFIG = {
     type: 'symbol',
     layout: {
     'icon-image': [
-      'case',
+      'concat',
+      // Bike-only parkings get the bike badge variant, everything else the plain parking icon
       [
-        'all',
-        //['==', ['get', 'realTimeData'], true],
+        'case',
         [
-          'any',
-          ['>', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
-          ['>', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
-        ]
+          'all',
+          ['==', ['get', 'bicyclePlaces'], true],
+          ['!=', ['get', 'carPlaces'], true]
+        ],
+        'bike-parking',
+        'parking'
       ],
-      'parking-available-icon',
       [
-        'all',
-        //['==', ['get', 'realTimeData'], true],
-        ['<=', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
-        ['<=', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
-      ],
-      'parking-unavailable-icon',
-      'parking-icon'
+        'case',
+        [
+          'all',
+          //['==', ['get', 'realTimeData'], true],
+          [
+            'any',
+            ['>', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
+            ['>', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
+          ]
+        ],
+        '-available-icon',
+        [
+          'all',
+          //['==', ['get', 'realTimeData'], true],
+          ['<=', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
+          ['<=', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
+        ],
+        '-unavailable-icon',
+        '-icon'
+      ]
     ],
     'icon-size': 0.15,
     'icon-allow-overlap': false,
@@ -370,12 +384,14 @@ const LAYER_CONFIG = {
     minzoom: 14,
     maxzoom: 20,
     popupRenderer: (properties, hoverInfo) => {
-        const name = properties.name && properties.name.trim() ? properties.name.trim() : 'Parking';
+        const isBikeParking = properties.bicyclePlaces && !properties.carPlaces;
+        const title = isBikeParking ? 'Bike parking' : 'Parking';
+        const name = properties.name && properties.name.trim() ? properties.name.trim() : title;
         return (
             <div className="otp-ui-mapOverlayPopup" style={{minWidth: '200px'}}>
                 <div className="otp-ui-mapOverlayPopup__popupHeader">
-                    <IconWithText icon={<Parking />} />
-                    &nbsp;Parking
+                    <IconWithText icon={isBikeParking ? <Bicycle /> : <Parking />} />
+                    &nbsp;{title}
                     {properties.realTimeData && (
                       <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
                     )}
@@ -447,15 +463,16 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
     // Parking icon and availability variants
     {
       const parkingSvgString = ReactDOMServer.renderToStaticMarkup(<Parking />)
-      const baseUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(parkingSvgString)}`
-      const makeVariant = (color: string) => {
+      // Bike parking: same "P" in orange
+      const bikeParkingSvgString = parkingSvgString.replace(/currentColor/g, '#f97316')
+      const toDataUrl = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+      const makeVariant = (svg: string, color: string) => {
         // Inject a prominent corner circle (top-right) into the base SVG.
         // Coordinates chosen for FA-style viewBox (≈ 448x512) so the dot is clearly visible.
-        const withDot = parkingSvgString.replace(
+        return toDataUrl(svg.replace(
           '</svg>',
           `<circle cx="380" cy="85" r="60" fill="${color}" stroke="#ffffff" stroke-width="20"/></svg>`
-        )
-        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
+        ))
       }
       const addImg = (name: string, src: string) => {
         if (mapInstance.hasImage(name)) return
@@ -467,11 +484,12 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
         }
         img.src = src
       }
-      console.log(baseUrl);
-      console.log(makeVariant('#22c55e'));
-      addImg('parking-icon', baseUrl)
-      addImg('parking-available-icon', makeVariant('#22c55e'))
-      addImg('parking-unavailable-icon', makeVariant('#ef4444'))
+      addImg('parking-icon', toDataUrl(parkingSvgString))
+      addImg('parking-available-icon', makeVariant(parkingSvgString, '#22c55e'))
+      addImg('parking-unavailable-icon', makeVariant(parkingSvgString, '#ef4444'))
+      addImg('bike-parking-icon', toDataUrl(bikeParkingSvgString))
+      addImg('bike-parking-available-icon', makeVariant(bikeParkingSvgString, '#22c55e'))
+      addImg('bike-parking-unavailable-icon', makeVariant(bikeParkingSvgString, '#ef4444'))
     }
     // Bus icon
     if (!mapInstance.hasImage('bus-icon')) {
