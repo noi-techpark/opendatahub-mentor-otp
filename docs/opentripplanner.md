@@ -48,8 +48,41 @@ The NeTEx sources are listed in `pipeline/Makefile` and documented in
 reaches OTP as one feed; `build-config.json` names that archive. The GTFS feeds and the parking
 NeTEx are named there directly.
 
-The graph build itself runs OTP in a container started from `$OTP_IMAGE` -- the same image that
-serves the graph, because OTP refuses a `graph.obj` written by a different build.
+The graph build itself runs OTP in a container started from the serving image, which
+`infrastructure/docker/otp/Dockerfile` builds on the base OTP its `ARG BASE_IMAGE` names. Building
+and serving from one image matters because OTP refuses a graph written by a different
+serialization version. Both graphs carry that version in their names, `streetGraph-<id>.obj` and
+`graph-<id>.obj`, through the `${otp.serialization.version.id}` that `build-config.json` uses: a new
+OTP builds graphs of its own, and each server loads the one it can read.
+
+## Deployment
+
+The `otp-graph-build` container rebuilds every night at 02:00: the OSM update, the feed refresh, and
+then whatever is out of date. A deploy restarts it, and it then builds only what the deployed change
+needs, from the inputs already on its volume:
+
+| Change                                   | Rebuilt                                   |
+|------------------------------------------|-------------------------------------------|
+| `pipeline/geo/*.geojson`                 | OSM update, region re-cut, street, graph  |
+| `pipeline/Makefile`, `pipeline/scripts/` | the NeTEx stores, graph                   |
+| the Dockerfile's `ARG BASE_IMAGE`        | street, graph                             |
+| an OTP config                            | graph (street too for `build-config.json`)|
+| anything else                            | nothing                                   |
+
+`/app/run-build.sh deploy --dry-run` in that container prints the decision without building.
+
+OTP serves from a compose project of its own, `<project>-otp`, which the deploy playbook does not
+take down. Its compose file ships in each release as `docker-compose.otp.yml`, so when the deploy
+role reverts a failed release, the restored `otp-graph-build` rolls OTP back with it. Traefik
+answers on `SERVER_PORT_OTP` and routes only to an OTP whose healthcheck passes, which it does once
+its graph is loaded. Every build ends in `otp-rollout.sh`, which starts the OTP image the deploy
+named next to the running one, waits for it to load `graph-<id>.obj`, and only then stops the old
+one. Until a graph for the new image exists, the old OTP serves the old graph. The newest three
+published versions are kept, so an older image still finds its graph. A restart without downtime:
+
+```bash
+docker compose -p <project> exec otp-graph-build /app/otp-rollout.sh --force
+```
 
 ## Execute OTP instance
 

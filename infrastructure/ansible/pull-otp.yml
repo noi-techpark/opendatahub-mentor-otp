@@ -1,0 +1,7 @@
+---
+# The role's post-release hook: before the role starts otp-graph-build, which rolls out this image
+# and cannot pull it.
+- name: Pull the OTP images
+  ansible.builtin.command:
+    cmd: docker compose --project-name {{ project_name }}-otp --file docker-compose.otp.yml pull
+    chdir: /var/docker/{{ project_name }}/releases/{{ release_name }}
