@@ -174,7 +174,10 @@ module.exports = {
         minimizer: [new TerserPlugin(), new OptimizeCSSAssetsPlugin({})]
       }
 
-      const MAX_IMPORT_CYCLES = 7 // based on existing cycles.
+      // based on existing cycles. +1 for lib/app/actions/api-v2-ojp.js: it sits
+      // inside the vendor apiV2 -> api -> apiV1 -> ui -> apiV2 cycle, which the
+      // plugin then reports once more (starting from our module).
+      const MAX_IMPORT_CYCLES = 8
       let detectedCycles = []
 
       // Custom plugins to allow trimet-mod-otp integration
@@ -201,6 +204,19 @@ module.exports = {
             resource.request = path.resolve(
               __dirname,
               `lib/app/components/app/${name}`
+            )
+          }
+        ),
+        // Route the vendor imports of actions/apiV2 to our module, which moves
+        // single calls from OTP GraphQL to OJP. Only the relative requests made
+        // inside the vendor code match: our module imports the original through
+        // the @otp-react-redux alias.
+        new webpack.NormalModuleReplacementPlugin(
+          /^(\.\/|\.\.\/\.\.\/actions\/)apiV2$/,
+          (resource) => {
+            resource.request = path.resolve(
+              __dirname,
+              'lib/app/actions/api-v2-ojp'
             )
           }
         ),
