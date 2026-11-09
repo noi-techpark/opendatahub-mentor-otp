@@ -127,7 +127,9 @@ module.exports = {
       )
       matches.forEach(({ loader }) => {
         loader.test = /\.(js|jsx|ts|tsx)$/
-        loader.exclude = /node_modules/
+        // ojp-sdk and its ESM dependencies ship ES2020+ syntax (`??`, `?.`)
+        // that webpack 4 cannot parse, so they must go through babel too.
+        loader.exclude = /node_modules\/(?!(ojp-sdk|ojp-shared-types|fast-xml-parser|strnum)\/)/
       })
 
       // Gather the CSS, HTML, YAML, and JS override files.
