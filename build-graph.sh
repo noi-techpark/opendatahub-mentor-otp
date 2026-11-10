@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-# Drives pipeline/ from the source feeds to a graph.obj. Runs in the otp-graph-build container,
+# Drives pipeline/ from the source feeds to a graph-<id>.obj. Runs in the otp-graph-build container,
 # where cron reaches it through run-build.sh, and on a developer's machine from the repository root.
 #
 # Everything worth keeping between runs lives under $WORK -- the source feeds, the LMDB stores, the
@@ -41,9 +41,18 @@ OTP_DOCKER="${OTP_DOCKER:-$HERE/infrastructure/docker/otp-graph-build/otp-docker
 WORK="${WORK:-$HERE/work}"
 TOOLKIT_JAR="$WORK/netex-toolkit-shaded.jar"
 
+# The base OTP the Dockerfile names, unless the environment names the image that serves the graph.
+OTP_IMAGE="${OTP_IMAGE:-$(sed -n 's/^ARG BASE_IMAGE=//p' "$HERE/infrastructure/docker/otp/Dockerfile" 2>/dev/null)}"
 : "${OTP_IMAGE:?must name the OTP image that both builds and serves the graph}"
 
 mkdir -p "$WORK"
+
+# The image's entrypoint fixes a base directory and appends its arguments, hence --entrypoint.
+if [ -z "${OTP_SERIALIZATION_ID:-}" ]; then
+  OTP_SERIALIZATION_ID=$(docker run --rm --entrypoint java "$OTP_IMAGE" \
+    -cp @/app/jib-classpath-file @/app/jib-main-class-file --serializationVersionId)
+fi
+export OTP_SERIALIZATION_ID
 
 # ROOT stays the checkout: the pipeline derives its scripts/ and geo/ from it. The state directories
 # are the ones that have to outlive the container, and only they move to the work volume.
@@ -60,6 +69,7 @@ run_make() {
     TOOLKIT_JAR="$TOOLKIT_JAR" \
     OTP_JAR= \
     OTP_DOCKER="$OTP_DOCKER" \
+    OTP_SERIALIZATION_ID="$OTP_SERIALIZATION_ID" \
     "otp_run=\$(OTP_DOCKER) \$(1) \"\$(2)\" \"\$(3)\"" \
     "$@"
 }
@@ -126,7 +136,14 @@ fi
 #
 # The rest are named one by one here. This list has to stay in step with the pipeline's
 # download-feeds target, which also covers Austria.
-JOBS=1 run_make download-austria
-run_make download-swiss download-trenitalia download-sta download-rap download-flixbus download-parking
+#
+# REFRESH=0, no, off or false skips this step.
+case "${REFRESH:-}" in
+0 | no | off | false) echo "Leaving the source feeds alone (REFRESH=${REFRESH})" ;;
+*)
+  JOBS=1 run_make download-austria
+  run_make download-swiss download-trenitalia download-sta download-rap download-flixbus download-parking
+  ;;
+esac
 
 run_make all

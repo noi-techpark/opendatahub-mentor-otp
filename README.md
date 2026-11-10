@@ -166,7 +166,7 @@ You can find the latest version of the image on its [repository page](https://gi
 ```
 
 `build-graph.sh` drives `pipeline/`, which takes the NeTEx and GTFS sources to one EPIP archive and
-then to `graph.obj`. `pipeline/Makefile` holds the feed list and `pipeline/README.md` documents the
+then to `graph-<id>.obj`. `pipeline/Makefile` holds the feed list and `pipeline/README.md` documents the
 stages; the OTP configuration is the `build-config.json`, `router-config.json` and `otp-config.json`
 at the repository root, which the build copies into OTP's base directory.
 
