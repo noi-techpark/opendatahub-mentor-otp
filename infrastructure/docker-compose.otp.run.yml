@@ -4,8 +4,9 @@
 
 # The serving OTP, outside the main project the deploy playbook takes down on every release. It
 # ships in each release as docker-compose.otp.yml beside the main project's .env, and runs as
-# project <COMPOSE_PROJECT_NAME>-otp: every caller passes that name, and Traefik's constraint
-# matches it.
+# project <COMPOSE_PROJECT_NAME>-otp: every caller passes that name. Compose sets
+# COMPOSE_PROJECT_NAME to the --project-name in effect, so here it is already the -otp name, and
+# Traefik's constraint matches it.
 services:
   traefik:
     image: docker.io/library/traefik:v3.6.25
@@ -13,7 +14,7 @@ services:
     command:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME}-otp`)
+      - --providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME}`)
       - --entrypoints.web.address=:80
     ports:
       - ${SERVER_PORT_OTP}:80
