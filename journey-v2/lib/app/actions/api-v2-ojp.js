@@ -13,6 +13,8 @@ import {
   assembleBasePath,
   createQueryAction,
   fetchingStopTimesForStop,
+  fetchNearbyError,
+  fetchNearbyResponse,
   findStopTimesForStopError,
   findStopTimesForStopResponse
 } from '@otp-react-redux/lib/actions/api'
@@ -51,16 +53,17 @@ function getOtpServiceDay(operatingDayRef, timeZone) {
 }
 
 /**
- * Reads all the departures of a stop for one service day (03:30 to 03:30 of
- * the next day, the same window the vendor GraphQL query covers) from the
- * OJP StopEventRequest, one page at a time: each page starts from the last
- * departure of the previous one, and the repeated departures are dropped.
+ * Reads all the departures of a stop in the 24 hours from `start` (for the
+ * schedule viewer a service day, 03:30 to 03:30; for the nearby view from now,
+ * the windows the vendor GraphQL queries cover) from the OJP StopEventRequest,
+ * one page at a time: each page starts from the last departure of the
+ * previous one, and the repeated departures are dropped.
  */
-async function fetchOjpStopEvents(sdk, stopRef, serviceStart) {
-  const serviceEnd = serviceStart.getTime() + 24 * 3600 * 1000
+async function fetchOjpStopEvents(sdk, stopRef, start) {
+  const serviceEnd = start.getTime() + 24 * 3600 * 1000
   const stopEvents = []
   const seen = new Set()
-  let pageStart = serviceStart
+  let pageStart = start
 
   for (let page = 0; page < OJP_STOP_EVENTS_MAX_PAGES; page++) {
     const request = sdk.requests.StopEventRequest.initWithPlaceRefAndDate(
@@ -260,7 +263,316 @@ export const findStopTimesForStop = (params) =>
     )
   }
 
+/**
+ * Builds the `stoptimesForPatterns` of the vendor GraphQL Nearby query from OJP
+ * stop events. Unlike the StopTimes query, Nearby asks for realtime and applies
+ * no filters (no omitNonPickups, terminus arrivals included), so neither is done here.
+ *
+ * The nearby rows are labelled with the GraphQL pattern headsign, which OJP does
+ * not have, and the trip destination text is not a stable substitute: trips with
+ * realtime updates carry a bilingual one ("Südtiroler Straße Via Alto Adige" for
+ * "Via Alto Adige"). So the departures are grouped by line and destination stop,
+ * and each group is labelled with the text of a departure without realtime data.
+ * The rows still differ from the GraphQL ones where a pattern headsign is not
+ * the trip destination (agreed UX change, see #343).
+ */
+function toNearbyStoptimesForPatterns(stopEvents, stop, timeZone) {
+  const labels = {}
+  stopEvents.forEach(({ service, thisCall }) => {
+    const key = `${service.lineRef}|${service.destinationStopPointRef}`
+    const realtime = !!thisCall.callAtStop.serviceDeparture.estimatedTime
+    if (!labels[key] || (labels[key].realtime && !realtime)) {
+      labels[key] = { realtime, text: service.destinationText?.text }
+    }
+  })
+
+  const patterns = {}
+
+  stopEvents.forEach(({ service, thisCall }) => {
+    const { callAtStop } = thisCall
+    const routeId = `${OJP_FEED_PREFIX}${service.lineRef}`
+    const route = stop.routes.find((r) => r.gtfsId === routeId)
+    if (!route) return
+
+    const headsign =
+      labels[`${service.lineRef}|${service.destinationStopPointRef}`].text
+    const id = `${routeId}:${headsign}`
+    if (!patterns[id]) {
+      patterns[id] = {
+        pattern: {
+          desc: headsign,
+          headsign,
+          route: {
+            agency: route.agency,
+            color: route.color,
+            longName: route.longName,
+            mode: route.mode,
+            shortName: route.shortName,
+            textColor: route.textColor,
+            type: route.type
+          }
+        },
+        stoptimes: []
+      }
+    }
+
+    // OTP GraphQL marks the departures with realtime data as MODIFIED, and
+    // OJP returns an EstimatedTime for exactly those (checked trip by trip).
+    const { estimatedTime, timetabledTime } = callAtStop.serviceDeparture
+    const serviceDay = getOtpServiceDay(service.operatingDayRef, timeZone)
+    const scheduled = new Date(timetabledTime).getTime() / 1000
+    const expected = new Date(estimatedTime ?? timetabledTime).getTime() / 1000
+    patterns[id].stoptimes.push({
+      departureDelay: expected - scheduled,
+      headsign,
+      realtimeDeparture: expected - serviceDay,
+      realtimeState: estimatedTime ? 'MODIFIED' : 'SCHEDULED',
+      scheduledDeparture: scheduled - serviceDay,
+      serviceDay,
+      trip: { route: { shortName: route.shortName } }
+    })
+  })
+  return Object.values(patterns)
+}
+
+// Copy of the vendor mergeSameStops (actions/apiV2.js), which is not exported:
+// stops sharing a code are shown as one, with the departures of both.
+const mergeSameStops = (nearbyResponse) => {
+  return nearbyResponse?.reduce((prev, { node }) => {
+    const existingStop = prev.find(
+      (stop) => stop.place.code === node.place.code
+    )
+    // Only merge if the stop has a code at all
+    if (existingStop && node.place.code) {
+      existingStop.place.stoptimesForPatterns = [
+        ...(existingStop.place.stoptimesForPatterns || []),
+        ...(node.place.stoptimesForPatterns || [])
+      ]
+    } else {
+      prev.push(node)
+    }
+    return prev
+  }, [])
+}
+
+// The vendor stoptimesForPatterns selection of the Nearby query, still used for
+// the stops OJP cannot resolve (feeds other than netex).
+const NEARBY_STOPTIMES_FOR_PATTERNS = `stoptimesForPatterns {
+  pattern {
+    headsign
+    desc: name
+    route {
+      agency {
+        name
+        gtfsId
+      }
+      shortName
+      type
+      mode
+      longName
+      color
+      textColor
+    }
+  }
+  stoptimes {
+    serviceDay
+    departureDelay
+    realtimeState
+    realtimeDeparture
+    scheduledDeparture
+    headsign
+    trip {
+      route {
+        shortName
+      }
+    }
+  }
+}`
+
+/**
+ * Nearby view with the departures from the OJP StopEventRequest (#343). The
+ * places (stops, rentals, parkings) still come from the GraphQL `nearest`
+ * query, which now asks for the routes of each stop instead of its departures.
+ * The view refreshes every 15 s, and every refresh reads the 24 hours from now
+ * for each stop (one OJP request per 99 departures), like the GraphQL query.
+ */
+export const fetchNearby = (position, radius) =>
+  function (dispatch, getState) {
+    const { lat, lon } = position
+    const { config } = getState().otp
+    const timeZone = config.homeTimezone
+
+    // The response action is a thunk: the GraphQL places are only the first
+    // half of the data, the departures are added before the vendor action is sent.
+    const withOjpStoptimes = (edges) =>
+      async function (dispatch) {
+        try {
+          const sdk = createOjpSdk(config)
+          const now = new Date()
+          const stops = (edges || [])
+            .map(({ node }) => node.place)
+            .filter((place) => place.__typename === 'Stop')
+
+          await Promise.all(
+            stops
+              .filter((stop) => stop.gtfsId.startsWith(OJP_FEED_PREFIX))
+              .map(async (stop) => {
+                const stopEvents = await fetchOjpStopEvents(
+                  sdk,
+                  stop.gtfsId.slice(OJP_FEED_PREFIX.length),
+                  now
+                )
+                stop.stoptimesForPatterns = toNearbyStoptimesForPatterns(
+                  stopEvents,
+                  stop,
+                  timeZone
+                )
+              })
+          )
+
+          const otherFeedStops = stops.filter(
+            (stop) => !stop.gtfsId.startsWith(OJP_FEED_PREFIX)
+          )
+          if (otherFeedStops.length > 0) {
+            const { api } = config
+            const response = await fetch(
+              `${assembleBasePath(config)}${api?.basePath ?? '/otp'}/gtfs/v1`,
+              {
+                body: JSON.stringify({
+                  query: `query NearbyOtherFeeds($ids: [String]) {
+                    stops(ids: $ids) {
+                      gtfsId
+                      ${NEARBY_STOPTIMES_FOR_PATTERNS}
+                    }
+                  }`,
+                  variables: { ids: otherFeedStops.map((stop) => stop.gtfsId) }
+                }),
+                headers: { 'Content-Type': 'application/json' },
+                method: 'POST'
+              }
+            )
+            const payload = await response.json()
+            if (payload.errors) throw payload.errors
+            payload.data.stops.forEach(({ gtfsId, stoptimesForPatterns }) => {
+              const stop = otherFeedStops.find((s) => s.gtfsId === gtfsId)
+              stop.stoptimesForPatterns = stoptimesForPatterns
+            })
+          }
+
+          dispatch(
+            fetchNearbyResponse({
+              coords: { lat, lon },
+              data: mergeSameStops(edges)
+            })
+          )
+        } catch (err) {
+          dispatch(fetchNearbyError(err))
+        }
+      }
+
+    // The vendor Nearby query, with the routes of each stop in place of
+    // stoptimesForPatterns.
+    const query = `query Nearby(
+      $lat: Float!
+      $lon: Float!
+      $radius: Int
+    ) {
+      nearest(lat:$lat, lon:$lon, maxDistance: $radius, first: 100, filterByPlaceTypes: [STOP, VEHICLE_RENT, BIKE_PARK, CAR_PARK]) {
+        edges {
+          node {
+            id
+            distance
+            place {
+              __typename
+              id
+              lat
+              lon
+              ...on RentalVehicle {
+                network
+                name
+                lat
+                lon
+                allowPickupNow
+                operative
+                rentalUris {
+                  android
+                  ios
+                  web
+                }
+                vehicleType {
+                  formFactor
+                }
+              }
+              ... on VehicleRentalStation {
+                network
+              }
+              ...on BikeRentalStation {
+                bikesAvailable
+                spacesAvailable
+                name
+                networks
+              }
+              ... on VehicleParking {
+                carPlaces
+                bicyclePlaces
+                lat
+                lon
+                name
+              }
+              ... on Stop {
+                name
+                lat
+                lon
+                code
+                platformCode
+                gtfsId
+                routes {
+                  gtfsId
+                  agency {
+                    name
+                    gtfsId
+                  }
+                  shortName
+                  type
+                  mode
+                  longName
+                  color
+                  textColor
+                }
+              }
+            }
+            distance
+          }
+        }
+      }
+    }`
+
+    return dispatch(
+      createQueryAction(null, withOjpStoptimes, fetchNearbyError, {
+        fetchOptions: {
+          body: JSON.stringify({ query, variables: { lat, lon, radius } }),
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST'
+        },
+        noThrottle: true,
+        rewritePayload: (payload) => {
+          // Same error the vendor action raises.
+          if (payload.errors) {
+            const error = new Error('GraphQL response error')
+            error.message =
+              'Check error.cause for more information. Are the OTP server and client on compatible versions?'
+            error.cause = payload.errors
+            throw error
+          }
+          return payload.data?.nearest?.edges
+        },
+        url: '/gtfs/v1'
+      })
+    )
+  }
+
 export default {
   ...vendorActions,
+  fetchNearby,
   findStopTimesForStop
 }
