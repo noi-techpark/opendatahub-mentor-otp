@@ -6,7 +6,16 @@
 // alias on purpose: the replacement only matches relative requests to apiV2,
 // so this one still resolves to the original vendor file.
 import * as OJP from 'ojp-sdk'
+import {
+  aggregateModes,
+  getBannedRoutesFromSubmodes,
+  populateSettingWithValue
+} from '@opentripplanner/trip-form'
+import { decodeQueryParams, DelimitedArrayParam } from 'use-query-params'
 import { toDate } from 'date-fns-tz'
+import coreUtils from '@opentripplanner/core-utils'
+import haversine from 'haversine'
+import polyline from '@mapbox/polyline'
 import vendorActions from '@otp-react-redux/lib/actions/apiV2'
 
 import {
@@ -16,11 +25,32 @@ import {
   fetchNearbyError,
   fetchNearbyResponse,
   findStopTimesForStopError,
-  findStopTimesForStopResponse
+  findStopTimesForStopResponse,
+  rememberSearch,
+  routingError,
+  routingRequest,
+  routingResponse,
+  updateOtpUrlParams
 } from '@otp-react-redux/lib/actions/api'
+import { convertToPlace, getPersistenceMode } from '@otp-react-redux/lib/util/user'
 import { FETCH_STATUS } from '@otp-react-redux/lib/util/constants'
-import { getServiceStart } from '@otp-react-redux/lib/util/api'
-import { routeIsValid } from '@otp-react-redux/lib/util/viewer'
+import {
+  generateModeSettingValues,
+  getDefaultNumItineraries,
+  getServiceStart
+} from '@otp-react-redux/lib/util/api'
+import {
+  getActiveItineraries,
+  getActiveItinerary,
+  getRouteOperator,
+  queryIsValid
+} from '@otp-react-redux/lib/util/state'
+import {
+  getRouteColorBasedOnSettings,
+  routeIsValid
+} from '@otp-react-redux/lib/util/viewer'
+import { rememberPlace } from '@otp-react-redux/lib/actions/user'
+import { RoutingQueryCallResult } from '@otp-react-redux/lib/actions/api-constants'
 
 export * from '@otp-react-redux/lib/actions/apiV2'
 
@@ -571,8 +601,690 @@ export const fetchNearby = (position, radius) =>
     )
   }
 
+// Helpers of the vendor routingQuery, copied with it from actions/apiV2.js
+// because they are not exported.
+const { generateCombinations, generateOtp2Query, SIMPLIFICATIONS } =
+  coreUtils.queryGen
+const { getTripOptionsFromQuery, getUrlParams } = coreUtils.query
+const { convertGraphQLResponseToLegacy } = coreUtils.itinerary
+const { randId } = coreUtils.storage
+
+function formatRecentPlace(place) {
+  return convertToPlace({
+    ...place,
+    icon: 'clock-o',
+    id: `recent-${randId()}`,
+    timestamp: new Date().getTime(),
+    type: 'recent'
+  })
+}
+
+function formatRecentSearch(state, queryParamData) {
+  return {
+    id: randId(),
+    query: getTripOptionsFromQuery(
+      { ...state.otp.currentQuery, queryParamData },
+      true
+    ),
+    timestamp: new Date().getTime()
+  }
+}
+
+function isStoredPlace(place) {
+  return ['home', 'work', 'suggested', 'stop'].indexOf(place.type) !== -1
+}
+
+function createGraphQLQueryAction(
+  query,
+  variables,
+  responseAction,
+  errorAction,
+  options
+) {
+  const fetchOptions = {
+    body: JSON.stringify({ batchId: options.batchId, query, variables }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST'
+  }
+  return createQueryAction(null, responseAction, errorAction, {
+    ...options,
+    fetchOptions,
+    noThrottle: true,
+    url: '/gtfs/v1'
+  })
+}
+
+// OJP ptMode -> OTP mode. bus, rail and cableway (the South Tyrol gondolas)
+// are checked against the OTP OJP API; the others follow the OJP enumeration.
+const OJP_PT_MODES = {
+  air: 'AIRPLANE',
+  bus: 'BUS',
+  cableway: 'GONDOLA',
+  coach: 'COACH',
+  funicular: 'FUNICULAR',
+  metro: 'SUBWAY',
+  rail: 'RAIL',
+  telecabin: 'GONDOLA',
+  tram: 'TRAM',
+  trolleyBus: 'TROLLEYBUS',
+  water: 'FERRY'
+}
+
+// OTP transit mode -> OJP ptMode, for the mode filter of the request. The
+// "transit" button sends its submodes (BUS, TRAM, RAIL, ...) and not FUNICULAR,
+// so they must reach OJP too, or OJP would return modes GraphQL leaves out.
+const OTP_TRANSIT_MODES_TO_OJP = {
+  AIRPLANE: 'air',
+  BUS: 'bus',
+  COACH: 'coach',
+  FERRY: 'water',
+  FUNICULAR: 'funicular',
+  GONDOLA: 'cableway',
+  RAIL: 'rail',
+  SUBWAY: 'metro',
+  TRAM: 'tram',
+  TROLLEYBUS: 'trolleyBus'
+}
+
+/**
+ * Only the plain public transport search (the "transit" mode button: transit
+ * modes with walking) goes to the OJP TripRequest (#342). The other
+ * combinations (bicycle, rentals, car, park and ride), transit modes without an
+ * OJP equivalent and the options the OTP OJP API ignores (wheelchair, banned or
+ * unpreferred routes and trips, checked on the test server) stay on GraphQL,
+ * so their results do not change.
+ */
+function isOjpCombination(combo) {
+  const { banned, modes, modeSettings, unpreferred } = combo
+  const wheelchair = modeSettings?.find((ms) => ms.key === 'wheelchair')?.value
+  return (
+    modes.every(
+      ({ mode, qualifier }) =>
+        !qualifier &&
+        (mode === 'TRANSIT' || !!OTP_TRANSIT_MODES_TO_OJP[mode])
+    ) &&
+    !wheelchair &&
+    !banned?.routes &&
+    !banned?.trips &&
+    !unpreferred?.routes &&
+    !unpreferred?.agencies
+  )
+}
+
+// A stop chosen in the search is sent by id, like the core-utils patch does for
+// GraphQL; any other place (or a stop outside the netex feed) by coordinates.
+function toOjpPlaceRef(place) {
+  return place.type === 'stop' && place.id?.startsWith(OJP_FEED_PREFIX)
+    ? place.id.slice(OJP_FEED_PREFIX.length)
+    : `${place.lat},${place.lon}`
+}
+
+// "PT6M13S" -> 373
+function parseOjpDuration(duration) {
+  const [, h = 0, m = 0, s = 0] =
+    duration?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/) || []
+  return Number(h) * 3600 + Number(m) * 60 + Number(s)
+}
+
+/**
+ * Converts an OJP Trip into an itinerary of the vendor GraphQL Plan query, so
+ * that the rest of routingQuery and the UI handle it as before.
+ *
+ * Agreed approximations while OTP returns no LegTrack/LegProjection (#342):
+ * - transit legs are drawn as straight lines between their stops, and walking
+ *   legs as a straight line between start and end, without turn-by-turn steps;
+ * - OJP has no route long name (the headsign takes its place), color, agency,
+ *   fares or alerts, so they are empty.
+ */
+function toPlanItinerary(trip, places, from, to) {
+  // OJP names the searched places "Origin" and "Destination"; GraphQL uses the
+  // names sent with the search, so those are used here too.
+  const placeOf = (location, searchedPlace) =>
+    location.stopPointRef
+      ? places[location.stopPointRef]
+      : {
+          lat: location.geoPosition.latitude,
+          lon: location.geoPosition.longitude,
+          name: searchedPlace?.name ?? location.name?.text
+        }
+  const stopOf = (stopPointRef) => {
+    const { lat, lon } = places[stopPointRef]
+    const gtfsId = `${OJP_FEED_PREFIX}${stopPointRef}`
+    return { alerts: [], code: null, gtfsId, id: gtfsId, lat, lon }
+  }
+
+  const legs = []
+  trip.leg.forEach((leg, legIndex) => {
+    if (leg.timedLeg) {
+      const { legAlight, legBoard, legIntermediate = [], service } =
+        leg.timedLeg
+      const calls = [legBoard, ...legIntermediate, legAlight]
+      const points = calls.map((call) => places[call.stopPointRef])
+      const departure = legBoard.serviceDeparture
+      const arrival = legAlight.serviceArrival
+      const startTime = new Date(
+        departure.estimatedTime ?? departure.timetabledTime
+      ).getTime()
+      const endTime = new Date(
+        arrival.estimatedTime ?? arrival.timetabledTime
+      ).getTime()
+      const routeId = `${OJP_FEED_PREFIX}${service.lineRef}`
+      const tripId = `${OJP_FEED_PREFIX}${service.journeyRef}`
+      legs.push({
+        accessibilityScore: null,
+        agency: null,
+        alerts: [],
+        arrivalDelay:
+          (endTime - new Date(arrival.timetabledTime).getTime()) / 1000,
+        departureDelay:
+          (startTime - new Date(departure.timetabledTime).getTime()) / 1000,
+        // The itinerary card picks its main leg by distance, so transit legs
+        // need one: measured along the stops, like the drawn line.
+        distance: points.slice(1).reduce(
+          (sum, point, i) =>
+            sum +
+            haversine(
+              { latitude: points[i].lat, longitude: points[i].lon },
+              { latitude: point.lat, longitude: point.lon },
+              { unit: 'meter' }
+            ),
+          0
+        ),
+        dropOffBookingInfo: null,
+        dropoffType: 'SCHEDULED',
+        duration: (endTime - startTime) / 1000,
+        endTime,
+        fareProducts: [],
+        from: {
+          ...places[legBoard.stopPointRef],
+          rentalVehicle: null,
+          stop: stopOf(legBoard.stopPointRef),
+          vertexType: 'TRANSIT'
+        },
+        headsign: service.destinationText?.text,
+        interlineWithPreviousLeg: false,
+        intermediateStops: legIntermediate.map((call) => ({
+          ...places[call.stopPointRef],
+          locationType: 'STOP',
+          stopCode: null,
+          stopId: `${OJP_FEED_PREFIX}${call.stopPointRef}`
+        })),
+        legGeometry: {
+          length: points.length,
+          points: polyline.encode(points.map(({ lat, lon }) => [lat, lon]))
+        },
+        mode: OJP_PT_MODES[service.mode.ptMode] ?? 'TRANSIT',
+        pickupBookingInfo: null,
+        pickupType: 'SCHEDULED',
+        // Same mapping as the nearby view: GraphQL marks realtime legs as MODIFIED.
+        realTime: !!departure.estimatedTime,
+        realtimeState: departure.estimatedTime ? 'MODIFIED' : 'SCHEDULED',
+        rentedBike: false,
+        rideHailingEstimate: null,
+        route: {
+          alerts: [],
+          color: null,
+          gtfsId: routeId,
+          id: routeId,
+          // OJP has no long name, and the leg header (metro RouteBlock) shows
+          // the destination only when there is one: with the headsign in its
+          // place the header shows the destination alone, as GraphQL does when
+          // the long name is similar to it.
+          longName: service.destinationText?.text,
+          // The XML parser turns numeric line names (201) into numbers.
+          shortName: String(
+            service.publishedServiceName?.text ?? service.publicCode
+          ),
+          textColor: null,
+          type: null
+        },
+        startTime,
+        steps: [],
+        to: {
+          ...places[legAlight.stopPointRef],
+          rentalVehicle: null,
+          stop: stopOf(legAlight.stopPointRef),
+          vertexType: 'TRANSIT'
+        },
+        transitLeg: true,
+        trip: {
+          arrivalStoptime: {
+            stop: { gtfsId: `${OJP_FEED_PREFIX}${legAlight.stopPointRef}` },
+            stopPosition: legAlight.order
+          },
+          departureStoptime: {
+            stop: { gtfsId: `${OJP_FEED_PREFIX}${legBoard.stopPointRef}` },
+            stopPosition: legBoard.order
+          },
+          gtfsId: tripId,
+          id: tripId
+        }
+      })
+      return
+    }
+
+    // A walking leg: continuousLeg, or transferLeg between two stops.
+    const walk = leg.continuousLeg ?? leg.transferLeg
+    const walkFrom = placeOf(walk.legStart, legIndex === 0 && from)
+    const walkTo = placeOf(
+      walk.legEnd,
+      legIndex === trip.leg.length - 1 && to
+    )
+    // A transferLeg has no time window: it starts when the previous leg ends.
+    const startTime = walk.timeWindowStart
+      ? new Date(walk.timeWindowStart).getTime()
+      : legs[legs.length - 1]?.endTime
+    const duration = parseOjpDuration(walk.duration)
+    legs.push({
+      accessibilityScore: null,
+      agency: null,
+      alerts: [],
+      arrivalDelay: 0,
+      departureDelay: 0,
+      distance: walk.length,
+      duration,
+      endTime: walk.timeWindowEnd
+        ? new Date(walk.timeWindowEnd).getTime()
+        : startTime + duration * 1000,
+      fareProducts: [],
+      from: {
+        ...walkFrom,
+        rentalVehicle: null,
+        stop: walk.legStart.stopPointRef
+          ? stopOf(walk.legStart.stopPointRef)
+          : null,
+        vertexType: walk.legStart.stopPointRef ? 'TRANSIT' : 'NORMAL'
+      },
+      headsign: null,
+      interlineWithPreviousLeg: false,
+      intermediateStops: null,
+      legGeometry: {
+        length: 2,
+        points: polyline.encode([
+          [walkFrom.lat, walkFrom.lon],
+          [walkTo.lat, walkTo.lon]
+        ])
+      },
+      mode: 'WALK',
+      realTime: false,
+      realtimeState: null,
+      rentedBike: false,
+      route: null,
+      startTime,
+      steps: [],
+      to: {
+        ...walkTo,
+        rentalVehicle: null,
+        stop: walk.legEnd.stopPointRef ? stopOf(walk.legEnd.stopPointRef) : null,
+        vertexType: walk.legEnd.stopPointRef ? 'TRANSIT' : 'NORMAL'
+      },
+      transitLeg: false,
+      trip: null
+    })
+  })
+
+  const startTime = legs[0].startTime
+  const endTime = legs[legs.length - 1].endTime
+  const duration = (endTime - startTime) / 1000
+  const walkLegs = legs.filter((leg) => leg.mode === 'WALK')
+  return {
+    accessibilityScore: null,
+    duration,
+    endTime,
+    legs,
+    startTime,
+    // OJP Transfers counts more than the changes of vehicle (4 against the
+    // GraphQL 1 on the same trip), so it is computed like GraphQL does.
+    transfers: Math.max(0, legs.filter((leg) => leg.transitLeg).length - 1),
+    waitingTime: duration - legs.reduce((sum, leg) => sum + leg.duration, 0),
+    walkTime: walkLegs.reduce((sum, leg) => sum + leg.duration, 0)
+  }
+}
+
+/**
+ * Same as the GraphQL Plan request of one combination, from the OJP
+ * TripRequest: the response is shaped as the GraphQL one and goes through the
+ * same rewritePayload and response action.
+ */
+function ojpPlanQueryAction(combo, responseAction, errorAction, options) {
+  return async function (dispatch, getState) {
+    const { config } = getState().otp
+    const { arriveBy, date, from, modes, numItineraries, time, to } = combo
+
+    let rewrittenPayload
+    try {
+      const sdk = createOjpSdk(config)
+      const request = sdk.requests.TripRequest.initWithPlaceRefsOrCoords(
+        toOjpPlaceRef(from),
+        toOjpPlaceRef(to)
+      )
+      const dateTime = toDate(`${date} ${time}`, {
+        timeZone: config.homeTimezone
+      }).toISOString()
+      if (arriveBy) {
+        delete request.payload.origin.depArrTime
+        request.payload.destination.depArrTime = dateTime
+      } else {
+        request.payload.origin.depArrTime = dateTime
+      }
+      request.payload.params.numberOfResults = numItineraries
+      const ptModes = modes
+        .filter(({ mode }) => mode !== 'TRANSIT')
+        .map(({ mode }) => OTP_TRANSIT_MODES_TO_OJP[mode])
+      if (ptModes.length > 0) {
+        request.payload.params.modeAndModeOfOperationFilter = [
+          { exclude: false, personalMode: [], ptMode: ptModes }
+        ]
+      }
+      const response = await request.fetchResponse(sdk)
+      if (!response.ok) throw response.error
+
+      const places = {}
+      response.value.tripResponseContext?.places?.place?.forEach((place) => {
+        const ref = place.stopPoint?.stopPointRef
+        if (!ref) return
+        places[ref] = {
+          lat: place.geoPosition.latitude,
+          lon: place.geoPosition.longitude,
+          name: place.stopPoint.stopPointName?.text
+        }
+      })
+
+      rewrittenPayload = options.rewritePayload(
+        {
+          data: {
+            plan: {
+              itineraries: (response.value.tripResult ?? []).map(({ trip }) =>
+                toPlanItinerary(trip, places, from, to)
+              ),
+              routingErrors: []
+            }
+          }
+        },
+        dispatch,
+        getState
+      )
+    } catch (err) {
+      return dispatch(errorAction(err))
+    }
+    dispatch(responseAction(rewrittenPayload))
+  }
+}
+
+const queryParamConfig = { modeButtons: DelimitedArrayParam }
+
+/**
+ * The vendor routingQuery (actions/apiV2.js), copied because each combination
+ * request is built inside it: the only change is that the combination chosen by
+ * isOjpCombination is sent to the OJP TripRequest instead of GraphQL.
+ */
+export function routingQuery(searchId = null, updateSearchInReducer) {
+  // eslint-disable-next-line complexity
+  return function (dispatch, getState) {
+    const state = getState()
+    const { config, currentQuery, modeSettingDefinitions } = state.otp
+    const persistenceMode = getPersistenceMode(config.persistence)
+    const activeItinerary =
+      getActiveItinerary(state) ||
+      (config.itinerary?.showFirstResultByDefault ? 0 : null)
+
+    const isNewSearch = !searchId
+    if (isNewSearch) searchId = randId()
+    // Don't permit a routing query if the query is invalid
+    if (!queryIsValid(state)) {
+      console.warn('Query is invalid. Aborting routing query', currentQuery)
+      return RoutingQueryCallResult.INVALID_QUERY
+    }
+
+    const {
+      bannedTrips,
+      date,
+      departArrive,
+      modes,
+      numItineraries,
+      routingType,
+      time,
+      unpreferred
+    } = currentQuery
+    const arriveBy = departArrive === 'ARRIVE'
+
+    // Retrieve active mode keys from URL parameters or configuration defaults
+    const urlSearchParams = new URLSearchParams(getUrlParams())
+    const activeModeKeys =
+      decodeQueryParams(queryParamConfig, {
+        modeButtons: urlSearchParams.get('modeButtons')
+      }).modeButtons ||
+      config?.modes?.initialState?.enabledModeButtons ||
+      {}
+
+    const strictModes = !!config?.itinerary?.strictItineraryFiltering
+
+    // Filter mode definitions based on active mode keys
+    const activeModeButtons = config.modes?.modeButtons.filter((mb) =>
+      activeModeKeys.includes(mb.key)
+    )
+    const activeModes = aggregateModes(activeModeButtons)
+
+    // Get mode setting values from the url, or initial state config, or default value in definition
+    const modeSettingValues = generateModeSettingValues(
+      urlSearchParams,
+      modeSettingDefinitions,
+      config?.modes?.initialState?.modeSettingValues
+    )
+    // TODO: walkReluctance is in here, but not when set via setQueryParam
+    const modeSettings = modeSettingDefinitions?.map(
+      populateSettingWithValue(modeSettingValues)
+    )
+    // Get the raw query param strings to save for the rider's search history
+    const rawModeButtonQP = urlSearchParams.get('modeButtons')
+    const queryParamData = {
+      modeButtons: rawModeButtonQP,
+      ...modeSettingValues
+    }
+
+    const excludedRoutes =
+      config.routeModeOverrides &&
+      getBannedRoutesFromSubmodes(
+        modeSettings,
+        config.routeModeOverrides
+      )?.join(',')
+
+    const baseQuery = {
+      arriveBy,
+      banned: {
+        routes: excludedRoutes || undefined,
+        trips: bannedTrips
+      },
+      date,
+      from: currentQuery.from,
+      modes: modes || activeModes,
+      modeSettings,
+      time,
+      to: currentQuery.to,
+      unpreferred,
+      // TODO: Does this break everything?
+      ...currentQuery,
+      numItineraries: numItineraries || getDefaultNumItineraries(config)
+    }
+    // Generate combinations if the modes for query are not specified in the query
+    // FIXME: BICYCLE_RENT does not appear in this list unless TRANSIT is also enabled.
+    // This is likely due to the fact that BICYCLE_RENT is treated as a transit submode.
+    const combinations = modes ? [baseQuery] : generateCombinations(baseQuery)
+
+    if (combinations.length === 0) {
+      return RoutingQueryCallResult.INVALID_MODE_SELECTION
+    }
+
+    dispatch(
+      routingRequest({
+        activeItinerary,
+        pending: combinations.length,
+        routingType,
+        searchId,
+        updateSearchInReducer
+      })
+    )
+
+    combinations.forEach((combo, index) => {
+      const responseAction = (response) => {
+        const dispatchedRoutingResponse = routingResponse(response)
+        // If tracking is enabled, store locations and search after successful
+        // search is completed.
+        if (
+          persistenceMode.isLocalStorage &&
+          state.user?.localUser?.storeTripHistory
+        ) {
+          const { from, to } = currentQuery
+          if (!isStoredPlace(from)) {
+            dispatch(
+              rememberPlace({
+                location: formatRecentPlace(from),
+                type: 'recent'
+              })
+            )
+          }
+          if (!isStoredPlace(to)) {
+            dispatch(
+              rememberPlace({
+                location: formatRecentPlace(to),
+                type: 'recent'
+              })
+            )
+          }
+          dispatch(rememberSearch(formatRecentSearch(state, queryParamData)))
+        }
+        return dispatchedRoutingResponse
+      }
+      const options = {
+        batchId: searchId,
+        rewritePayload: (response, dispatch, getState) => {
+          const itineraries = response.data?.plan?.itineraries
+
+          // Convert user-selected transit modes from mode selector into modes recognized by OTP.
+          const activeModeStrings = activeModes.map(
+            (am) => SIMPLIFICATIONS[am.mode]
+          )
+
+          let filteredItineraries = itineraries
+          // If "strictItineraryFiltering" is enabled, only return itineraries that contain at least one explicitly requested mode...
+          if (strictModes) {
+            filteredItineraries = itineraries?.filter((itin) =>
+              itin.legs.some((leg) =>
+                activeModeStrings.includes(SIMPLIFICATIONS[leg.mode])
+              )
+            )
+            // ... Otherwise return all itineraries.
+          }
+
+          // Filter itineraries to collapse short names and hide unnecessary errors.
+          const withCollapsedShortNames = filteredItineraries?.map((itin) => ({
+            ...itin,
+            legs: itin.legs
+              ?.map((leg) => {
+                return {
+                  ...leg,
+                  origColor: leg?.route?.color,
+                  route: {
+                    ...leg.route,
+                    color: getRouteColorBasedOnSettings(
+                      getRouteOperator(
+                        {
+                          agencyId: leg?.agency?.id,
+                          id: leg?.route?.id
+                        },
+                        config.transitOperators
+                      ),
+                      { color: leg?.route?.color, mode: leg.mode }
+                    ).split('#')?.[1]
+                  }
+                }
+              })
+              ?.map(convertGraphQLResponseToLegacy)
+          }))
+
+          /* It is possible for a NO_TRANSIT_CONNECTION error to be
+            returned even if trips were returned, since it is on a mode-by-mode basis.
+            there is a chance for user confusion!
+
+           We'll reintroduce this error later once all the results are compiled */
+
+          response.data.plan.routingErrors =
+            response.data?.plan?.routingErrors.filter(
+              (re) => re?.code !== 'NO_TRANSIT_CONNECTION'
+            )
+          if (
+            getActiveItineraries(getState())?.length > 0 &&
+            response?.data?.plan
+          ) {
+            // Add accessibility error, if it is turned on
+            const state = getState()
+            const { displayA11yError } = state.otp.config?.itinerary
+            if (displayA11yError) {
+              if (
+                response.data.plan.itineraries.find(
+                  (itin) => !!itin?.accessibilityScore
+                )
+              ) {
+                if (!response.data.plan?.routingErrors) {
+                  response.data.plan.routingErrors = []
+                }
+                response.data.plan.routingErrors.push({
+                  code: 'OTP_RR_A11Y_ROUTING_ENABLED'
+                })
+              }
+            }
+          }
+
+          return {
+            index,
+            response: {
+              plan: {
+                ...response.data?.plan,
+                itineraries: withCollapsedShortNames
+              },
+              requestId: searchId
+            },
+            searchId
+          }
+        }
+      }
+
+      if (isOjpCombination(combo)) {
+        dispatch(
+          ojpPlanQueryAction(combo, responseAction, routingError, options)
+        )
+      } else {
+        const query = generateOtp2Query(combo)
+        dispatch(
+          createGraphQLQueryAction(
+            query.query,
+            query.variables,
+            responseAction,
+            routingError,
+            options
+          )
+        )
+      }
+    })
+    // Update OTP URL params if a new search. In other words, if we're
+    // performing a search based on query params taken from the URL after a back
+    // button press, we don't need to update the OTP URL.
+    // TODO: For old searches that we are re-running, should we be **replacing**
+    //  the URL params here (instead of **pushing** a new path to history like
+    //  what currently happens in updateOtpUrlParams)? That way we could ensure
+    //  that the path absolutely accurately reflects the app state.
+    const params = getUrlParams()
+    if (isNewSearch || params.ui_activeSearch !== searchId) {
+      dispatch(updateOtpUrlParams(state, searchId))
+    }
+
+    return RoutingQueryCallResult.SUCCESS
+  }
+}
+
 export default {
   ...vendorActions,
   fetchNearby,
-  findStopTimesForStop
+  findStopTimesForStop,
+  routingQuery
 }
