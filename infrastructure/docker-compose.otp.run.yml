@@ -16,6 +16,7 @@ services:
       - --providers.docker.exposedbydefault=false
       - --providers.docker.constraints=Label(`com.docker.compose.project`,`${COMPOSE_PROJECT_NAME}`)
       - --entrypoints.web.address=:80
+      - --entrypoints.web.forwardedHeaders.insecure=true
     ports:
       - ${SERVER_PORT_OTP}:80
     volumes:
