@@ -1,3 +1,11 @@
+// SPDX-FileCopyrightText: 2024 Conveyal <support@conveyal.com>
+// SPDX-FileCopyrightText: 2026 NOI <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: MIT
+
+// Conveyal is listed because routingQuery, mergeSameStops and their helpers
+// are copied from the vendor actions/apiV2.js (MIT).
+
 // Replaces the vendor `actions/apiV2` module (see the NormalModuleReplacementPlugin
 // in craco.config.js), so the OTP GraphQL calls can be moved to the OJP services
 // one at a time without modifying the otp-react-redux submodule.
