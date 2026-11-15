@@ -805,6 +805,15 @@ verify-inputs: ## Integrity-check every file in input/ (reports; changes nothing
 	 echo "=== verifying $$n files in $(INPUT_DIR)"
 	@find $(INPUT_DIR) -maxdepth 1 -type f ! -name '*.tmp' -print0 | sort -z | xargs -0 $(FETCH) --check
 
+# A feed whose timetable has ended still downloads, verifies and loads -- it just adds no service,
+# so the only symptom is journeys missing from the planner. This prints the last service day of
+# every source in input/. It reads only and needs no store; MIN_DAYS=<n> makes it exit 1 when a
+# feed ends within n days, for a script that wants to stop before building on an expired feed.
+MIN_DAYS ?= 0
+verify-validity: ## Print the last service day of every feed in input/ (MIN_DAYS=<n> fails on fewer days left)
+	$(JAVA) $(SCRIPTS)/tools/FeedValidity.java --min-days $(MIN_DAYS) \
+		$(sort $(wildcard $(INPUT_DIR)/*.zip $(INPUT_DIR)/*.gz $(INPUT_DIR)/*.xml))
+
 # Two recipe lines for the reason given above download-swiss: the scan-and-delete half must not
 # share a line with $(MAKE), or `make -n repair-inputs` would delete for real. The bad list travels
 # between the two lines through $(STATE_DIR) because a shell variable cannot: each recipe line is
