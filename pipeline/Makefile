@@ -547,15 +547,18 @@ endif
 export OTP_SERIALIZATION_ID
 
 OTP_CONFIGS := $(addprefix $(OTP_DIR)/,build-config.json router-config.json otp-config.json)
-# Measured heaps: street (OSM+DEM), transit layering, serving. Transit below 54G G1-death-spirals
-# and above 58G swaps on a 61G box; 56G builds entirely in RAM.
+# Heaps: street (OSM+DEM), transit layering, serving. Transit at 40G needs a full GC to finish;
+# 43G keeps it to young and mixed collections. Both build heaps assume compact object headers.
 STREET_HEAP  ?= 40G
-TRANSIT_HEAP ?= 50G
+TRANSIT_HEAP ?= 43G
 SERVE_HEAP   ?= 31G
-# Used for the build phases only
-OTP_BUILD_JVM ?= -XX:ObjectAlignmentInBytes=16 -XX:MaxGCPauseMillis=500
+# Used for the build phases only. A small -Xms commits heap only as the build needs it: on the deploy
+# host the serving OTP holds its own heap beside the build. -Xlog:gc puts the heap after each
+# collection in the build log.
+OTP_BUILD_JVM ?= -Xms8G -XX:ObjectAlignmentInBytes=16 -XX:+UseCompactObjectHeaders \
+  -XX:MaxGCPauseMillis=500 -Xlog:gc
 # $(1) = -Xmx, $(2) = OTP args. The base dir is the last argument.
-otp_run = $(JAVA) -Xmx$(1) -Xms$(1) $(3) -jar $(OTP_JAR) $(2) $(OTP_DIR)
+otp_run = $(JAVA) -Xmx$(1) $(3) -jar $(OTP_JAR) $(2) $(OTP_DIR)
 
 EUROPE_URL     ?= https://download.geofabrik.de/europe-latest.osm.pbf
 ELEVATION_URL  ?= https://leonard.io/srtm/srtm_39_03.zip

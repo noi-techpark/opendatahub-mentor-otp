@@ -67,7 +67,7 @@ jobs:
           X_MV_USERNAME: ${{ secrets.MV_USERNAME }}
           X_MV_PASSWORD: ${{ secrets.MV_PASSWORD }}
           X_TRANSMODEL_HOST: "https://transmodel.api.opendatahub.testingmachine.eu"
-          X_OTP_JAVA_OPTS: -Xmx50G -XX:+UseCompactObjectHeaders
+          X_OTP_JAVA_OPTS: -Xmx44G -XX:+UseCompactObjectHeaders
 
           # disable in test
           # X_MATOMO_BASE_URL: ${{ env.MATOMO_BASE_URL }}
@@ -136,7 +136,7 @@ jobs:
           X_MV_USERNAME: ${{ secrets.MV_USERNAME }}
           X_MV_PASSWORD: ${{ secrets.MV_PASSWORD }}
           X_TRANSMODEL_HOST: "https://transmodel.api.opendatahub.com"
-          X_OTP_JAVA_OPTS: -Xmx50G -XX:+UseCompactObjectHeaders
+          X_OTP_JAVA_OPTS: -Xmx44G -XX:+UseCompactObjectHeaders
 
           X_MATOMO_BASE_URL: "https://digital.matomo.cloud/"
           X_MATOMO_SITE_ID: 20
