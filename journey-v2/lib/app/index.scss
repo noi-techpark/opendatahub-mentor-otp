@@ -640,6 +640,20 @@ input[type="text"]::-ms-clear {
   .maplibregl-map aside.filter-group {
     margin: 67px 16px 0 0;
   }
+
+  /* "Journey Planner | Open Data Hub" logo at the map's top left, 16px from
+     the edges and with no background, as the Figma "Header Top Left".
+     It lets clicks through so the map under it can still be dragged. */
+  .map-logo {
+    background: url('../../branding/opendatahub/map-logo.svg') no-repeat;
+    height: 42px;
+    left: 16px;
+    pointer-events: none;
+    position: absolute;
+    top: 16px;
+    width: 161px;
+    z-index: 2;
+  }
 }
 
 .slide-pane {
