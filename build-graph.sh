@@ -137,12 +137,17 @@ fi
 # The rest are named one by one here. This list has to stay in step with the pipeline's
 # download-feeds target, which also covers Austria.
 #
+# A failed refresh does not stop the build: the copy in input/ is used, and -k lets the other feeds
+# refresh. A feed without a downloaded file still fails the build.
+#
 # REFRESH=0, no, off or false skips this step.
 case "${REFRESH:-}" in
 0 | no | off | false) echo "Leaving the source feeds alone (REFRESH=${REFRESH})" ;;
 *)
-  JOBS=1 run_make download-austria
-  run_make download-swiss download-trenitalia download-sta download-rap download-flixbus download-parking
+  JOBS=1 run_make -k download-austria ||
+    echo "WARNING: some Austrian feeds were not refreshed; building with the copies in input/" >&2
+  run_make -k download-swiss download-trenitalia download-sta download-rap download-flixbus download-parking ||
+    echo "WARNING: some feeds were not refreshed; building with the copies in input/" >&2
   ;;
 esac
 
