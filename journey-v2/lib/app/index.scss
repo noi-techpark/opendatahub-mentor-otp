@@ -557,6 +557,91 @@ input[type="text"]::-ms-clear {
   display: none;
 }
 
+/* Mobile burger from the Figma guidelines (Tab trip, 393px wide): a 44px
+   white button at the top right, 15px from the top and 16px from the right,
+   with three 2px black bars. Desktop keeps the burger in the header for now. */
+@media only screen and (max-width: 768px) {
+  .app-menu-icon {
+    background: #ffffff;
+    border: 1px solid #e3e4e7;
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: 44px;
+    left: auto;
+    padding: 13.5px 11px;
+    position: fixed;
+    right: 16px;
+    top: 15px;
+    width: 44px;
+  }
+
+  .app-menu-icon .menu-line {
+    border-bottom: 2px solid #000000;
+    border-radius: 1px;
+  }
+
+  .app-menu-icon[aria-expanded="true"] .menu-line.top {
+    top: 6.5px;
+  }
+
+  .app-menu-icon[aria-expanded="true"] .menu-line.bottom {
+    bottom: 6.5px;
+  }
+}
+
+/* Mobile welcome screen: the destination field ("Where do you want to go?")
+   sits at the bottom, like the bottom panel in the Figma Tab trip screen,
+   and the map fills the space above it so its controls stay reachable. The
+   `main` in the selector is what wins over the vendor's mobile.css. */
+@media only screen and (max-width: 768px) {
+  .otp.mobile main .welcome-location {
+    background: #ffffff;
+    bottom: 0;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+    height: 76px;
+    padding-top: 8px;
+    top: auto;
+    z-index: 10;
+  }
+
+  .otp.mobile main .welcome-map {
+    bottom: 76px;
+    top: 0;
+  }
+
+  /* Transparent header floating over the map, as in the Figma. The map now
+     starts at the top of the screen, and the header text turns dark because
+     the vendor's white text would disappear over a light map. */
+  .otp.mobile .navbar {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 5;
+  }
+
+  .otp.mobile .navbar .mobile-header-text,
+  .otp.mobile .navbar .mobile-header-action > button {
+    color: #000000;
+  }
+
+  /* No "Plan Your Trip" title over the map, as in the Figma. Only the welcome
+     and trip search screens use that title, so other screens (stop viewer,
+     trip viewer...) keep theirs. */
+  .otp.mobile:has(.welcome-map, .batch-search-map) .navbar .mobile-header-text {
+    display: none;
+  }
+
+  /* The burger now sits over the map's top right corner, so the layers
+     button goes under it: y=67, 16px from the right, as in the Figma. */
+  .maplibregl-map aside.filter-group {
+    margin: 67px 16px 0 0;
+  }
+}
+
 .slide-pane {
   transition: all 0.2s ease-in-out;
 }
