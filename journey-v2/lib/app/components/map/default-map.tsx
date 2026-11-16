@@ -454,8 +454,13 @@ class DefaultMap extends Component {
           {/* If set, custom overlays are shown if no active itinerary is shown or pending. */}
           {typeof getCustomMapOverlays === 'function' &&
             getCustomMapOverlays(!itinerary && !pending)}
+          {/* Added before the zoom control: MapLibre stacks later bottom controls above earlier ones, so locate sits under +/- as in the Figma. */}
+          <GeolocateControl
+            position={navigationControlPosition || 'bottom-right'}
+          />
           <NavigationControl
             position={navigationControlPosition || 'bottom-right'}
+            showCompass={false}
           />
         </BaseMap>
       </MapContainer>

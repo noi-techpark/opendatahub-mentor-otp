@@ -202,6 +202,19 @@ module.exports = {
             )
           }
         ),
+        // The vendor mobile screens import the upstream default-map directly
+        // instead of using the one from the app context, so mobile would show
+        // the upstream layers and controls. Point them at the app's own map.
+        new webpack.NormalModuleReplacementPlugin(
+          /(^|\/)(map\/)?default-map$/,
+          (resource) => {
+            if (!resource.context.includes('otp-react-redux')) return
+            resource.request = path.resolve(
+              __dirname,
+              'lib/app/components/map/default-map'
+            )
+          }
+        ),
         new webpack.DefinePlugin({
           CSS: JSON.stringify(CUSTOM_CSS),
           JS_CONFIG: JSON.stringify(customJsFile),

@@ -727,3 +727,77 @@ button.step {
 .maplibregl-map .layers-list:hover label {
   margin-bottom: 5px;
 }
+
+/* Map controls from the Figma guidelines (Desktop map info): 44px white
+   buttons, 4px radius, 1px #e3e4e7 border. Zoom buttons are 42px inside the
+   group border so the outer size is 44px, and the layer button replaces the
+   globe emoji of the base-map layer selector. */
+.maplibregl-map {
+  .maplibregl-ctrl-group {
+    border: 1px solid #e3e4e7;
+    box-shadow: none;
+
+    button {
+      height: 42px;
+      width: 42px;
+    }
+
+    button + button {
+      border-top: 1px solid #e3e4e7;
+    }
+  }
+
+  .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    background-size: 28px 28px;
+  }
+
+  .maplibregl-ctrl-group button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M13 7h2v6h6v2h-6v6h-2v-6H7v-2h6z' fill='%23000'/%3E%3C/svg%3E");
+  }
+
+  .maplibregl-ctrl-group button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M7 13h14v2H7z' fill='%23000'/%3E%3C/svg%3E");
+  }
+
+  /* Only the idle state: the active, waiting and error states keep the
+     MapLibre icons so the user still sees that tracking is on. */
+  .maplibregl-ctrl-group button.maplibregl-ctrl-geolocate:not(:disabled):not(.maplibregl-ctrl-geolocate-active):not(.maplibregl-ctrl-geolocate-waiting):not(.maplibregl-ctrl-geolocate-background) .maplibregl-ctrl-icon {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M11.2 13.3C12.36 13.3 13.3 12.36 13.3 11.2C13.3 10.04 12.36 9.1 11.2 9.1C10.04 9.1 9.1 10.04 9.1 11.2C9.1 12.36 10.04 13.3 11.2 13.3ZM4.2 11.2C4.2 7.334 7.334 4.2 11.2 4.2C15.066 4.2 18.2 7.334 18.2 11.2C18.2 15.066 15.066 18.2 11.2 18.2C7.334 18.2 4.2 15.066 4.2 11.2ZM11.2 5.6C8.107 5.6 5.6 8.107 5.6 11.2C5.6 14.293 8.107 16.8 11.2 16.8C14.293 16.8 16.8 14.293 16.8 11.2C16.8 8.107 14.293 5.6 11.2 5.6ZM0 11.2C0 5.014 5.014 0 11.2 0C17.386 0 22.4 5.014 22.4 11.2C22.4 17.386 17.386 22.4 11.2 22.4C5.014 22.4 0 17.386 0 11.2ZM11.2 1.4C5.788 1.4 1.4 5.788 1.4 11.2C1.4 16.612 5.788 21 11.2 21C16.612 21 21 16.612 21 11.2C21 5.788 16.612 1.4 11.2 1.4Z' transform='translate%282.8 2.8%29' fill='%23000000'/%3E%3C/svg%3E");
+  }
+
+  /* Basemap credits are shown as plain text instead of behind the round "i"
+     button: the OpenStreetMap/CARTO licences require visible attribution. */
+  .maplibregl-ctrl-attrib.maplibregl-compact {
+    border-radius: 4px;
+    font-size: 9px;
+    line-height: 12px;
+    margin: 0;
+    min-height: 0;
+    padding: 2px 6px;
+
+    .maplibregl-ctrl-attrib-button {
+      display: none;
+    }
+
+    .maplibregl-ctrl-attrib-inner {
+      display: block;
+    }
+  }
+
+  .layers-list:not(:hover):not(.fake-mobile-hover) {
+    background: #fff;
+    border: 1px solid #e3e4e7;
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0;
+    width: 44px;
+  }
+
+  .layers-list:not(:hover):not(.fake-mobile-hover)::after {
+    background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M22.023 0.079C22.255 0.2 22.4 0.439 22.4 0.7L22.4 14C22.4 14.228 22.289 14.443 22.101 14.573L15.101 19.473C14.86 19.642 14.54 19.642 14.299 19.473L7.7 14.854L1.101 19.473C0.888 19.623 0.608 19.641 0.377 19.521C0.145 19.4 0 19.161 0 18.9L0 5.6C0 5.372 0.111 5.158 0.299 5.027L7.299 0.127C7.54 -0.042 7.86 -0.042 8.101 0.127L14.7 4.746L21.299 0.127C21.512 -0.023 21.792 -0.041 22.023 0.079ZM14 5.964L8.4 2.044L8.4 13.636L14 17.556L14 5.964ZM15.4 17.556L21 13.636L21 2.044L15.4 5.964L15.4 17.556ZM7 13.636L7 2.044L1.4 5.964L1.4 17.556L7 13.636Z' transform='translate%282.8 4.2%29' fill='%23000000'/%3E%3C/svg%3E") center / 28px 28px no-repeat;
+    content: '';
+    height: 100%;
+    width: 100%;
+  }
+}
