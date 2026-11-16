@@ -9,6 +9,7 @@ import * as mapActions from '@otp-react-redux/lib/actions/map'
 import { SetLocationHandler } from '@otp-react-redux/lib/components/util/types'
 
 import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
+import { addMarkerImages } from './marker-images'
 
 type Props = {
   visible: boolean,
@@ -52,18 +53,8 @@ const TaxiOverlay = (props: Props) => {
   useEffect(() => {
     if(!map) return
     const mapInstance = map.getMap()
-    const carIcon = new Image()
-    carIcon.onload = function () {
-      
-      carIcon.width = 150
-      carIcon.height = 150
-
-      if (!mapInstance.hasImage('taxi')) {
-        mapInstance.addImage('taxi', carIcon)
-      }
-    }
-    carIcon.src = taxiIconData
-  }, [map, taxiIconData])
+    addMarkerImages(mapInstance)
+  }, [map])
 
   // Track mount status to avoid state updates after unmount
   const isMountedRef = useRef(true)
@@ -226,12 +217,13 @@ const TaxiOverlay = (props: Props) => {
               'text-anchor': 'bottom',
               'text-size': 12,
               'text-field': 'Taxi',
-              'icon-anchor': 'top',
-              'icon-image': 'taxi',
+              // Pin marker: the tip sits on the taxi position. Grey: no realtime state in the design for taxis.
+              'icon-anchor': 'bottom',
+              'icon-image': 'StopTaxi-grey',
               'icon-allow-overlap': false,
               'text-allow-overlap': false,
               'text-optional': true,
-              'icon-size': 0.1
+              'icon-size': 1
             }}
             paint={{
               'icon-opacity': ['case', ["!=", ['get', 'State'], 'OCCUPIED'], 1.0, 0.3],

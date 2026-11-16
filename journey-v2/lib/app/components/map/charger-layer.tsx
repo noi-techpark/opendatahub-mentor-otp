@@ -4,13 +4,13 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import { connect } from 'react-redux'
-import ReactDOMServer from 'react-dom/server'
 
 import { useMap, Popup, Source, Layer } from 'react-map-gl'
 import * as mapActions from '@otp-react-redux/lib/actions/map'
 import { SetLocationHandler } from '@otp-react-redux/lib/components/util/types'
 import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
 import Charger from '../../icons/Charger'
+import { addMarkerImages } from './marker-images'
 
 type Props = {
   visible: boolean,
@@ -63,23 +63,7 @@ const ChargerOverlay = (props: Props) => {
     const mapInstance = map.getMap()
     if (!mapInstance) return
 
-    const chargerSvgString = ReactDOMServer.renderToStaticMarkup(
-        <Charger />
-    )
-    const chargerDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-        chargerSvgString
-    )}`
-    const chargerIcon = new Image()
-
-    chargerIcon.width = 24  // Set appropriate size
-    chargerIcon.height = 20 // Set appropriate size
-
-    chargerIcon.onload = () => {
-        if (!mapInstance.hasImage('charger-icon')) {
-        mapInstance.addImage('charger-icon', chargerIcon, {sdf: true})
-        }
-    }
-    chargerIcon.src = chargerDataUrl
+    addMarkerImages(mapInstance)
   }, [map])
 
   // --- 2. Data Refresh: Fetch Taxi Data and Update GeoJSON State ---
@@ -248,8 +232,9 @@ const ChargerOverlay = (props: Props) => {
               'text-anchor': 'bottom',
               'text-size': 12,
               //'text-field': ['get', 'name'],
-              'icon-anchor': 'top',
-              'icon-image': 'charger-icon',
+              // Grey: no live free-plug count is available for chargers yet.
+              'icon-anchor': 'center',
+              'icon-image': 'ChargingCar-grey',
               'icon-size': 1
             }}
             filter={['any', ['>', ['get', 'free'], 0], ['>=', ['zoom'], 10]]}

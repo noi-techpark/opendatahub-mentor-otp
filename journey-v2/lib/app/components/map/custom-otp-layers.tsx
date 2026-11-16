@@ -18,6 +18,7 @@ import styled from 'styled-components'
 import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
 import { connect } from 'react-redux'
 import { Button } from '@opentripplanner/endpoints-overlay/lib/styled'
+import { addMarkerImages } from './marker-images'
 
 
 
@@ -41,20 +42,17 @@ const LAYER_CONFIG = {
         ['>', ['length', ['get', 'routes']], 0]
       ]
     ],
-    paint: {
-        'icon-opacity': 0.7,
-    },
     layout: {
+      // Marker image is `<Icon>-<state>`: green when the stop has realtime data, grey otherwise.
       'icon-image': [
-        'match',
-        ['get', 'type'],
-        'BUS',
-        'bus-icon',
-        'RAIL',
-        'rail-icon',
-        'rail-icon'
+        'concat',
+        ['match', ['get', 'type'], 'BUS', 'StopBus', 'TRAM', 'StopTram', 'StopTrain'],
+        '-',
+        ['case', ['==', ['get', 'realTimeData'], true], 'green', 'grey']
       ],
-      'icon-size': ['match', ['get', 'type'], 'BUS', 0.1, 'RAIL', 0.15, 0.1],
+      // Pin markers: the tip sits on the stop coordinate.
+      'icon-anchor': 'bottom',
+      'icon-size': 1,
       'icon-allow-overlap': true,
       'text-allow-overlap': true,
       'text-optional': true,
@@ -128,32 +126,17 @@ const LAYER_CONFIG = {
         ]
       ]
     ],
-    paint: {
-      'icon-opacity': 0.8,
-    },
     layout: {
+      // Bus-only stations use the stop pin, everything else the train station circle.
       'icon-image': [
-        'match',
-        ['get', 'type'],
-        'BUS',
-        'bus-icon',
-        'RAIL',
-        'rail-icon',
-        'BUS,RAIL',
-        'rail-icon',
-        'RAIL,BUS',
-        'rail-icon',
-        'rail-icon'
+        'concat',
+        ['match', ['get', 'type'], 'BUS', 'StopBus', 'StationTrain'],
+        '-',
+        ['case', ['==', ['get', 'realTimeData'], true], 'green', 'grey']
       ],
-      'icon-size': [
-        'match',
-        ['get', 'type'],
-        'BUS', 0.1,
-        'RAIL,BUS', 0.15,
-        'BUS,RAIL', 0.15,
-        'RAIL', 0.15,
-        0.15
-        ],
+      // The pin tip sits on the coordinate, the circle is centred on it.
+      'icon-anchor': ['match', ['get', 'type'], 'BUS', 'bottom', 'center'],
+      'icon-size': 1,
       'icon-allow-overlap': true,
       'text-optional': true,
       'text-field':  ["step", ["zoom"], [
@@ -236,53 +219,36 @@ const LAYER_CONFIG = {
     filter: ['!=', 'formFactors', ''],
     layout: {
       'icon-image': [
-        'case',
-        // Realtime and vehicles available -> available variant
-        [
-          'all',
-          ['==', ['get', 'operative'], true],
-          ['>', ['coalesce', ['get', 'vehiclesAvailable'], 0], 0]
-        ],
+        'concat',
         [
           'match',
           ['get', 'formFactors'],
-          'BICYCLE', 'bicycle-icon-available',
-          'CAR', 'car-icon-available',
-          'BICYCLE,CAR', 'car-icon-available',
-          'CAR,BICYCLE', 'car-icon-available',
-          /* default */ 'bicycle-icon-available'
+          'BICYCLE', 'RentalBike',
+          'CAR', 'RentalCar',
+          'BICYCLE,CAR', 'RentalCar',
+          'CAR,BICYCLE', 'RentalCar',
+          /* default */ 'RentalBike'
         ],
-        // Realtime but no vehicles -> unavailable variant
+        '-',
         [
-          'any',
-          ['==', ['get', 'operative'], false],
-          ['<=', ['coalesce', ['get', 'vehiclesAvailable'], 0], 0]
-        ],
-        [
-          'match',
-          ['get', 'formFactors'],
-          'BICYCLE', 'bicycle-icon-unavailable',
-          'CAR', 'car-icon-unavailable',
-          'BICYCLE,CAR', 'car-icon-unavailable',
-          'CAR,BICYCLE', 'car-icon-unavailable',
-          /* default */ 'bicycle-icon-unavailable'
-        ],
-        // Fallback: base icon without dot
-        [
-          'match',
-          ['get', 'formFactors'],
-          'BICYCLE', 'bicycle-icon',
-          'CAR', 'car-icon',
-          'BICYCLE,CAR', 'car-icon',
-          'CAR,BICYCLE', 'car-icon',
-          /* default */ 'bicycle-icon'
+          'case',
+          // No live count -> grey
+          ['!', ['has', 'vehiclesAvailable']], 'grey',
+          // Not operative or none left -> red
+          ['==', ['get', 'operative'], false], 'red',
+          ['<=', ['get', 'vehiclesAvailable'], 0], 'red',
+          // 1-2 left -> amber, more than 2 -> green
+          ['>', ['get', 'vehiclesAvailable'], 2], 'green',
+          'amber'
         ]
       ],
-      'icon-size': 0.1,
+      // Circle marker centred on the station; the label sits below it.
+      'icon-anchor': 'center',
+      'icon-size': 1,
       'icon-allow-overlap': false,
       'text-optional': true,
       'text-field':  ["step", ["zoom"], "", 17, ["get", "name"]],
-      'text-offset': [0, 1],
+      'text-offset': [0, 2],
       'text-size': 12,
       'text-anchor': 'top'
     },
@@ -330,9 +296,9 @@ const LAYER_CONFIG = {
   vehicleParking: {
     type: 'symbol',
     layout: {
+    // Grey until live occupancy is verified: capacity alone says nothing about free places.
     'icon-image': [
       'concat',
-      // Bike-only parkings get the bike badge variant, everything else the plain parking icon
       [
         'case',
         [
@@ -340,46 +306,20 @@ const LAYER_CONFIG = {
           ['==', ['get', 'bicyclePlaces'], true],
           ['!=', ['get', 'carPlaces'], true]
         ],
-        'bike-parking',
-        'parking'
+        'ParkingBike',
+        'ParkingCar'
       ],
-      [
-        'case',
-        [
-          'all',
-          //['==', ['get', 'realTimeData'], true],
-          [
-            'any',
-            ['>', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
-            ['>', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
-          ]
-        ],
-        '-available-icon',
-        [
-          'all',
-          //['==', ['get', 'realTimeData'], true],
-          ['<=', ['coalesce', ['get', 'capacity.carPlaces'], 0], 0],
-          ['<=', ['coalesce', ['get', 'capacity.bicyclePlaces'], 0], 0]
-        ],
-        '-unavailable-icon',
-        '-icon'
-      ]
+      '-grey'
     ],
-    'icon-size': 0.15,
+    // Circle marker centred on the parking; the label sits below it.
+    'icon-anchor': 'center',
+    'icon-size': 1,
     'icon-allow-overlap': false,
     'text-optional': true,
     'text-field':  ["step", ["zoom"], "", 17, ["get", "name"]],
-    'text-offset': [0, 1],
+    'text-offset': [0, 2],
     'text-size': 12,
     'text-anchor': 'top'
-    },
-    paint: {
-        'icon-color': '#0000FF',               // blue icon
-        'icon-opacity': 0.8,
-
-  /*    'text-color': '#FFFFFF',               // white text for contrast
-      'text-halo-color': '#0000FF',            // blue border around text
-      'text-halo-width': 2,*/
     },
     minzoom: 14,
     maxzoom: 20,
@@ -460,119 +400,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
     if (!map) return
     const mapInstance = map.getMap()
     if (!mapInstance) return
-    // Parking icon and availability variants
-    {
-      const parkingSvgString = ReactDOMServer.renderToStaticMarkup(<Parking />)
-      // Bike parking: same "P" in orange
-      const bikeParkingSvgString = parkingSvgString.replace(/currentColor/g, '#f97316')
-      const toDataUrl = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
-      const makeVariant = (svg: string, color: string) => {
-        // Inject a prominent corner circle (top-right) into the base SVG.
-        // Coordinates chosen for FA-style viewBox (≈ 448x512) so the dot is clearly visible.
-        return toDataUrl(svg.replace(
-          '</svg>',
-          `<circle cx="380" cy="85" r="60" fill="${color}" stroke="#ffffff" stroke-width="20"/></svg>`
-        ))
-      }
-      const addImg = (name: string, src: string) => {
-        if (mapInstance.hasImage(name)) return
-        const img = new Image()
-        img.width = 131
-        img.height = 150
-        img.onload = () => {
-          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
-        }
-        img.src = src
-      }
-      addImg('parking-icon', toDataUrl(parkingSvgString))
-      addImg('parking-available-icon', makeVariant(parkingSvgString, '#22c55e'))
-      addImg('parking-unavailable-icon', makeVariant(parkingSvgString, '#ef4444'))
-      addImg('bike-parking-icon', toDataUrl(bikeParkingSvgString))
-      addImg('bike-parking-available-icon', makeVariant(bikeParkingSvgString, '#22c55e'))
-      addImg('bike-parking-unavailable-icon', makeVariant(bikeParkingSvgString, '#ef4444'))
-    }
-    // Bus icon
-    if (!mapInstance.hasImage('bus-icon')) {
-      const busSvgString = ReactDOMServer.renderToStaticMarkup(
-        <ClassicModeIcon mode="bus" />
-      )
-      const busDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-        busSvgString
-      )}`
-
-      const busIcon = new Image()
-          
-      busIcon.width = 131  // Set appropriate size
-      busIcon.height = 150 // Set appropriate size
-
-      busIcon.onload = () => {
-        if (!mapInstance.hasImage('bus-icon')) {
-          mapInstance.addImage('bus-icon', busIcon)
-        }
-      }
-      busIcon.src = busDataUrl
-    }
-    // Car icon for stations – here using ClassicModeIcon mode "car"
-    if (!mapInstance.hasImage('car-icon')) {
-      const carSvgString = ReactDOMServer.renderToStaticMarkup(
-        <ClassicModeIcon mode="car" />
-      )
-      const carDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-        carSvgString
-      )}`
-      const carIcon = new Image()
-      carIcon.width = 150  // Set appropriate size
-      carIcon.height = 150 // Set appropriate size
-      
-      carIcon.onload = () => {
-        if (!mapInstance.hasImage('car-icon')) {
-          mapInstance.addImage('car-icon', carIcon)
-        }
-      }
-      carIcon.src = carDataUrl
-
-      // Add availability variants for car icon (top-right dot)
-      const makeCarVariant = (color: string) => {
-        const withDot = carSvgString.replace(
-          '</svg>',
-          `<circle cx="430" cy="70" r="80" fill="${color}" stroke="#ffffff" stroke-width="25"/></svg>`
-        )
-        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
-      }
-      const addCarVariant = (name: string, src: string) => {
-        if (mapInstance.hasImage(name)) return
-        const img = new Image()
-        img.width = 150
-        img.height = 150
-        img.onload = () => {
-          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
-        }
-        img.src = src
-      }
-      console.log("car", makeCarVariant('#22c55e'))
-      addCarVariant('car-icon-available', makeCarVariant('#22c55e'))
-      addCarVariant('car-icon-unavailable', makeCarVariant('#ef4444'))
-    }
-    // Train icon
-    if (!mapInstance.hasImage('rail-icon')) {
-      const tramSvgString = ReactDOMServer.renderToStaticMarkup(
-        <ClassicModeIcon mode="rail" />
-      )
-      const tramDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-        tramSvgString
-      )}`
-      const railIcon = new Image()
-      
-      railIcon.width = 100  // Set appropriate size
-      railIcon.height = 150 // Set appropriate size
-
-      railIcon.onload = () => {
-        if (!mapInstance.hasImage('rail-icon')) {
-          mapInstance.addImage('rail-icon', railIcon)
-        }
-      }
-      railIcon.src = tramDataUrl
-    }
+    addMarkerImages(mapInstance)
     // Micromobility icon
     if (!mapInstance.hasImage('scooter-icon')) {
       const scooterSvgString = ReactDOMServer.renderToStaticMarkup(
@@ -611,28 +439,6 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
         }
       }
       bicycleIcon.src = bicycleDataUrl
-
-      // Add availability variants for bicycle icon (top-right dot)
-      const makeBikeVariant = (color: string) => {
-        const withDot = bicycleSvgString.replace(
-          '</svg>',
-          `<circle cx="90" cy="8" r="12" fill="${color}" stroke="#ffffff" stroke-width="3"/></svg>`
-        )
-        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(withDot)}`
-      }
-      const addBikeVariant = (name: string, src: string) => {
-        if (mapInstance.hasImage(name)) return
-        const img = new Image()
-        img.width = 245
-        img.height = 150
-        img.onload = () => {
-          if (!mapInstance.hasImage(name)) mapInstance.addImage(name, img)
-        }
-        img.src = src
-      }
-      //console.log(makeBikeVariant('#22c55e'))
-      addBikeVariant('bicycle-icon-available', makeBikeVariant('#22c55e'))
-      addBikeVariant('bicycle-icon-unavailable', makeBikeVariant('#ef4444'))
     }
   }, [map, sourceLayerName])
 
@@ -770,39 +576,25 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
       {/* For stops, render extra highlight layers */}
       {sourceLayerName === 'stops' && (
         <>
-          {/* Small green dot indicating realtime availability */}
-          <Layer
-            id="otp-stops-realtime"
-            type="circle"
-            source="otp-source"
-            {...{ 'source-layer': sourceLayerName }}
-            layout={{}}
-            paint={{
-              'circle-radius': 3,
-              'circle-color': '#22c55e',
-              'circle-opacity': 1,
-              'circle-stroke-color': '#ffffff',
-              'circle-stroke-width': 1,
-              'circle-translate': [8, -8],
-              'circle-translate-anchor': 'viewport'
-            }}
-            filter={['all', ['==', ['get', 'realTimeData'], true]]}
-            minzoom={16}
-            maxzoom={20}
-          />
           <Layer
             id="otp-stops-highlight"
             type="circle"
             source="otp-source"
             {...{ 'source-layer': sourceLayerName }}
+            // Draw the halo under the stop markers, not over them.
+            beforeId={`otp-${sourceLayerName}`}
             layout={{}}
             paint={{
               'circle-radius': 20,
               'circle-color': '#0000FF',
-              'circle-opacity': 0.2
+              'circle-opacity': 0.2,
+              // Pin markers sit above the stop coordinate: move the halo onto the pin body.
+              'circle-translate': [0, -16]
             }}
             filter={[
               'all',
+              // Without this, a null highlightParentStation matches every stop that has no parent station.
+              ['has', 'parentStation'],
               ['==', ['get', 'parentStation'], highlightParentStation],
               ['has', 'routes'],
               [
@@ -849,29 +641,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
           />
         </>
       )}
-      {/* Rental station realtime now indicated via icon variants. */}
-      {/* For stations, render realtime indicator as well */}
-      {sourceLayerName === 'stations' && (
-        <Layer
-          id="otp-stations-realtime"
-          type="circle"
-          source="otp-source"
-          {...{ 'source-layer': sourceLayerName }}
-          layout={{}}
-          paint={{
-            'circle-radius': 3.5,
-            'circle-color': '#22c55e',
-            'circle-opacity': 1,
-            'circle-stroke-color': '#ffffff',
-            'circle-stroke-width': 1,
-            'circle-translate': [10, -10],
-            'circle-translate-anchor': 'viewport'
-          }}
-          filter={['all', ['==', ['get', 'realTimeData'], true]]}
-          minzoom={12}
-          maxzoom={20}
-        />
-      )}
+      {/* Realtime state of stops, stations and rentals is the marker border colour. */}
       {/* Parking availability indicators are now part of the icon variant. */}
       {/*{hoverInfo && (
         <Popup
