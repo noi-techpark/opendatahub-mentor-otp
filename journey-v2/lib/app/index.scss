@@ -609,6 +609,34 @@ input[type="text"]::-ms-clear {
     top: 0;
   }
 
+  /* Trip search screen, same layout as the welcome screen: the origin,
+     destination and mode settings panel sits at the bottom and the map fills
+     the space above it. The panel's content is taller than the vendor's fixed
+     216px and its height changes with the chosen modes, so the screen is a
+     column: the panel takes the height it needs, the map takes the rest. */
+  .otp.mobile main:has(> .batch-search-settings) {
+    display: flex;
+    flex-direction: column;
+    inset: 0;
+    position: fixed;
+  }
+
+  .otp.mobile main .batch-search-map {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    top: 0;
+  }
+
+  .otp.mobile main .batch-search-settings {
+    background: #ffffff;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+    height: auto;
+    order: 1;
+    position: relative;
+    top: auto;
+  }
+
   /* Transparent header floating over the map, as in the Figma. The map now
      starts at the top of the screen, and the header text turns dark because
      the vendor's white text would disappear over a light map. */
