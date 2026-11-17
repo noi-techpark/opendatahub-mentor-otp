@@ -8,25 +8,29 @@ import { Label as BsLabel } from 'react-bootstrap'
 import ReactDOMServer from 'react-dom/server'
 import { FormattedMessage, injectIntl } from 'react-intl'
 import { ClassicModeIcon } from '@opentripplanner/icons'
-import { Bicycle, Parking } from '@styled-icons/fa-solid'
-import { Rss } from '@styled-icons/fa-solid/Rss'
 import { Wheelchair } from '@styled-icons/fa-solid/Wheelchair'
 import { setViewedStop } from '@otp-react-redux/lib/actions/ui'
 import { setLocation } from '@otp-react-redux/lib/actions/map'
 import { IconWithText } from '@otp-react-redux/lib/components/util/styledIcon'
-import styled from 'styled-components'
-import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
 import { connect } from 'react-redux'
-import { Button } from '@opentripplanner/endpoints-overlay/lib/styled'
 import { addMarkerImages } from './marker-images'
+import * as PopupIcons from '../../icons/popup'
+import PoiPopup, { getRouteNames } from './poi-popup'
 
 
+// The popup sits above the marker: pins are ~35px tall and anchored at their
+// tip, circles ~36px and centred, so 40px clears both.
+const POI_POPUP_OFFSET = 40
 
-const PulsingRss = styled(Rss)`
-  animation: pulse-opacity 2s ease-in-out infinite;
-  transform: scaleX(-1);
-`
-
+// Popup header icon for a stop or station `type` (comma separated modes, e.g.
+// "BUS,RAIL"): rail wins over bus, as on the markers.
+const getModeIcon = (type = '') => {
+  if (type.includes('RAIL') || type.includes('TRAM') || type.includes('SUBWAY')) return <PopupIcons.Subway />
+  if (type.includes('AIRPLANE')) return <PopupIcons.Airplane />
+  if (type.includes('GONDOLA') || type.includes('CABLE_CAR') || type.includes('FUNICULAR')) return <PopupIcons.CableCar />
+  if (type.includes('FERRY')) return <PopupIcons.Ship />
+  return <PopupIcons.Bus />
+}
 
 // --- Default configuration for layers ---
 const LAYER_CONFIG = {
@@ -64,28 +68,24 @@ const LAYER_CONFIG = {
     },
     minzoom: 16,
     maxzoom: 20,
-    popupRenderer: (properties, hoverInfo, setViewedStop, setLocation) => {
+    popupRenderer: (properties, hoverInfo, setViewedStop, setLocation, mapInstance) => {
+      // Stop features only carry the route types; the line names are on the
+      // parent station, which comes in the same vector tile.
+      const station = properties.parentStation && mapInstance?.querySourceFeatures('otp-source', {
+        filter: ['==', ['get', 'gtfsId'], properties.parentStation],
+        sourceLayer: 'stations'
+      })[0]
+      const lines = getRouteNames(station?.properties.routes)
       return (
-        <div className="otp-ui-mapOverlayPopup" style={{width: '300px'}}>
-          <div className="otp-ui-mapOverlayPopup__popupHeader">
-            {properties.type.includes('BUS') && <IconWithText icon={<ClassicModeIcon mode="bus" />} />}
-            {properties.type.includes('RAIL') && <IconWithText icon={<ClassicModeIcon mode="rail" />} />}
-            &nbsp;
-            Stop
-            {properties.realTimeData && (
-              <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
-            )}
-          </div>
-          <div className="otp-ui-mapOverlayPopup__popupTitle" style={{padding: '5px 0'}}>
-            <Button onClick={() => { setViewedStop({...properties, stopId: properties.gtfsId}, "nearby");}}>{properties.name}</Button>
-          </div>
-          {properties.platform && <div>
-            <strong>Platform:</strong> {properties.platform}
-          </div>}
-          <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
-            <NoiFromToPicker place={hoverInfo} />
-          </div>
-        </div>
+        <PoiPopup
+          icon={getModeIcon(properties.type)}
+          onViewMore={() => setViewedStop({...properties, stopId: properties.gtfsId}, "nearby")}
+          place={hoverInfo}
+          // "Bus stop + ID" in the Figma: stops have no code in the tiles, the platform is their number.
+          title={[properties.name, properties.code || properties.platform].filter(Boolean).join(' ')}
+        >
+          {lines}
+        </PoiPopup>
       )
     }
   },
@@ -164,23 +164,9 @@ const LAYER_CONFIG = {
     maxzoom: 16,
     popupRenderer: (properties, hoverInfo) => {
       return (
-        <div className="otp-ui-mapOverlayPopup" style={{width: '300px'}}>
-          <div className="otp-ui-mapOverlayPopup__popupHeader">
-            {properties.type.includes('BUS') && <IconWithText icon={<ClassicModeIcon mode="bus" />} />}
-            {properties.type.includes('RAIL') && <IconWithText icon={<ClassicModeIcon mode="rail" />} />}
-            &nbsp;
-            Station
-            {properties.realTimeData && (
-              <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
-            )}
-          </div>
-          <div className="otp-ui-mapOverlayPopup__popupTitle" style={{padding: '5px 0'}}>
-            {properties.name}
-          </div>
-          <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
-            <NoiFromToPicker place={hoverInfo} />
-          </div>
-        </div>
+        <PoiPopup icon={getModeIcon(properties.type)} place={hoverInfo} title={properties.name}>
+          {getRouteNames(properties.routes)}
+        </PoiPopup>
       )
     }
   },
@@ -254,42 +240,28 @@ const LAYER_CONFIG = {
     },
     minzoom: 10,
     maxzoom: 20,
-        popupRenderer: (properties, hoverInfo) => {
+    popupRenderer: (properties, hoverInfo) => {
       let formFactors = properties.formFactors.split(",");
+      const isCar = formFactors.includes('CAR')
       return (
-        <div className="otp-ui-mapOverlayPopup" style={{width: '300px'}}>
-          <div className="otp-ui-mapOverlayPopup__popupHeader">
-            {formFactors.includes('BICYCLE') && <IconWithText icon={<ClassicModeIcon mode="bicycle" />} />}
-            {formFactors.includes('CAR') && <IconWithText icon={<ClassicModeIcon mode="car" />} />}
-            &nbsp;
-            Rental Station
-            {properties.operative && (
-              <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
-            )}
-          </div>
-          <div className="otp-ui-mapOverlayPopup__popupTitle" style={{padding: '5px 0'}}>
-            {properties.name}
-          </div>
-          <div className="otp-ui-mapOverlayPopup__popupRow">
-            <div>
-              {formFactors.includes('BICYCLE') && !formFactors.includes('CAR') &&
-                `${properties.vehiclesAvailable} bikes available`
-              }
-              {formFactors.includes('CAR') && !formFactors.includes('BICYCLE') &&
-                `${properties.vehiclesAvailable} cars available`
-              }
-              {formFactors.includes('BICYCLE') && formFactors.includes('CAR') &&
-                `${properties.vehiclesAvailable} vehicles available`
-              }
-              {!formFactors.includes('BICYCLE') && !formFactors.includes('CAR') &&
-                `${properties.vehiclesAvailable} vehicles available`
-              }
-            </div>
-          </div>
-          <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
-            <NoiFromToPicker place={hoverInfo} />
-          </div>
-        </div>
+        <PoiPopup
+          icon={isCar ? <PopupIcons.Car /> : <PopupIcons.Bicycle />}
+          place={hoverInfo}
+          title={properties.name}
+        >
+          {formFactors.includes('BICYCLE') && !formFactors.includes('CAR') &&
+            `${properties.vehiclesAvailable} bikes available`
+          }
+          {formFactors.includes('CAR') && !formFactors.includes('BICYCLE') &&
+            `${properties.vehiclesAvailable} cars available`
+          }
+          {formFactors.includes('BICYCLE') && formFactors.includes('CAR') &&
+            `${properties.vehiclesAvailable} vehicles available`
+          }
+          {!formFactors.includes('BICYCLE') && !formFactors.includes('CAR') &&
+            `${properties.vehiclesAvailable} vehicles available`
+          }
+        </PoiPopup>
       );
     }
   },
@@ -328,45 +300,34 @@ const LAYER_CONFIG = {
         const title = isBikeParking ? 'Bike parking' : 'Parking';
         const name = properties.name && properties.name.trim() ? properties.name.trim() : title;
         return (
-            <div className="otp-ui-mapOverlayPopup" style={{minWidth: '200px'}}>
-                <div className="otp-ui-mapOverlayPopup__popupHeader">
-                    <IconWithText icon={isBikeParking ? <Bicycle /> : <Parking />} />
-                    &nbsp;{title}
-                    {properties.realTimeData && (
-                      <PulsingRss width="16px" style={{ position: 'absolute', right: '5px' }} />
-                    )}
-                </div>
-                <div className="otp-ui-mapOverlayPopup__popupTitle" style={{padding: '5px 0'}}>
-                    {name}
-                </div>
-                <div style={{padding: '5px 0'}}>
-                    {properties.wheelchairAccessibleCarPlaces && <BsLabel bsStyle="primary">
-                      <IconWithText Icon={Wheelchair}>
-                        <FormattedMessage id="components.TripViewer.accessible" />
-                      </IconWithText>
-                    </BsLabel>}
-                  <div> { properties.carPlaces &&
-                      <IconWithText icon={<ClassicModeIcon mode="car" />}>
-                        {properties.realTimeData && properties['availability.carPlaces'] !== undefined
-                          ? `${properties['availability.carPlaces']} / ${properties['capacity.carPlaces']}`
-                          : properties['capacity.carPlaces']}
-                      </IconWithText>
-                    }
-                  </div>
-                  <div>
-                    { properties.bicyclePlaces &&
-                    <IconWithText icon={<ClassicModeIcon mode="bicycle" />}>
-                      {properties.realTimeData && properties['availability.bicyclePlaces'] !== undefined
-                        ? `${properties['availability.bicyclePlaces']} / ${properties['capacity.bicyclePlaces']}`
-                        : properties['capacity.bicyclePlaces']}
-                    </IconWithText>
-                    }
-                  </div>
-                </div>
-                <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
-                    <NoiFromToPicker place={hoverInfo} />
-                </div>
-            </div>
+            <PoiPopup
+              icon={isBikeParking ? <PopupIcons.Bicycle /> : <PopupIcons.Car />}
+              place={hoverInfo}
+              title={name}
+            >
+                {properties.wheelchairAccessibleCarPlaces && <BsLabel bsStyle="primary">
+                  <IconWithText Icon={Wheelchair}>
+                    <FormattedMessage id="components.TripViewer.accessible" />
+                  </IconWithText>
+                </BsLabel>}
+              <div> { properties.carPlaces &&
+                  <IconWithText icon={<ClassicModeIcon mode="car" />}>
+                    {properties.realTimeData && properties['availability.carPlaces'] !== undefined
+                      ? `${properties['availability.carPlaces']} / ${properties['capacity.carPlaces']}`
+                      : properties['capacity.carPlaces']}
+                  </IconWithText>
+                }
+              </div>
+              <div>
+                { properties.bicyclePlaces &&
+                <IconWithText icon={<ClassicModeIcon mode="bicycle" />}>
+                  {properties.realTimeData && properties['availability.bicyclePlaces'] !== undefined
+                    ? `${properties['availability.bicyclePlaces']} / ${properties['capacity.bicyclePlaces']}`
+                    : properties['capacity.bicyclePlaces']}
+                </IconWithText>
+                }
+              </div>
+            </PoiPopup>
         );
       }
   }
@@ -556,7 +517,7 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
   // --- New default popup renderer: Print all properties ---
   const renderPopupContent = (hoverInfo) => {
     if (mergedConfig.popupRenderer) {
-      return mergedConfig.popupRenderer(hoverInfo.properties, hoverInfo, setViewedStop, setLocation)
+      return mergedConfig.popupRenderer(hoverInfo.properties, hoverInfo, setViewedStop, setLocation, map?.getMap())
     }
     return (
       <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
@@ -657,13 +618,15 @@ const OTPVectorLayer = ({ sourceLayerName, layerStyle = {}, name, setViewedStop,
       )}*/}
       {stickyInfo && (
         <Popup
-          maxWidth="none"
-          longitude={stickyInfo.geometry.coordinates[0]}
+          // Figma tooltip: above the marker, no close button (a click on the map closes it).
+          anchor="bottom"
+          className="poi-popup-container"
+          closeButton={false}
           latitude={stickyInfo.geometry.coordinates[1]}
-          closeButton={true}
+          longitude={stickyInfo.geometry.coordinates[0]}
+          maxWidth="none"
+          offset={POI_POPUP_OFFSET}
           onClose={onStickyClose}
-          offsetTop={-10}
-          anchor="top"
         >
           {renderPopupContent(stickyInfo)}
         </Popup>

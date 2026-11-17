@@ -8,9 +8,9 @@ import { connect } from 'react-redux'
 import { useMap, Popup, Source, Layer } from 'react-map-gl'
 import * as mapActions from '@otp-react-redux/lib/actions/map'
 import { SetLocationHandler } from '@otp-react-redux/lib/components/util/types'
-import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
 import Charger from '../../icons/Charger'
 import { addMarkerImages } from './marker-images'
+import PoiPopup from './poi-popup'
 
 type Props = {
   visible: boolean,
@@ -313,32 +313,24 @@ const ChargerOverlay = (props: Props) => {
       {stickyInfo && (
         <div >
         <Popup
-          maxWidth="none"
-          longitude={stickyInfo.lon}
+          // Same placement as the other POI popups (custom-otp-layers.tsx).
+          anchor="bottom"
+          className="poi-popup-container"
+          closeButton={false}
           latitude={stickyInfo.lat}
-          closeButton={true}
+          longitude={stickyInfo.lon}
+          maxWidth="none"
+          offset={40}
           onClose={() => setStickyInfo(null)}
-          offsetTop={-10}
-          anchor="top"
         >
-          <div className="otp-ui-mapOverlayPopup">
-            <div className="otp-ui-mapOverlayPopup__popupHeader">
-            <Charger width={24} height={20} />
-            &nbsp;E-Charger
-            </div>
-
-            <div className="otp-ui-mapOverlayPopup__popupTitle">
-            {stickyInfo.properties.name}
-            </div>
-
-            <div>
+          <PoiPopup
+            icon={<Charger height={15} width={15} />}
+            place={stickyInfo}
+            title={stickyInfo.properties.name}
+          >
+            {stickyInfo.properties.free} available
+            <div className="poi-popup__info">
             Provider: {stickyInfo.properties.provider}
-            </div>
-
-            <div className="otp-ui-mapOverlayPopup__popupAvailableInfo">
-            <div className="otp-ui-mapOverlayPopup__popupAvailableInfoValue">
-                {stickyInfo.properties.free}
-            </div>
             </div>
             <div className="otp-ui-mapOverlayPopup__popupAvailableSlots">
             {(Array.isArray(stickyInfo.properties.plugs) && stickyInfo.properties.plugs.length > 0) ? stickyInfo.properties.plugs.map((plug, key) => {
@@ -366,16 +358,10 @@ const ChargerOverlay = (props: Props) => {
                 </div>
                 );
             }) : (
-              <div style={{ padding: '8px 0' }}>No plug details available.</div>
+              <div className="poi-popup__info">No plug details available.</div>
             )}
             </div>
-
-            <div className="otp-ui-mapOverlayPopup__popupRow">
-            <NoiFromToPicker
-                place={stickyInfo}
-            />
-            </div>
-        </div>
+          </PoiPopup>
         </Popup>
         </div>
       )}

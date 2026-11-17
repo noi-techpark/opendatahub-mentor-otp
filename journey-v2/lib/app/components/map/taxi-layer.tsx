@@ -8,8 +8,9 @@ import { useMap, Popup, Source, Layer } from 'react-map-gl'
 import * as mapActions from '@otp-react-redux/lib/actions/map'
 import { SetLocationHandler } from '@otp-react-redux/lib/components/util/types'
 
-import NoiFromToPicker from '../viewers/nearby/noi-from-to-picker'
 import { addMarkerImages } from './marker-images'
+import * as PopupIcons from '../../icons/popup'
+import PoiPopup from './poi-popup'
 
 type Props = {
   visible: boolean,
@@ -46,9 +47,6 @@ const TaxiOverlay = (props: Props) => {
   }, [stickyInfo])
 
   // --- 1. Load the Taxi Icon ---
-  // We define an SVG taxi icon as a data URL and add it to the map style.
-  const taxiIconData =
-    `data:image/svg+xml;base64,PHN2ZwogICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICAgdmlld0JveD0iMCAwIDUxMiA1MTIiCiAgICBoZWlnaHQ9IjEwMCUiCiAgICB3aWR0aD0iMTAwJSIKICA+CiAgICA8cGF0aCBkPSJNNDk5Ljk5MSAxNjhoLTU0LjgxNWwtNy44NTQtMjAuOTQ0Yy05LjE5Mi0yNC41MTMtMjUuNDI1LTQ1LjM1MS00Ni45NDItNjAuMjYzUzM0My42NTEgNjQgMzE3LjQ3MiA2NEgxOTQuNTI4Yy0yNi4xOCAwLTUxLjM5MSA3Ljg4Mi03Mi45MDggMjIuNzkzLTIxLjUxOCAxNC45MTItMzcuNzUgMzUuNzUtNDYuOTQyIDYwLjI2M0w2Ni44MjQgMTY4SDEyLjAwOWMtOC4xOTEgMC0xMy45NzQgOC4wMjQtMTEuMzg0IDE1Ljc5NWw4IDI0QTEyIDEyIDAgMCAwIDIwLjAwOSAyMTZoMjguODE1bC0uMDUyLjE0QzI5LjIyMiAyMjcuMDkzIDE2IDI0Ny45OTcgMTYgMjcydjQ4YzAgMTYuMjI1IDYuMDQ5IDMxLjAyOSAxNiA0Mi4zMDlWNDI0YzAgMTMuMjU1IDEwLjc0NSAyNCAyNCAyNGg0OGMxMy4yNTUgMCAyNC0xMC43NDUgMjQtMjR2LTQwaDI1NnY0MGMwIDEzLjI1NSAxMC43NDUgMjQgMjQgMjRoNDhjMTMuMjU1IDAgMjQtMTAuNzQ1IDI0LTI0di02MS42OTFjOS45NTEtMTEuMjgxIDE2LTI2LjA4NSAxNi00Mi4zMDl2LTQ4YzAtMjQuMDAzLTEzLjIyMi00NC45MDctMzIuNzcyLTU1Ljg2bC0uMDUyLS4xNGgyOC44MTVhMTIgMTIgMCAwIDAgMTEuMzg0LTguMjA1bDgtMjRjMi41OS03Ljc3MS0zLjE5My0xNS43OTUtMTEuMzg0LTE1Ljc5NXptLTM2NS4zODggMS41MjhDMTQzLjkxOCAxNDQuNjg5IDE2OCAxMjggMTk0LjUyOCAxMjhoMTIyLjk0NGMyNi41MjggMCA1MC42MSAxNi42ODkgNTkuOTI1IDQxLjUyOEwzOTEuODI0IDIwOEgxMjAuMTc2bDE0LjQyNy0zOC40NzJ6TTg4IDMyOGMtMTcuNjczIDAtMzItMTQuMzI3LTMyLTMyIDAtMTcuNjczIDE0LjMyNy0zMiAzMi0zMnM0OCAzMC4zMjcgNDggNDgtMzAuMzI3IDE2LTQ4IDE2em0zMzYgMGMtMTcuNjczIDAtNDggMS42NzMtNDgtMTYgMC0xNy42NzMgMzAuMzI3LTQ4IDQ4LTQ4czMyIDE0LjMyNyAzMiAzMmMwIDE3LjY3My0xNC4zMjcgMzItMzIgMzJ6IiAvPgogIDwvc3ZnPg==`
 
   useEffect(() => {
     if(!map) return
@@ -235,31 +233,26 @@ const TaxiOverlay = (props: Props) => {
 
       {stickyInfo && (
         <Popup
-          longitude={stickyInfo.longitude}
+          // Same placement as the other POI popups (custom-otp-layers.tsx).
+          anchor="bottom"
+          className="poi-popup-container"
+          closeButton={false}
           latitude={stickyInfo.latitude}
-          closeButton={true}
+          longitude={stickyInfo.longitude}
+          maxWidth="none"
+          offset={40}
           onClose={() => setStickyInfo(null)}
-          offsetTop={-10}
-          anchor="top"
         >
-          <div className="otp-ui-mapOverlayPopup" style={{minWidth: '300px'}}>
-            <div className="otp-ui-mapOverlayPopup__popupHeader">
-              <img src={taxiIconData} alt="Taxi Icon" width="24" height="24" />
-              &nbsp;Taxi
-            </div>
-            <div className="otp-ui-mapOverlayPopup__popupTitle">
-              {stickyInfo.properties.Name}
-            </div>
-            <div className="otp-ui-mapOverlayPopup__popupRow">
-              State: {stickyInfo.properties.State}
-            </div>
-            <div className="otp-ui-mapOverlayPopup__popupRow">
+          <PoiPopup
+            icon={<PopupIcons.Cab />}
+            place={{ lon: stickyInfo.longitude, lat: stickyInfo.latitude, name: stickyInfo.properties.Name, properties: stickyInfo.properties }}
+            title={stickyInfo.properties.Name}
+          >
+            State: {stickyInfo.properties.State}
+            <div className="poi-popup__info">
               Region: {stickyInfo.properties.Region}
             </div>
-            <div className="otp-ui-mapOverlayPopup__popupRow" style={{padding: '10px 0 0 0'}}>
-                <NoiFromToPicker place={{ lon: stickyInfo.longitude, lat: stickyInfo.latitude, name: stickyInfo.properties.Name, properties: stickyInfo.properties }} />
-            </div>
-          </div>
+          </PoiPopup>
         </Popup>
       )}
     </>

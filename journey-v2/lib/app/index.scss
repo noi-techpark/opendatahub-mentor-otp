@@ -367,6 +367,103 @@ $location-filter-width: 280px;
 @import url(@otp-react-redux/lib/components/admin/call-taker.css);
 @import url(@otp-react-redux/lib/components/app/app.css);
 
+/* POI popups on the map (poi-popup.tsx), from the Figma tooltip in Mobile >
+   Tab trip: a white 208px card with 4px corners and 8px padding, no tip and
+   no close button. The Figma has no shadow; a light one is kept so the white
+   card stays readable over light map areas. The `.maplibregl-popup` prefix
+   wins over the 10px radius set on all popups in default-map.tsx. */
+.maplibregl-popup.poi-popup-container {
+  .maplibregl-popup-tip {
+    display: none;
+  }
+
+  .maplibregl-popup-content {
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 8px 8px 0;
+  }
+}
+
+.poi-popup {
+  color: #000000;
+  font-family: 'Source Sans 3', 'Source Sans Pro', $font-family-sans-serif;
+  font-size: 12px;
+  line-height: 15px;
+  text-align: left;
+  width: 192px;
+
+  &__header {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__main {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 18px;
+    margin-top: 8px;
+  }
+
+  /* Secondary lines inside the bold block (provider, region...). */
+  &__info {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    margin-top: 4px;
+  }
+
+  /* Links are underlined in the Figma ("View more", start / arrive). */
+  &__link {
+    background: none;
+    border: 0;
+    color: #50742f;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 24px;
+    padding: 0;
+    text-decoration: underline;
+  }
+
+  /* Start / arrive actions: the shared from/to picker, restyled to the
+     Figma's green links with a 10px icon and no separator line. */
+  &__actions {
+    line-height: 24px;
+    margin-top: 8px;
+
+    > span > span {
+      display: flex;
+      gap: 22px;
+    }
+
+    > span > span > span {
+      align-items: center;
+      border-left: 0;
+      display: inline-flex;
+      gap: 4px;
+      padding-left: 0;
+    }
+
+    button {
+      color: #50742f;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 0;
+      text-decoration: underline;
+    }
+
+    svg {
+      color: #50742f;
+      height: 10px;
+      width: 10px;
+    }
+  }
+}
+
 .otp-ui-mapOverlayPopup {
   font-size: $font-size-base;
   min-width: 250px;
