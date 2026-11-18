@@ -61,6 +61,7 @@ jobs:
 
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.testingmachine.eu"
           X_PELIAS_URL: "https://geocoder.otp.opendatahub.testingmachine.eu"
+          X_OTP_OJP_URL: "https://otp.opendatahub.testingmachine.eu/otp/ojp/v2/"
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
           # The Austrian Verbund feeds; data.mobilitaetsverbuende.at authenticates every download.
@@ -130,7 +131,7 @@ jobs:
 
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.com"
           X_PELIAS_URL: "https://geocoder.otp.opendatahub.com"
-          X_OTP_OJP_URL: "https://otp.opendatahub.testingmachine.eu/otp/ojp/v2/"
+          X_OTP_OJP_URL: "https://otp.opendatahub.com/otp/ojp/v2/"
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
           # The Austrian Verbund feeds; data.mobilitaetsverbuende.at authenticates every download.
