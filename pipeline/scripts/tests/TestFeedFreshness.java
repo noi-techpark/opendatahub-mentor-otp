@@ -1,10 +1,10 @@
 package tests;
 
-// tools.FeedValidity reports the last day a feed's timetable runs on. It must read the service
+// tools.FeedFreshness reports the last day a feed's timetable runs on. It must read the service
 // calendar (OperatingPeriod, OperatingDay, DayTypeAssignment) and ignore validity dates that say
 // nothing about service, such as a frame's ValidBetween.
 
-import tools.FeedValidity;
+import tools.FeedFreshness;
 import toolkit.test.Check;
 import toolkit.test.Runner;
 
@@ -19,10 +19,10 @@ import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class TestFeedValidity {
+public class TestFeedFreshness {
 
     public static void main(String[] args) {
-        Runner.run(TestFeedValidity.class);
+        Runner.run(TestFeedFreshness.class);
     }
 
     private static final String NS = "xmlns=\"http://www.netex.org.uk/netex\"";
@@ -35,7 +35,7 @@ public class TestFeedValidity {
     }
 
     private static LocalDate last(String xml) throws Exception {
-        return FeedValidity.lastServiceDay(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+        return FeedFreshness.lastServiceDay(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
     }
 
     /// The FlixBus shape: UicOperatingPeriods, with a frame ValidBetween far beyond them.
@@ -81,7 +81,7 @@ public class TestFeedValidity {
     public static void testZipGzipAndPlain() throws Exception {
         String a = doc("<UicOperatingPeriod><ToDate>2026-11-10</ToDate></UicOperatingPeriod>");
         String b = doc("<OperatingDay><CalendarDate>2026-12-01</CalendarDate></OperatingDay>");
-        Path dir = Files.createTempDirectory("feedvalidity");
+        Path dir = Files.createTempDirectory("feedfreshness");
         try {
             Path zip = dir.resolve("feed.zip");
             try (OutputStream out = Files.newOutputStream(zip); ZipOutputStream z = new ZipOutputStream(out)) {
@@ -92,7 +92,7 @@ public class TestFeedValidity {
                 z.putNextEntry(new ZipEntry("b.xml"));
                 z.write(b.getBytes(StandardCharsets.UTF_8));
             }
-            Check.equals(LocalDate.of(2026, 12, 1), FeedValidity.scan(zip).lastServiceDay(),
+            Check.equals(LocalDate.of(2026, 12, 1), FeedFreshness.scan(zip).lastServiceDay(),
                     "every .xml entry of a zip is read, other entries are not");
 
             Path gz = dir.resolve("feed.xml.gz");
@@ -101,11 +101,11 @@ public class TestFeedValidity {
                 g.write(a.getBytes(StandardCharsets.UTF_8));
             }
             Files.write(gz, buf.toByteArray());
-            Check.equals(LocalDate.of(2026, 11, 10), FeedValidity.scan(gz).lastServiceDay(), "gzip");
+            Check.equals(LocalDate.of(2026, 11, 10), FeedFreshness.scan(gz).lastServiceDay(), "gzip");
 
             Path xml = dir.resolve("feed.xml");
             Files.writeString(xml, b);
-            Check.equals(LocalDate.of(2026, 12, 1), FeedValidity.scan(xml).lastServiceDay(), "plain xml");
+            Check.equals(LocalDate.of(2026, 12, 1), FeedFreshness.scan(xml).lastServiceDay(), "plain xml");
         } finally {
             try (var s = Files.walk(dir)) {
                 s.sorted(java.util.Comparator.reverseOrder()).forEach(p -> p.toFile().delete());

@@ -30,7 +30,7 @@ make serve               # OTP on :8080
 make download-all        # refresh everything external: the toolkit jar and every source
 make download-feeds      # refresh the sources (a plain `make all` never re-downloads)
 make verify-inputs       # integrity-check input/ ; repair-inputs re-fetches what fails
-make verify-validity     # last service day of every feed in input/ (MIN_DAYS=14 fails on shorter)
+make check-freshness     # last service day of every feed in input/ (MIN_DAYS=14 fails on shorter)
 make clean               # drop the stores and graphs, keep input/
 make clean-feeds         # drop the downloaded source feeds (the AT re-fetch needs the DBP login)
 make clean-osm           # drop the OSM + elevation downloads (~34 GB to re-fetch)

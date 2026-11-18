@@ -33,7 +33,7 @@ public class AllTests {
         TestDedupDefinitionDays.class,
         TestDropForeignJourneys.class,
         TestEpipSplitExport.class,
-        TestFeedValidity.class,
+        TestFeedFreshness.class,
         TestFeedsToConsolidated.class,
         TestFlattenWrappedNames.class,
         TestItaloAuthorityCodespace.class,

@@ -15,7 +15,7 @@ package tools;
 //   - any element with FromDate + ValidDayBits (the Swiss export's AvailabilityConditions):
 //     FromDate plus the position of the last 1 bit
 //
-// Usage: FeedValidity [--today YYYY-MM-DD] [--min-days N] <file>...
+// Usage: FeedFreshness [--today YYYY-MM-DD] [--min-days N] <file>...
 //   Files may be .xml, .xml.gz / .gz or .zip (every .xml entry is read). Anything else is skipped.
 //   With N > 0, exit 1 when a feed reaches fewer than N days ahead (an ended one included).
 //   N = 0, the default, only reports and exits 0. Exit 2 on a usage or read error.
@@ -40,7 +40,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class FeedValidity {
+public class FeedFreshness {
 
     /// The last service day found in one file, or null when it holds no service calendar.
     public record Result(Path file, LocalDate lastServiceDay) {}
@@ -58,7 +58,7 @@ public class FeedValidity {
                 }
             }
         } catch (RuntimeException e) {
-            System.err.println("usage: FeedValidity [--today YYYY-MM-DD] [--min-days N] <file>...");
+            System.err.println("usage: FeedFreshness [--today YYYY-MM-DD] [--min-days N] <file>...");
             System.exit(2);
         }
 

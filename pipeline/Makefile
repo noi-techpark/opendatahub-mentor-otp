@@ -810,8 +810,8 @@ verify-inputs: ## Integrity-check every file in input/ (reports; changes nothing
 # every source in input/. It reads only and needs no store; MIN_DAYS=<n> makes it exit 1 when a
 # feed ends within n days, for a script that wants to stop before building on an expired feed.
 MIN_DAYS ?= 0
-verify-validity: ## Print the last service day of every feed in input/ (MIN_DAYS=<n> fails on fewer days left)
-	$(JAVA) $(SCRIPTS)/tools/FeedValidity.java --min-days $(MIN_DAYS) \
+check-freshness: ## Print the last service day of every feed in input/ (MIN_DAYS=<n> fails on fewer days left)
+	$(JAVA) $(SCRIPTS)/tools/FeedFreshness.java --min-days $(MIN_DAYS) \
 		$(sort $(wildcard $(INPUT_DIR)/*.zip $(INPUT_DIR)/*.gz $(INPUT_DIR)/*.xml))
 
 # Two recipe lines for the reason given above download-swiss: the scan-and-delete half must not
