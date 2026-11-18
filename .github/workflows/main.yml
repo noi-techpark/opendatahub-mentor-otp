@@ -20,7 +20,7 @@ env:
   DOCKER_IMAGE_CARSHARING: ghcr.io/${{ github.repository }}/odh-mentor-otp-carsharing
   DOCKER_IMAGE_ECHARGING: ghcr.io/${{ github.repository }}/odh-mentor-otp-echarging
   DOCKER_IMAGE_AMARILLO: ghcr.io/${{ github.repository }}/odh-mentor-otp-amarillo
-  DOCKER_IMAGE_OJP_PROXY: ghcr.io/leonardehrenfried/ojp-proxy:2026-10-13T15-15-21Z
+  DOCKER_IMAGE_OJP_PROXY: ghcr.io/leonardehrenfried/ojp-proxy:2026-11-18T13-00-08Z
 
 jobs:
   deploy-test:
@@ -130,6 +130,7 @@ jobs:
 
           X_CARSHARING_BASEURL: "https://carsharing.otp.opendatahub.com"
           X_PELIAS_URL: "https://geocoder.otp.opendatahub.com"
+          X_OTP_OJP_URL: "https://otp.opendatahub.testingmachine.eu/otp/ojp/v2/"
 
           X_ADMIN_TOKEN: ${{ secrets.AMARILLO_ADMIN_TOKEN }}
           # The Austrian Verbund feeds; data.mobilitaetsverbuende.at authenticates every download.

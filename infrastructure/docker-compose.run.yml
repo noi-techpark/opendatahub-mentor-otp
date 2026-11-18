@@ -86,6 +86,7 @@ services:
     restart: unless-stopped
     environment:
       - PELIAS_URL=${PELIAS_URL}
+      - OTP_OJP_URL=${OTP_OJP_URL}
     ports:
       - ${DOCKER_OJP_PROXY_PORT}:8080
 
