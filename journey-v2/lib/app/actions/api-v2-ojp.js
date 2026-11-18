@@ -91,11 +91,47 @@ function getOtpServiceDay(operatingDayRef, timeZone) {
 }
 
 /**
+ * One StopEventRequest: up to `numberOfResults` departures of a stop in the 24
+ * hours from `start`, only of the line `lineRef` when it is given.
+ */
+async function fetchOjpStopEventsPage(
+  sdk,
+  stopRef,
+  start,
+  numberOfResults,
+  lineRef
+) {
+  const request = sdk.requests.StopEventRequest.initWithPlaceRefAndDate(
+    stopRef,
+    start
+  )
+  // timeWindow and lineFilter are not part of the SDK params type, but the SDK
+  // serializes the keys in object order, which here follows the XSD sequence.
+  // The OTP LineFilter works with a single line only: with two or more it
+  // returns nothing (Exclude=false) or excludes nothing (Exclude=true).
+  // Line comes before Exclude in the XSD, hence the unsorted keys.
+  request.payload.params = {
+    ...(lineRef && {
+      lineFilter: { line: [{ lineRef }], exclude: false }
+    }),
+    includeAllRestrictedLines: true,
+    numberOfResults,
+    timeWindow: 'PT24H',
+    stopEventType: 'departure',
+    includePreviousCalls: false,
+    includeOnwardCalls: false,
+    useRealtimeData: 'explanatory'
+  }
+  const response = await request.fetchResponse(sdk)
+  if (!response.ok) throw response.error
+  return response.value.stopEventResult ?? []
+}
+
+/**
  * Reads all the departures of a stop in the 24 hours from `start` (for the
- * schedule viewer a service day, 03:30 to 03:30; for the nearby view from now,
- * the windows the vendor GraphQL queries cover) from the OJP StopEventRequest,
- * one page at a time: each page starts from the last departure of the
- * previous one, and the repeated departures are dropped.
+ * schedule viewer a service day, 03:30 to 03:30) from the OJP
+ * StopEventRequest, one page at a time: each page starts from the last
+ * departure of the previous one, and the repeated departures are dropped.
  */
 async function fetchOjpStopEvents(sdk, stopRef, start) {
   const serviceEnd = start.getTime() + 24 * 3600 * 1000
@@ -104,25 +140,12 @@ async function fetchOjpStopEvents(sdk, stopRef, start) {
   let pageStart = start
 
   for (let page = 0; page < OJP_STOP_EVENTS_MAX_PAGES; page++) {
-    const request = sdk.requests.StopEventRequest.initWithPlaceRefAndDate(
+    const results = await fetchOjpStopEventsPage(
+      sdk,
       stopRef,
-      pageStart
+      pageStart,
+      OJP_STOP_EVENTS_PER_PAGE
     )
-    // timeWindow is not part of the SDK params type, but the SDK serializes
-    // the keys in object order, which here follows the XSD sequence.
-    request.payload.params = {
-      includeAllRestrictedLines: true,
-      numberOfResults: OJP_STOP_EVENTS_PER_PAGE,
-      timeWindow: 'PT24H',
-      stopEventType: 'departure',
-      includePreviousCalls: false,
-      includeOnwardCalls: false,
-      useRealtimeData: 'explanatory'
-    }
-    const response = await request.fetchResponse(sdk)
-    if (!response.ok) throw response.error
-
-    const results = response.value.stopEventResult ?? []
     let added = 0
     results.forEach(({ stopEvent }) => {
       const { operatingDayRef, journeyRef } = stopEvent.service
@@ -171,7 +194,9 @@ function toStoptimesForPatterns(stopEvents, stopData, timeZone) {
     const route = stopData.routes.find((r) => r.id === routeId)
     if (!routeIsValid(route, routeId)) return
 
-    const headsign = service.destinationText?.text
+    // The XML parser turns numeric names into numbers (a train to "0" exists),
+    // and the vendor calls desc.match on any headsign that has no length.
+    const headsign = service.destinationText?.text?.toString()
     const id = `${routeId}:${headsign}`
     if (!patterns[id]) {
       patterns[id] = {
@@ -320,7 +345,11 @@ function toNearbyStoptimesForPatterns(stopEvents, stop, timeZone) {
     const key = `${service.lineRef}|${service.destinationStopPointRef}`
     const realtime = !!thisCall.callAtStop.serviceDeparture.estimatedTime
     if (!labels[key] || (labels[key].realtime && !realtime)) {
-      labels[key] = { realtime, text: service.destinationText?.text }
+      // toString: see toStoptimesForPatterns, numeric names are parsed as numbers.
+      labels[key] = {
+        realtime,
+        text: service.destinationText?.text?.toString()
+      }
     }
   })
 
@@ -431,9 +460,21 @@ const NEARBY_STOPTIMES_FOR_PATTERNS = `stoptimesForPatterns {
  * Nearby view with the departures from the OJP StopEventRequest (#343). The
  * places (stops, rentals, parkings) still come from the GraphQL `nearest`
  * query, which now asks for the routes of each stop instead of its departures.
- * The view refreshes every 15 s, and every refresh reads the 24 hours from now
- * for each stop (one OJP request per 99 departures), like the GraphQL query.
+ *
+ * The view shows the next 3 departures of each line and refreshes every 15 s,
+ * so reading the whole 24 hours of every stop (up to 9 pages of 99 at a busy
+ * stop) would be far too much XML. Each refresh reads one page per stop
+ * instead, and the lines with fewer than 3 departures in it (the rare ones,
+ * crowded out by the frequent ones) get theirs from one request each with a
+ * LineFilter, still within 24 hours, like the GraphQL query.
+ *
+ * Agreed trade-off (measured against reading the whole day: about 70% less
+ * XML, but more requests): a frequent line can miss its departures towards a
+ * second destination when none falls in the first page, so 9-17% of the rows,
+ * mostly ones departing only tomorrow, are missing or show fewer than 3 times.
  */
+const NEARBY_DEPARTURES_PER_LINE = 3
+
 export const fetchNearby = (position, radius) =>
   function (dispatch, getState) {
     const { lat, lon } = position
@@ -455,11 +496,59 @@ export const fetchNearby = (position, radius) =>
             stops
               .filter((stop) => stop.gtfsId.startsWith(OJP_FEED_PREFIX))
               .map(async (stop) => {
-                const stopEvents = await fetchOjpStopEvents(
-                  sdk,
-                  stop.gtfsId.slice(OJP_FEED_PREFIX.length),
-                  now
-                )
+                const stopRef = stop.gtfsId.slice(OJP_FEED_PREFIX.length)
+                const stopEvents = (
+                  await fetchOjpStopEventsPage(
+                    sdk,
+                    stopRef,
+                    now,
+                    OJP_STOP_EVENTS_PER_PAGE
+                  )
+                ).map(({ stopEvent }) => stopEvent)
+
+                // A page that is not full already holds all the 24 hours.
+                if (stopEvents.length === OJP_STOP_EVENTS_PER_PAGE) {
+                  const departuresPerLine = {}
+                  const seen = new Set()
+                  stopEvents.forEach(({ service }) => {
+                    departuresPerLine[service.lineRef] =
+                      (departuresPerLine[service.lineRef] ?? 0) + 1
+                    seen.add(`${service.operatingDayRef}|${service.journeyRef}`)
+                  })
+                  // One request per line: the OTP LineFilter fails with more.
+                  // A line counted here can still miss departures towards a
+                  // second destination (OJP has no direction filter yet).
+                  const lineResults = await Promise.all(
+                    stop.routes
+                      .filter((route) =>
+                        route.gtfsId.startsWith(OJP_FEED_PREFIX)
+                      )
+                      .map((route) =>
+                        route.gtfsId.slice(OJP_FEED_PREFIX.length)
+                      )
+                      .filter(
+                        (lineRef) =>
+                          (departuresPerLine[lineRef] ?? 0) <
+                          NEARBY_DEPARTURES_PER_LINE
+                      )
+                      .map((lineRef) =>
+                        fetchOjpStopEventsPage(
+                          sdk,
+                          stopRef,
+                          now,
+                          NEARBY_DEPARTURES_PER_LINE,
+                          lineRef
+                        )
+                      )
+                  )
+                  lineResults.flat().forEach(({ stopEvent }) => {
+                    const { journeyRef, operatingDayRef } = stopEvent.service
+                    if (seen.has(`${operatingDayRef}|${journeyRef}`)) return
+                    seen.add(`${operatingDayRef}|${journeyRef}`)
+                    stopEvents.push(stopEvent)
+                  })
+                }
+
                 stop.stoptimesForPatterns = toNearbyStoptimesForPatterns(
                   stopEvents,
                   stop,
@@ -809,7 +898,8 @@ function toPlanItinerary(trip, places, from, to) {
           stop: stopOf(legBoard.stopPointRef),
           vertexType: 'TRANSIT'
         },
-        headsign: service.destinationText?.text,
+        // The XML parser turns numeric destinations ("0") into numbers.
+        headsign: service.destinationText?.text?.toString(),
         interlineWithPreviousLeg: false,
         intermediateStops: legIntermediate.map((call) => ({
           ...places[call.stopPointRef],
@@ -838,7 +928,7 @@ function toPlanItinerary(trip, places, from, to) {
           // the destination only when there is one: with the headsign in its
           // place the header shows the destination alone, as GraphQL does when
           // the long name is similar to it.
-          longName: service.destinationText?.text,
+          longName: service.destinationText?.text?.toString(),
           // The XML parser turns numeric line names (201) into numbers.
           shortName: String(
             service.publishedServiceName?.text ?? service.publicCode
