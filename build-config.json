@@ -11,7 +11,12 @@
       "maxDuration": "20m"
     },
     "wheelchair": {
-      "maxDuration": "20m"
+      "maxDuration": "20m",
+      "stop" : {
+        "onlyConsiderAccessible" : false,
+        "unknownCost" : 900,
+        "inaccessibleCost" : 7200
+      }
     }
   },
   "transitFeeds": [
