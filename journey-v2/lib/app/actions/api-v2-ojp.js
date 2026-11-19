@@ -62,9 +62,10 @@ import { RoutingQueryCallResult } from '@otp-react-redux/lib/actions/api-constan
 
 export * from '@otp-react-redux/lib/actions/apiV2'
 
-// OTP's OJP API only knows the "netex" feed: it prefixes every incoming id with
-// "netex:" (router-config.json, ojpApi.hardcodedInputFeedId) and returns ids
-// without it. Stops of the other feeds (skyalps, amarillo) stay on GraphQL.
+// OTP's OJP API takes and returns the same feed-prefixed ids as GraphQL
+// (router-config.json, ojpApi.hideFeedId false), so ids pass through as they
+// are. Only the "netex" feed goes to OJP for now: stops of the other feeds
+// (skyalps, amarillo) stay on GraphQL.
 const OJP_FEED_PREFIX = 'netex:'
 
 // The server rejects NumberOfResults >= 100, and without a TimeWindow it only
@@ -180,7 +181,7 @@ async function fetchOjpStopEvents(sdk, stopRef, start) {
  * destination: the schedule viewer groups by route id and headsign anyway.
  */
 function toStoptimesForPatterns(stopEvents, stopData, timeZone) {
-  const stopRef = stopData.gtfsId.slice(OJP_FEED_PREFIX.length)
+  const stopRef = stopData.gtfsId
   const patterns = {}
 
   stopEvents.forEach(({ service, thisCall }) => {
@@ -190,7 +191,7 @@ function toStoptimesForPatterns(stopEvents, stopData, timeZone) {
     if (callAtStop.noBoardingAtStop) return
     if (service.destinationStopPointRef === stopRef) return
 
-    const routeId = `${OJP_FEED_PREFIX}${service.lineRef}`
+    const routeId = service.lineRef
     const route = stopData.routes.find((r) => r.id === routeId)
     if (!routeIsValid(route, routeId)) return
 
@@ -219,7 +220,7 @@ function toStoptimesForPatterns(stopEvents, stopData, timeZone) {
       serviceDay,
       trip: {
         blockId: null,
-        id: `${OJP_FEED_PREFIX}${service.journeyRef}`,
+        id: service.journeyRef,
         pattern: { id },
         route: { gtfsId: routeId }
       }
@@ -259,7 +260,7 @@ export const findStopTimesForStop = (params) =>
         try {
           const stopEvents = await fetchOjpStopEvents(
             createOjpSdk(config),
-            stopId.slice(OJP_FEED_PREFIX.length),
+            stopId,
             getServiceStart(date, timeZone)
           )
           dispatch(
@@ -357,7 +358,7 @@ function toNearbyStoptimesForPatterns(stopEvents, stop, timeZone) {
 
   stopEvents.forEach(({ service, thisCall }) => {
     const { callAtStop } = thisCall
-    const routeId = `${OJP_FEED_PREFIX}${service.lineRef}`
+    const routeId = service.lineRef
     const route = stop.routes.find((r) => r.gtfsId === routeId)
     if (!route) return
 
@@ -496,7 +497,7 @@ export const fetchNearby = (position, radius) =>
             stops
               .filter((stop) => stop.gtfsId.startsWith(OJP_FEED_PREFIX))
               .map(async (stop) => {
-                const stopRef = stop.gtfsId.slice(OJP_FEED_PREFIX.length)
+                const stopRef = stop.gtfsId
                 const stopEvents = (
                   await fetchOjpStopEventsPage(
                     sdk,
@@ -523,9 +524,7 @@ export const fetchNearby = (position, radius) =>
                       .filter((route) =>
                         route.gtfsId.startsWith(OJP_FEED_PREFIX)
                       )
-                      .map((route) =>
-                        route.gtfsId.slice(OJP_FEED_PREFIX.length)
-                      )
+                      .map((route) => route.gtfsId)
                       .filter(
                         (lineRef) =>
                           (departuresPerLine[lineRef] ?? 0) <
@@ -812,7 +811,7 @@ function isOjpCombination(combo) {
 // GraphQL; any other place (or a stop outside the netex feed) by coordinates.
 function toOjpPlaceRef(place) {
   return place.type === 'stop' && place.id?.startsWith(OJP_FEED_PREFIX)
-    ? place.id.slice(OJP_FEED_PREFIX.length)
+    ? place.id
     : `${place.lat},${place.lon}`
 }
 
@@ -846,7 +845,7 @@ function toPlanItinerary(trip, places, from, to) {
         }
   const stopOf = (stopPointRef) => {
     const { lat, lon } = places[stopPointRef]
-    const gtfsId = `${OJP_FEED_PREFIX}${stopPointRef}`
+    const gtfsId = stopPointRef
     return { alerts: [], code: null, gtfsId, id: gtfsId, lat, lon }
   }
 
@@ -865,8 +864,8 @@ function toPlanItinerary(trip, places, from, to) {
       const endTime = new Date(
         arrival.estimatedTime ?? arrival.timetabledTime
       ).getTime()
-      const routeId = `${OJP_FEED_PREFIX}${service.lineRef}`
-      const tripId = `${OJP_FEED_PREFIX}${service.journeyRef}`
+      const routeId = service.lineRef
+      const tripId = service.journeyRef
       legs.push({
         accessibilityScore: null,
         agency: null,
@@ -905,7 +904,7 @@ function toPlanItinerary(trip, places, from, to) {
           ...places[call.stopPointRef],
           locationType: 'STOP',
           stopCode: null,
-          stopId: `${OJP_FEED_PREFIX}${call.stopPointRef}`
+          stopId: call.stopPointRef
         })),
         legGeometry: {
           length: points.length,
@@ -947,11 +946,11 @@ function toPlanItinerary(trip, places, from, to) {
         transitLeg: true,
         trip: {
           arrivalStoptime: {
-            stop: { gtfsId: `${OJP_FEED_PREFIX}${legAlight.stopPointRef}` },
+            stop: { gtfsId: legAlight.stopPointRef },
             stopPosition: legAlight.order
           },
           departureStoptime: {
-            stop: { gtfsId: `${OJP_FEED_PREFIX}${legBoard.stopPointRef}` },
+            stop: { gtfsId: legBoard.stopPointRef },
             stopPosition: legBoard.order
           },
           gtfsId: tripId,
