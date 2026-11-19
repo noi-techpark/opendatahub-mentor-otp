@@ -64,9 +64,7 @@ export * from '@otp-react-redux/lib/actions/apiV2'
 
 // OTP's OJP API takes and returns the same feed-prefixed ids as GraphQL
 // (router-config.json, ojpApi.hideFeedId false), so ids pass through as they
-// are. Only the "netex" feed goes to OJP for now: stops of the other feeds
-// (skyalps, amarillo) stay on GraphQL.
-const OJP_FEED_PREFIX = 'netex:'
+// are and the stops of every feed (netex, skyalps, amarillo) go to OJP.
 
 // The server rejects NumberOfResults >= 100, and without a TimeWindow it only
 // looks a couple of hours ahead, so a whole service day is read in pages.
@@ -236,9 +234,6 @@ function toStoptimesForPatterns(stopEvents, stopData, timeZone) {
 export const findStopTimesForStop = (params) =>
   function (dispatch, getState) {
     const { date, stopId } = params
-    if (!stopId?.startsWith(OJP_FEED_PREFIX)) {
-      return dispatch(vendorActions.findStopTimesForStop(params))
-    }
 
     dispatch(fetchingStopTimesForStop(params))
     const { config } = getState().otp
@@ -423,40 +418,6 @@ const mergeSameStops = (nearbyResponse) => {
   }, [])
 }
 
-// The vendor stoptimesForPatterns selection of the Nearby query, still used for
-// the stops OJP cannot resolve (feeds other than netex).
-const NEARBY_STOPTIMES_FOR_PATTERNS = `stoptimesForPatterns {
-  pattern {
-    headsign
-    desc: name
-    route {
-      agency {
-        name
-        gtfsId
-      }
-      shortName
-      type
-      mode
-      longName
-      color
-      textColor
-    }
-  }
-  stoptimes {
-    serviceDay
-    departureDelay
-    realtimeState
-    realtimeDeparture
-    scheduledDeparture
-    headsign
-    trip {
-      route {
-        shortName
-      }
-    }
-  }
-}`
-
 /**
  * Nearby view with the departures from the OJP StopEventRequest (#343). The
  * places (stops, rentals, parkings) still come from the GraphQL `nearest`
@@ -494,96 +455,62 @@ export const fetchNearby = (position, radius) =>
             .filter((place) => place.__typename === 'Stop')
 
           await Promise.all(
-            stops
-              .filter((stop) => stop.gtfsId.startsWith(OJP_FEED_PREFIX))
-              .map(async (stop) => {
-                const stopRef = stop.gtfsId
-                const stopEvents = (
-                  await fetchOjpStopEventsPage(
-                    sdk,
-                    stopRef,
-                    now,
-                    OJP_STOP_EVENTS_PER_PAGE
-                  )
-                ).map(({ stopEvent }) => stopEvent)
-
-                // A page that is not full already holds all the 24 hours.
-                if (stopEvents.length === OJP_STOP_EVENTS_PER_PAGE) {
-                  const departuresPerLine = {}
-                  const seen = new Set()
-                  stopEvents.forEach(({ service }) => {
-                    departuresPerLine[service.lineRef] =
-                      (departuresPerLine[service.lineRef] ?? 0) + 1
-                    seen.add(`${service.operatingDayRef}|${service.journeyRef}`)
-                  })
-                  // One request per line: the OTP LineFilter fails with more.
-                  // A line counted here can still miss departures towards a
-                  // second destination (OJP has no direction filter yet).
-                  const lineResults = await Promise.all(
-                    stop.routes
-                      .filter((route) =>
-                        route.gtfsId.startsWith(OJP_FEED_PREFIX)
-                      )
-                      .map((route) => route.gtfsId)
-                      .filter(
-                        (lineRef) =>
-                          (departuresPerLine[lineRef] ?? 0) <
-                          NEARBY_DEPARTURES_PER_LINE
-                      )
-                      .map((lineRef) =>
-                        fetchOjpStopEventsPage(
-                          sdk,
-                          stopRef,
-                          now,
-                          NEARBY_DEPARTURES_PER_LINE,
-                          lineRef
-                        )
-                      )
-                  )
-                  lineResults.flat().forEach(({ stopEvent }) => {
-                    const { journeyRef, operatingDayRef } = stopEvent.service
-                    if (seen.has(`${operatingDayRef}|${journeyRef}`)) return
-                    seen.add(`${operatingDayRef}|${journeyRef}`)
-                    stopEvents.push(stopEvent)
-                  })
-                }
-
-                stop.stoptimesForPatterns = toNearbyStoptimesForPatterns(
-                  stopEvents,
-                  stop,
-                  timeZone
+            stops.map(async (stop) => {
+              const stopRef = stop.gtfsId
+              const stopEvents = (
+                await fetchOjpStopEventsPage(
+                  sdk,
+                  stopRef,
+                  now,
+                  OJP_STOP_EVENTS_PER_PAGE
                 )
-              })
-          )
+              ).map(({ stopEvent }) => stopEvent)
 
-          const otherFeedStops = stops.filter(
-            (stop) => !stop.gtfsId.startsWith(OJP_FEED_PREFIX)
-          )
-          if (otherFeedStops.length > 0) {
-            const { api } = config
-            const response = await fetch(
-              `${assembleBasePath(config)}${api?.basePath ?? '/otp'}/gtfs/v1`,
-              {
-                body: JSON.stringify({
-                  query: `query NearbyOtherFeeds($ids: [String]) {
-                    stops(ids: $ids) {
-                      gtfsId
-                      ${NEARBY_STOPTIMES_FOR_PATTERNS}
-                    }
-                  }`,
-                  variables: { ids: otherFeedStops.map((stop) => stop.gtfsId) }
-                }),
-                headers: { 'Content-Type': 'application/json' },
-                method: 'POST'
+              // A page that is not full already holds all the 24 hours.
+              if (stopEvents.length === OJP_STOP_EVENTS_PER_PAGE) {
+                const departuresPerLine = {}
+                const seen = new Set()
+                stopEvents.forEach(({ service }) => {
+                  departuresPerLine[service.lineRef] =
+                    (departuresPerLine[service.lineRef] ?? 0) + 1
+                  seen.add(`${service.operatingDayRef}|${service.journeyRef}`)
+                })
+                // One request per line: the OTP LineFilter fails with more.
+                // A line counted here can still miss departures towards a
+                // second destination (OJP has no direction filter yet).
+                const lineResults = await Promise.all(
+                  stop.routes
+                    .map((route) => route.gtfsId)
+                    .filter(
+                      (lineRef) =>
+                        (departuresPerLine[lineRef] ?? 0) <
+                        NEARBY_DEPARTURES_PER_LINE
+                    )
+                    .map((lineRef) =>
+                      fetchOjpStopEventsPage(
+                        sdk,
+                        stopRef,
+                        now,
+                        NEARBY_DEPARTURES_PER_LINE,
+                        lineRef
+                      )
+                    )
+                )
+                lineResults.flat().forEach(({ stopEvent }) => {
+                  const { journeyRef, operatingDayRef } = stopEvent.service
+                  if (seen.has(`${operatingDayRef}|${journeyRef}`)) return
+                  seen.add(`${operatingDayRef}|${journeyRef}`)
+                  stopEvents.push(stopEvent)
+                })
               }
-            )
-            const payload = await response.json()
-            if (payload.errors) throw payload.errors
-            payload.data.stops.forEach(({ gtfsId, stoptimesForPatterns }) => {
-              const stop = otherFeedStops.find((s) => s.gtfsId === gtfsId)
-              stop.stoptimesForPatterns = stoptimesForPatterns
+
+              stop.stoptimesForPatterns = toNearbyStoptimesForPatterns(
+                stopEvents,
+                stop,
+                timeZone
+              )
             })
-          }
+          )
 
           dispatch(
             fetchNearbyResponse({
@@ -808,9 +735,9 @@ function isOjpCombination(combo) {
 }
 
 // A stop chosen in the search is sent by id, like the core-utils patch does for
-// GraphQL; any other place (or a stop outside the netex feed) by coordinates.
+// GraphQL; any other place by coordinates.
 function toOjpPlaceRef(place) {
-  return place.type === 'stop' && place.id?.startsWith(OJP_FEED_PREFIX)
+  return place.type === 'stop' && place.id
     ? place.id
     : `${place.lat},${place.lon}`
 }
