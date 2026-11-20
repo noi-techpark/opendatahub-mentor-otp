@@ -1,5 +1,5 @@
 # run-build.sh rebuilds the graphs when the label changes.
-ARG BASE_IMAGE=lehrenfried/opentripplanner:ojp-improvements-v2
+ARG BASE_IMAGE=lehrenfried/opentripplanner:ojp-improvements-v3
 FROM ${BASE_IMAGE}
 ARG BASE_IMAGE
 LABEL org.opentripplanner.base=${BASE_IMAGE}
