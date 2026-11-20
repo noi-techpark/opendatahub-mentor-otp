@@ -35,7 +35,6 @@ import {
   findStopTimesForStopError,
   findStopTimesForStopResponse,
   rememberSearch,
-  routingError,
   routingRequest,
   routingResponse,
   updateOtpUrlParams
@@ -710,12 +709,14 @@ const OTP_TRANSIT_MODES_TO_OJP = {
 }
 
 /**
- * Only the plain public transport search (the "transit" mode button: transit
- * modes with walking) goes to the OJP TripRequest (#342). The other
- * combinations (bicycle, rentals, car, park and ride), transit modes without an
- * OJP equivalent and the options the OTP OJP API ignores (wheelchair, banned or
- * unpreferred routes and trips, checked on the test server) stay on GraphQL,
- * so their results do not change.
+ * The public transport searches go to the OJP TripRequest (#342): transit
+ * modes with walking, and transit modes with bicycle (GraphQL rejects the
+ * latter: the server has no BICYCLE transfer profile). The other combinations
+ * (walk or bicycle alone, rentals, car, park and ride), transit modes without
+ * an OJP equivalent and the options the OTP OJP API ignores (wheelchair,
+ * banned or unpreferred routes and trips, checked on the test server) stay on
+ * GraphQL: walk and bicycle alone need turn-by-turn steps, and OTP returns no
+ * PathGuidance.
  */
 function isOjpCombination(combo) {
   const { banned, modes, modeSettings, unpreferred } = combo
@@ -724,8 +725,11 @@ function isOjpCombination(combo) {
     modes.every(
       ({ mode, qualifier }) =>
         !qualifier &&
-        (mode === 'TRANSIT' || !!OTP_TRANSIT_MODES_TO_OJP[mode])
+        (mode === 'TRANSIT' ||
+          mode === 'BICYCLE' ||
+          !!OTP_TRANSIT_MODES_TO_OJP[mode])
     ) &&
+    modes.some(({ mode }) => mode !== 'BICYCLE') &&
     !wheelchair &&
     !banned?.routes &&
     !banned?.trips &&
@@ -753,9 +757,10 @@ function parseOjpDuration(duration) {
  * Converts an OJP Trip into an itinerary of the vendor GraphQL Plan query, so
  * that the rest of routingQuery and the UI handle it as before.
  *
- * Agreed approximations while OTP returns no LegTrack/LegProjection (#342):
- * - transit legs are drawn as straight lines between their stops, and walking
- *   legs as a straight line between start and end, without turn-by-turn steps;
+ * Agreed approximations (#342):
+ * - legs are drawn along their LegTrack; a leg without one falls back to
+ *   straight lines between its stops (or its start and end);
+ * - walking legs have no turn-by-turn steps: OTP returns no PathGuidance;
  * - OJP has no route long name (the headsign takes its place), color, agency,
  *   fares or alerts, so they are empty.
  */
@@ -775,6 +780,19 @@ function toPlanItinerary(trip, places, from, to) {
     const gtfsId = stopPointRef
     return { alerts: [], code: null, gtfsId, id: gtfsId, lat, lon }
   }
+  // The shape of a leg from its LegTrack (requested with includeLegProjection),
+  // or `fallback` when OTP sends none.
+  const trackOf = (legBody, fallback) => {
+    const positions = (legBody.legTrack?.trackSection ?? []).flatMap(
+      (section) => section.linkProjection?.position ?? []
+    )
+    return positions.length > 1
+      ? positions.map(({ latitude, longitude }) => ({
+          lat: latitude,
+          lon: longitude
+        }))
+      : fallback
+  }
 
   const legs = []
   trip.leg.forEach((leg, legIndex) => {
@@ -782,7 +800,10 @@ function toPlanItinerary(trip, places, from, to) {
       const { legAlight, legBoard, legIntermediate = [], service } =
         leg.timedLeg
       const calls = [legBoard, ...legIntermediate, legAlight]
-      const points = calls.map((call) => places[call.stopPointRef])
+      const points = trackOf(
+        leg.timedLeg,
+        calls.map((call) => places[call.stopPointRef])
+      )
       const departure = legBoard.serviceDeparture
       const arrival = legAlight.serviceArrival
       const startTime = new Date(
@@ -802,7 +823,7 @@ function toPlanItinerary(trip, places, from, to) {
         departureDelay:
           (startTime - new Date(departure.timetabledTime).getTime()) / 1000,
         // The itinerary card picks its main leg by distance, so transit legs
-        // need one: measured along the stops, like the drawn line.
+        // need one: OJP gives none, so it is measured along the drawn line.
         distance: points.slice(1).reduce(
           (sum, point, i) =>
             sum +
@@ -899,6 +920,7 @@ function toPlanItinerary(trip, places, from, to) {
       ? new Date(walk.timeWindowStart).getTime()
       : legs[legs.length - 1]?.endTime
     const duration = parseOjpDuration(walk.duration)
+    const walkPoints = trackOf(walk, [walkFrom, walkTo])
     legs.push({
       accessibilityScore: null,
       agency: null,
@@ -923,13 +945,11 @@ function toPlanItinerary(trip, places, from, to) {
       interlineWithPreviousLeg: false,
       intermediateStops: null,
       legGeometry: {
-        length: 2,
-        points: polyline.encode([
-          [walkFrom.lat, walkFrom.lon],
-          [walkTo.lat, walkTo.lon]
-        ])
+        length: walkPoints.length,
+        points: polyline.encode(walkPoints.map(({ lat, lon }) => [lat, lon]))
       },
-      mode: 'WALK',
+      // Cycling to and from the stops in the transit with bicycle search.
+      mode: walk.service?.personalMode === 'bicycle' ? 'BICYCLE' : 'WALK',
       realTime: false,
       realtimeState: null,
       rentedBike: false,
@@ -992,12 +1012,21 @@ function ojpPlanQueryAction(combo, responseAction, errorAction, options) {
         request.payload.origin.depArrTime = dateTime
       }
       request.payload.params.numberOfResults = numItineraries
+      // The leg shapes for the map (LegTrack). The SDK default params already
+      // hold this key in its XSD place, so only the value changes. OTP ignores
+      // IncludeTrackProjection, which is a TripInfoRequest parameter.
+      request.payload.params.includeLegProjection = true
       const ptModes = modes
-        .filter(({ mode }) => mode !== 'TRANSIT')
+        .filter(({ mode }) => OTP_TRANSIT_MODES_TO_OJP[mode])
         .map(({ mode }) => OTP_TRANSIT_MODES_TO_OJP[mode])
-      if (ptModes.length > 0) {
+      const withBicycle = modes.some(({ mode }) => mode === 'BICYCLE')
+      if (ptModes.length > 0 || withBicycle) {
         request.payload.params.modeAndModeOfOperationFilter = [
-          { exclude: false, personalMode: [], ptMode: ptModes }
+          {
+            exclude: false,
+            personalMode: withBicycle ? ['bicycle'] : [],
+            ptMode: ptModes
+          }
         ]
       }
       const response = await request.fetchResponse(sdk)
@@ -1018,9 +1047,15 @@ function ojpPlanQueryAction(combo, responseAction, errorAction, options) {
         {
           data: {
             plan: {
-              itineraries: (response.value.tripResult ?? []).map(({ trip }) =>
-                toPlanItinerary(trip, places, from, to)
-              ),
+              itineraries: (response.value.tripResult ?? [])
+                // With bicycle OJP also returns a trip by bicycle alone; the
+                // bicycle-only combination already shows it (from GraphQL,
+                // with turn-by-turn steps), so it would appear twice.
+                .filter(
+                  ({ trip }) =>
+                    !withBicycle || trip.leg.some((leg) => leg.timedLeg)
+                )
+                .map(({ trip }) => toPlanItinerary(trip, places, from, to)),
               routingErrors: []
             }
           }
@@ -1273,10 +1308,35 @@ export function routingQuery(searchId = null, updateSearchInReducer) {
         }
       }
 
-      if (isOjpCombination(combo)) {
+      // A failed request (HTTP or GraphQL error, e.g. the server has no
+      // BICYCLE transfer profile for transit with bicycle) is answered as an
+      // empty plan with the SYSTEM_ERROR code, which the UI shows as an error
+      // box. The vendor routingError carries no search id, so the reducer
+      // never counts the request as done and the loader keeps spinning; with
+      // one, its response entry (no plan) crashes the map overlay
+      // (itinerary-summary-overlay flatMaps plan.itineraries).
+      const planError = (err) => (dispatch, getState) => {
+        console.error(err)
         dispatch(
-          ojpPlanQueryAction(combo, responseAction, routingError, options)
+          responseAction(
+            options.rewritePayload(
+              {
+                data: {
+                  plan: {
+                    itineraries: [],
+                    routingErrors: [{ code: 'SYSTEM_ERROR' }]
+                  }
+                }
+              },
+              dispatch,
+              getState
+            )
+          )
         )
+      }
+
+      if (isOjpCombination(combo)) {
+        dispatch(ojpPlanQueryAction(combo, responseAction, planError, options))
       } else {
         const query = generateOtp2Query(combo)
         dispatch(
@@ -1284,7 +1344,7 @@ export function routingQuery(searchId = null, updateSearchInReducer) {
             query.query,
             query.variables,
             responseAction,
-            routingError,
+            planError,
             options
           )
         )
