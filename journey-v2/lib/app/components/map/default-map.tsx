@@ -60,6 +60,8 @@ import { IconWithText } from '../../../vendor/otp-react-redux/lib/components/uti
 
 const MapContainer = styled.div`
   height: 100%;
+  /* Anchors the .map-logo corner logo to the map, not to the page. */
+  position: relative;
   width: 100%;
 
   .map {
@@ -454,10 +456,19 @@ class DefaultMap extends Component {
           {/* If set, custom overlays are shown if no active itinerary is shown or pending. */}
           {typeof getCustomMapOverlays === 'function' &&
             getCustomMapOverlays(!itinerary && !pending)}
-          <NavigationControl
+          {/* Added before the zoom control: MapLibre stacks later bottom controls above earlier ones, so locate sits under +/- as in the Figma. */}
+          <GeolocateControl
             position={navigationControlPosition || 'bottom-right'}
           />
+          <NavigationControl
+            position={navigationControlPosition || 'bottom-right'}
+            showCompass={false}
+          />
         </BaseMap>
+        {/* Open Data Hub logo floating over the map's top left corner, as the
+            Figma "Header Top Left". Shown on every branding (impact too): the
+            Figma has no other version of it. Styled in index.scss. */}
+        <div aria-hidden className="map-logo" />
       </MapContainer>
     )
   }

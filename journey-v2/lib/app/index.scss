@@ -367,6 +367,103 @@ $location-filter-width: 280px;
 @import url(@otp-react-redux/lib/components/admin/call-taker.css);
 @import url(@otp-react-redux/lib/components/app/app.css);
 
+/* POI popups on the map (poi-popup.tsx), from the Figma tooltip in Mobile >
+   Tab trip: a white 208px card with 4px corners and 8px padding, no tip and
+   no close button. The Figma has no shadow; a light one is kept so the white
+   card stays readable over light map areas. The `.maplibregl-popup` prefix
+   wins over the 10px radius set on all popups in default-map.tsx. */
+.maplibregl-popup.poi-popup-container {
+  .maplibregl-popup-tip {
+    display: none;
+  }
+
+  .maplibregl-popup-content {
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 8px 8px 0;
+  }
+}
+
+.poi-popup {
+  color: #000000;
+  font-family: 'Source Sans 3', 'Source Sans Pro', $font-family-sans-serif;
+  font-size: 12px;
+  line-height: 15px;
+  text-align: left;
+  width: 192px;
+
+  &__header {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__main {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 18px;
+    margin-top: 8px;
+  }
+
+  /* Secondary lines inside the bold block (provider, region...). */
+  &__info {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    margin-top: 4px;
+  }
+
+  /* Links are underlined in the Figma ("View more", start / arrive). */
+  &__link {
+    background: none;
+    border: 0;
+    color: #50742f;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 24px;
+    padding: 0;
+    text-decoration: underline;
+  }
+
+  /* Start / arrive actions: the shared from/to picker, restyled to the
+     Figma's green links with a 10px icon and no separator line. */
+  &__actions {
+    line-height: 24px;
+    margin-top: 8px;
+
+    > span > span {
+      display: flex;
+      gap: 22px;
+    }
+
+    > span > span > span {
+      align-items: center;
+      border-left: 0;
+      display: inline-flex;
+      gap: 4px;
+      padding-left: 0;
+    }
+
+    button {
+      color: #50742f;
+      font-family: inherit;
+      font-size: 12px;
+      padding: 0;
+      text-decoration: underline;
+    }
+
+    svg {
+      color: #50742f;
+      height: 10px;
+      width: 10px;
+    }
+  }
+}
+
 .otp-ui-mapOverlayPopup {
   font-size: $font-size-base;
   min-width: 250px;
@@ -557,6 +654,133 @@ input[type="text"]::-ms-clear {
   display: none;
 }
 
+/* Mobile burger from the Figma guidelines (Tab trip, 393px wide): a 44px
+   white button at the top right, 15px from the top and 16px from the right,
+   with three 2px black bars. Desktop keeps the burger in the header for now. */
+@media only screen and (max-width: 768px) {
+  .app-menu-icon {
+    background: #ffffff;
+    border: 1px solid #e3e4e7;
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: 44px;
+    left: auto;
+    padding: 13.5px 11px;
+    position: fixed;
+    right: 16px;
+    top: 15px;
+    width: 44px;
+  }
+
+  .app-menu-icon .menu-line {
+    border-bottom: 2px solid #000000;
+    border-radius: 1px;
+  }
+
+  .app-menu-icon[aria-expanded="true"] .menu-line.top {
+    top: 6.5px;
+  }
+
+  .app-menu-icon[aria-expanded="true"] .menu-line.bottom {
+    bottom: 6.5px;
+  }
+}
+
+/* Mobile welcome screen: the destination field ("Where do you want to go?")
+   sits at the bottom, like the bottom panel in the Figma Tab trip screen,
+   and the map fills the space above it so its controls stay reachable. The
+   `main` in the selector is what wins over the vendor's mobile.css. */
+@media only screen and (max-width: 768px) {
+  .otp.mobile main .welcome-location {
+    background: #ffffff;
+    bottom: 0;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+    height: 76px;
+    padding-top: 8px;
+    top: auto;
+    z-index: 10;
+  }
+
+  .otp.mobile main .welcome-map {
+    bottom: 76px;
+    top: 0;
+  }
+
+  /* Trip search screen, same layout as the welcome screen: the origin,
+     destination and mode settings panel sits at the bottom and the map fills
+     the space above it. The panel's content is taller than the vendor's fixed
+     216px and its height changes with the chosen modes, so the screen is a
+     column: the panel takes the height it needs, the map takes the rest. */
+  .otp.mobile main:has(> .batch-search-settings) {
+    display: flex;
+    flex-direction: column;
+    inset: 0;
+    position: fixed;
+  }
+
+  .otp.mobile main .batch-search-map {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    top: 0;
+  }
+
+  .otp.mobile main .batch-search-settings {
+    background: #ffffff;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+    height: auto;
+    order: 1;
+    position: relative;
+    top: auto;
+  }
+
+  /* Transparent header floating over the map, as in the Figma. The map now
+     starts at the top of the screen, and the header text turns dark because
+     the vendor's white text would disappear over a light map. */
+  .otp.mobile .navbar {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 5;
+  }
+
+  .otp.mobile .navbar .mobile-header-text,
+  .otp.mobile .navbar .mobile-header-action > button {
+    color: #000000;
+  }
+
+  /* No "Plan Your Trip" title over the map, as in the Figma. Only the welcome
+     and trip search screens use that title, so other screens (stop viewer,
+     trip viewer...) keep theirs. */
+  .otp.mobile:has(.welcome-map, .batch-search-map) .navbar .mobile-header-text {
+    display: none;
+  }
+
+  /* The burger now sits over the map's top right corner, so the layers
+     button goes under it: y=67, 16px from the right, as in the Figma. */
+  .maplibregl-map aside.filter-group {
+    margin: 67px 16px 0 0;
+  }
+
+  /* "Journey Planner | Open Data Hub" logo at the map's top left, 16px from
+     the edges and with no background, as the Figma "Header Top Left".
+     It lets clicks through so the map under it can still be dragged. */
+  .map-logo {
+    background: url('../../branding/opendatahub/map-logo.svg') no-repeat;
+    height: 42px;
+    left: 16px;
+    pointer-events: none;
+    position: absolute;
+    top: 16px;
+    width: 161px;
+    z-index: 2;
+  }
+}
+
 .slide-pane {
   transition: all 0.2s ease-in-out;
 }
@@ -726,4 +950,78 @@ button.step {
 .maplibregl-map .layers-list.fake-mobile-hover label,
 .maplibregl-map .layers-list:hover label {
   margin-bottom: 5px;
+}
+
+/* Map controls from the Figma guidelines (Desktop map info): 44px white
+   buttons, 4px radius, 1px #e3e4e7 border. Zoom buttons are 42px inside the
+   group border so the outer size is 44px, and the layer button replaces the
+   globe emoji of the base-map layer selector. */
+.maplibregl-map {
+  .maplibregl-ctrl-group {
+    border: 1px solid #e3e4e7;
+    box-shadow: none;
+
+    button {
+      height: 42px;
+      width: 42px;
+    }
+
+    button + button {
+      border-top: 1px solid #e3e4e7;
+    }
+  }
+
+  .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    background-size: 28px 28px;
+  }
+
+  .maplibregl-ctrl-group button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M13 7h2v6h6v2h-6v6h-2v-6H7v-2h6z' fill='%23000'/%3E%3C/svg%3E");
+  }
+
+  .maplibregl-ctrl-group button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M7 13h14v2H7z' fill='%23000'/%3E%3C/svg%3E");
+  }
+
+  /* Only the idle state: the active, waiting and error states keep the
+     MapLibre icons so the user still sees that tracking is on. */
+  .maplibregl-ctrl-group button.maplibregl-ctrl-geolocate:not(:disabled):not(.maplibregl-ctrl-geolocate-active):not(.maplibregl-ctrl-geolocate-waiting):not(.maplibregl-ctrl-geolocate-background) .maplibregl-ctrl-icon {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M11.2 13.3C12.36 13.3 13.3 12.36 13.3 11.2C13.3 10.04 12.36 9.1 11.2 9.1C10.04 9.1 9.1 10.04 9.1 11.2C9.1 12.36 10.04 13.3 11.2 13.3ZM4.2 11.2C4.2 7.334 7.334 4.2 11.2 4.2C15.066 4.2 18.2 7.334 18.2 11.2C18.2 15.066 15.066 18.2 11.2 18.2C7.334 18.2 4.2 15.066 4.2 11.2ZM11.2 5.6C8.107 5.6 5.6 8.107 5.6 11.2C5.6 14.293 8.107 16.8 11.2 16.8C14.293 16.8 16.8 14.293 16.8 11.2C16.8 8.107 14.293 5.6 11.2 5.6ZM0 11.2C0 5.014 5.014 0 11.2 0C17.386 0 22.4 5.014 22.4 11.2C22.4 17.386 17.386 22.4 11.2 22.4C5.014 22.4 0 17.386 0 11.2ZM11.2 1.4C5.788 1.4 1.4 5.788 1.4 11.2C1.4 16.612 5.788 21 11.2 21C16.612 21 21 16.612 21 11.2C21 5.788 16.612 1.4 11.2 1.4Z' transform='translate%282.8 2.8%29' fill='%23000000'/%3E%3C/svg%3E");
+  }
+
+  /* Basemap credits are shown as plain text instead of behind the round "i"
+     button: the OpenStreetMap/CARTO licences require visible attribution. */
+  .maplibregl-ctrl-attrib.maplibregl-compact {
+    border-radius: 4px;
+    font-size: 9px;
+    line-height: 12px;
+    margin: 0;
+    min-height: 0;
+    padding: 2px 6px;
+
+    .maplibregl-ctrl-attrib-button {
+      display: none;
+    }
+
+    .maplibregl-ctrl-attrib-inner {
+      display: block;
+    }
+  }
+
+  .layers-list:not(:hover):not(.fake-mobile-hover) {
+    background: #fff;
+    border: 1px solid #e3e4e7;
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0;
+    width: 44px;
+  }
+
+  .layers-list:not(:hover):not(.fake-mobile-hover)::after {
+    background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M22.023 0.079C22.255 0.2 22.4 0.439 22.4 0.7L22.4 14C22.4 14.228 22.289 14.443 22.101 14.573L15.101 19.473C14.86 19.642 14.54 19.642 14.299 19.473L7.7 14.854L1.101 19.473C0.888 19.623 0.608 19.641 0.377 19.521C0.145 19.4 0 19.161 0 18.9L0 5.6C0 5.372 0.111 5.158 0.299 5.027L7.299 0.127C7.54 -0.042 7.86 -0.042 8.101 0.127L14.7 4.746L21.299 0.127C21.512 -0.023 21.792 -0.041 22.023 0.079ZM14 5.964L8.4 2.044L8.4 13.636L14 17.556L14 5.964ZM15.4 17.556L21 13.636L21 2.044L15.4 5.964L15.4 17.556ZM7 13.636L7 2.044L1.4 5.964L1.4 17.556L7 13.636Z' transform='translate%282.8 4.2%29' fill='%23000000'/%3E%3C/svg%3E") center / 28px 28px no-repeat;
+    content: '';
+    height: 100%;
+    width: 100%;
+  }
 }
