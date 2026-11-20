@@ -6,7 +6,19 @@
   "areaVisibility": true,
   "staticParkAndRide": false,
   "transitModelTimeZone": "Europe/Rome",
-  "maxTransferDuration": "20m",
+  "transfers": {
+    "walk": {
+      "maxDuration": "20m"
+    },
+    "wheelchair": {
+      "maxDuration": "20m",
+      "stop" : {
+        "onlyConsiderAccessible" : false,
+        "unknownCost" : 900,
+        "inaccessibleCost" : 7200
+      }
+    }
+  },
   "transitFeeds": [
     {
       "source": "https://gtfs.api.opendatahub.testingmachine.eu/v1/dataset/skyalps-flight-data/raw",

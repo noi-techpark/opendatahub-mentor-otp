@@ -10,8 +10,7 @@
     }
   },
   "ojpApi" : {
-    "hideFeedId" : true,
-    "hardcodedInputFeedId" : "netex"
+    "hideFeedId" : false
   },
   "vectorTiles": {
     "layers": [
